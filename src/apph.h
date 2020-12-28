@@ -86,7 +86,7 @@ void reg_ah_r_(real *AH_R, int *AH_Nchi, int *AH_Nphi);
 
 void adjust_ah_xc_(real *AH_R, real *AH_xc, int *AH_Nchi, int *AH_Nphi, real *dx, real *dy, real *dz, int *axisym);
 
-void fill_ex_params_(real *AH_R, real *AH_xc, real *ex_r, real *ex_xc, int *AH_Nchi, int *AH_Nphi, real *dx, real *dy, real *dz, int *axisym);
+void fill_ex_params_(real *AH_R, real *AH_xc, real *min_AH_R, real *max_AH_R, real *ex_r0, real *ex_xc, int *AH_Nchi, int *AH_Nphi, real *dx, real *dy, real *dz, int *axisym);
 
 
 

@@ -29,7 +29,8 @@ extern real phi1_amp_2,phi1_r0_2,phi1_delta_2,phi1_x0_2[3],phi1_ecc_2[3];
 extern real phi4_qb_amp_1,phi4_qb_x0_1[3],phi4_qb_w0_1,phi4_qb_k_1[3],phi4_qb_delta_1;
 extern real phi4_qb_amp_2,phi4_qb_x0_2[3],phi4_qb_w0_2,phi4_qb_k_2[3],phi4_qb_delta_2;
 
-extern real ief_bh_r0;
+extern real ief_bh_r0,a_rot;
+extern real min_AH_R,max_AH_R;
 extern real ex_rbuf[MAX_BHS];
 extern int ex_reset_rbuf;
 extern real ex_r[MAX_BHS][3],ex_xc[MAX_BHS][3];
@@ -598,7 +599,7 @@ void extrap_quasiset_freepts_(    real *quasiset_tt, real *quasiset_tchi, real *
                    int *extrap_order,
                    real *x, real *y, real *z, real *dt, real *chr, real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width);
 
-void extrap_quasiset_fixedpts_(    real *quasiset_tt, real *quasiset_tchi, real *quasiset_txi, real *quasiset_chichi, real *quasiset_chixi,
+void extrap_quasiset_fixedpts_( real *quasiset_tt, real *quasiset_tchi, real *quasiset_txi, real *quasiset_chichi, real *quasiset_chixi,
                    real *quasiset_xixi,
                    real *quasiset_trace,
                    real *quasiset_massdensity,
@@ -611,5 +612,20 @@ void extrap_quasiset_fixedpts_(    real *quasiset_tt, real *quasiset_tchi, real 
                    int *extrap_order,
                    int *ind_distance_fixedpts,
                    real *x, real *y, real *z, real *dt, real *chr, real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width);
+
+void set_kerrads4d_ahr_(real *ief_bh_r0, real *a_rot, real *AdS_L, real *AH_R,real *min_AH_R,real *max_AH_R,int *AH_Nchi,int *AH_Nphi);
+
+void init_kerrads4d_bh_(real *ief_bh_r0, real *a_rot, real *AdS_L,
+                            real *gb_tt,real *gb_tx,real *gb_ty,real *gb_tz,
+                            real *gb_xx,real *gb_xy,real *gb_xz,
+                            real *gb_yy,real *gb_yz,real *gb_zz,
+                            real *gb_tt_t,real *gb_tx_t,real *gb_ty_t,real *gb_tz_t,
+                            real *gb_xx_t,real *gb_xy_t,real *gb_xz_t,
+                            real *gb_yy_t,real *gb_yz_t,
+                            real *gb_zz_t,
+                            real *Hb_t,real *Hb_x,real *Hb_y,real *Hb_z,
+                            real *Hb_t_t,real *Hb_x_t,real *Hb_y_t,real *Hb_z_t,
+                            int *phys_bdy,
+                            real *x, real *y, real *z, real *dt,real *chr_mg,real *ex,int *Nx,int *Ny,int *Nz,int *regtype);
 
 #endif

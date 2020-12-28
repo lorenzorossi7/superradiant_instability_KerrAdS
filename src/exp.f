@@ -454,12 +454,14 @@ c-----------------------------------------------------------------------
 c given AH_R,AH_xc, computes the corresponding coordinate center
 c and principle axis radii for excision ex_r0,ex_xc0
 c-----------------------------------------------------------------------
-        subroutine fill_ex_params(AH_R,AH_xc,ex_r0,ex_xc0,
+        subroutine fill_ex_params(AH_R,AH_xc,min_AH_R,max_AH_R,
+     &                            ex_r0,ex_xc0,
      &                            AH_Nchi,AH_Nphi,dx,dy,dz,axisym)
         implicit none
         integer axisym
         integer AH_Nchi,AH_Nphi
         real*8 AH_R(AH_Nchi,AH_Nphi),AH_xc(3),ex_r0(3),ex_xc0(3)
+        real*8 min_AH_R,max_AH_R
         
         real*8 PI
         parameter (PI=3.141592653589793d0)
@@ -484,6 +486,9 @@ c-----------------------------------------------------------------------
         ymax=0
         zmin=1
         zmax=0
+
+        min_AH_R=1
+        max_AH_R=0
 
         dahchi=PI/(AH_Nchi-1)
         dahphi=2*PI/(AH_Nphi-1)
@@ -513,6 +518,9 @@ c-----------------------------------------------------------------------
             ymax=max(y,ymax)
             zmax=max(z,ymax)
 
+            if (AH_R(i,j)<min_AH_R) min_AH_R=AH_R(i,j)
+            if (AH_R(i,j)>max_AH_R) max_AH_R=AH_R(i,j)
+
           end do
         end do
 
@@ -521,7 +529,8 @@ c-----------------------------------------------------------------------
         ex_xc0(2)=AH_xc(2)
         ex_xc0(3)=AH_xc(3)
 
-        !sets excision principal axis radii as ellipse semi-axes
+        !sets semi-axes of ellispoid approximation of AH:
+        !if the AH can be approximated by an ellipsoid with axes along the x,y,z axes, the following gives the semi-axes of this ellipsoid
         ex_r0(1)=(xmax-xmin)/2
         ex_r0(2)=(ymax-ymin)/2
         ex_r0(3)=(zmax-zmin)/2

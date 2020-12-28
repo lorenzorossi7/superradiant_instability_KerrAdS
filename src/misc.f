@@ -46,7 +46,7 @@ c-----------------------------------------------------------------------
         rhoim1jk=sqrt(xim1**2+yj**2+zk**2)
 
 
-!!!!!!!!!!!!MYVERSION
+!!!!!!!!!!!!MyVersion
         if (i.eq.1) then
                if ((.not.extrap)
      &            .and.(chr(i+1,j,k).ne.ex)
@@ -467,7 +467,7 @@ c-----------------------------------------------------------------------
         yjm1=y(j-1)
         rhoijm1k=sqrt(xi**2+yjm1**2+zk**2)
 
-!!!!!!!MYVERSION!!!!!!!!!!!!
+!!!!!!!MyVersion!!!!!!!!!!!!
 
         if (j.eq.1) then
                if ((.not.extrap)
@@ -1326,7 +1326,7 @@ c----------------------------------------------------------------------
         dy=y(2)-y(1)
         dz=z(2)-z(1)
 
-!!!!!!MYVERSION!!!!!!!!!
+!!!!!!MyVersion!!!!!!!!!
 
         !i
 
@@ -3520,7 +3520,8 @@ c------------------------------------------------------------------------
 
 c----------------------------------------------------------------------
 c initializes the metric to an exact Schwarzschild-AdS black hole solution
-c with radius parameter r0=2*BHmass
+c with radius parameter r0=2*M0, where M0 is the BHmass (r0 has no physical meaning, it is NOT the horizon radius.)
+c We denote the horizon radius by r_h in non-compactified coordinates and rho_h in compactified coordinates.
 c----------------------------------------------------------------------
         subroutine init_schwads4d_bh(r0,L,gb_tt,gb_tx,gb_ty,
      &                         gb_tz,
@@ -3684,7 +3685,7 @@ c----------------------------------------------------------------------
 !                 psi(i,j,k)=0
 !!!!!!!!!!!!!!!!!!!!!!!
 
-!!!CHECKED WITH MATHEMATICA!!
+!!!CHECKED WITH Mathematica!!
 
                  gb_tt(i,j,k)=(r0/2)*(1/rho0-rho0)
                  gb_tx(i,j,k)=2*x0*(1+rho0**2)
@@ -3790,7 +3791,7 @@ c----------------------------------------------------------------------
 !       write (*,*) ' gb_zz=',gb_zz(i,j,k)
 !
 !                 ! (Schw coordinates)!
-!                 ! TODO: add AdS_L dependence; currently assumes AdS_L=1!
+!                 ! TODO: add AdS_L dependence; currently Assumes AdS_L=1!
 !                 gb_tt(i,j,k)=0
 !                 gb_tx(i,j,k)=0
 !                 gb_ty(i,j,k)=0
@@ -3801,6 +3802,2292 @@ c----------------------------------------------------------------------
 !                 gb_yy(i,j,k)=0
 !                 gb_yz(i,j,k)=0
 !                 gb_zz(i,j,k)=0
+
+              end if
+            end do
+           end do
+        end do
+
+        ! y=0 axis regularization
+!        call axi_reg_g(gb_tt,gb_tx,gb_ty,
+!     &                 gb_xx,gb_xy,gb_yy,psi,tfunction,chr,ex,
+!     &                 L,x,y,z,Nx,Ny,Nz,regtype)
+
+!        call axi_reg_Hb(Hb_t,Hb_x,Hb_y,chr,ex,L,x,y,z,Nx,Ny,Nz,regtype)
+
+        return
+        end
+
+
+
+c----------------------------------------------------------------------
+c sets the horizon radius in spherical (non-rotating at the boundary) 
+c compactified coordinates for an exact Kerr-AdS black hole solution
+c with radius parameter rbh=2*M0, where M0 is the BHmass (r0 has no physical meaning, it is NOT the horizon radius),
+c and rotation parameter a.
+c----------------------------------------------------------------------
+        subroutine set_kerrads4d_ahr(rbh,a,L,
+     &                         AH_R,min_AH_R,max_AH_R,
+     &                         AH_Nchi,AH_Nphi)
+
+        implicit none
+
+        real*8 PI
+        parameter (PI=3.141592653589793d0)
+
+        integer AH_Nchi,AH_Nphi
+        real*8 rbh,a,M0,M0_min
+        real*8 rblhor
+        real*8 AH_R(AH_Nchi,AH_Nphi)
+        real*8 min_AH_R,max_AH_R
+        real*8 AH_chi,AH_phi
+        real*8 yipshor(AH_Nchi,AH_Nphi),rhohor(AH_Nchi,AH_Nphi)
+        real*8 L
+        real*8 dahchi,dahphi
+
+
+        integer i,j,k
+
+        ! initialize fixed-size variables
+        data i,j,k/0,0,0/
+
+        !--------------------------------------------------------------
+
+
+
+      ! Black hole mass
+        M0=rbh/2
+      ! Minimum black hole mass. For M0 below this value, there is a naked singularity
+        M0_min=((2*(1 + a**2/L**2) + Sqrt((1 + a**2/L**2)**2 
+     &       + (12*a**2)/L**2))*Sqrt(-1 + Sqrt((1 + a**2/L**2)**2 
+     &       + (12*a**2)/L**2) - a**2/L**2))/(3.*Sqrt(6.))
+
+        if (a.ge.L) then
+         write (*,*) "ERROR in choice of Kerr-AdS initial parameters: 
+     &   the rotation parameter a must be smaller than the AdS radius L"
+          write (*,*) "a,L=",a,L
+          stop
+        end if
+
+        if (M0.le.M0_min) then
+          write (*,*) "ERROR in choice of Kerr-AdS initial parameters: 
+     &      the black hole mass M0=2*r0 must be larger or equal 
+     &      than the M0_min value"
+          write (*,*) "M0,M0_min=",M0,M0_min
+          stop
+        end if
+
+      !event horizon radius in Boyer-Lindquist coordinates rotating at the boundary (non-spherical coordinates)
+        rblhor=(Sqrt(-2*a**2 - 2*L**2 + 
+     -      (a**4 + 14*a**2*L**2 + L**4)/
+     -   (a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 54*L**4*M0**2 +
+     -          Sqrt(-4*(a**4 + 14*a**2*L**2 + L**4)**3 + 
+     -             4*(a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 
+     -                 54*L**4*M0**2)**2)/2.)**0.3333333333333333 + 
+     -   (a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 54*L**4*M0**2 + 
+     -         Sqrt(-4*(a**4 + 14*a**2*L**2 + L**4)**3 + 
+     -            4*(a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 
+     -                54*L**4*M0**2)**2)/2.)**0.3333333333333333) + 
+     -    Sqrt(-4*a**2 - 4*L**2 - 
+     -      (a**4 + 14*a**2*L**2 + L**4)/
+     -   (a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 54*L**4*M0**2 +
+     -          Sqrt(-4*(a**4 + 14*a**2*L**2 + L**4)**3 + 
+     -             4*(a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 
+     -                 54*L**4*M0**2)**2)/2.)**0.3333333333333333 - 
+     -   (a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 54*L**4*M0**2 + 
+     -         Sqrt(-4*(a**4 + 14*a**2*L**2 + L**4)**3 + 
+     -            4*(a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 
+     -                54*L**4*M0**2)**2)/2.)**0.3333333333333333 + 
+     -      (12*Sqrt(3.)*L**2*M0)/
+     -       Sqrt(-2*a**2 - 2*L**2 + 
+     -         (a**4 + 14*a**2*L**2 + L**4)/
+     -          (a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 
+     -             54*L**4*M0**2 + 
+     -             Sqrt(-4*(a**4 + 14*a**2*L**2 + L**4)**3 + 
+     -                4*(a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 
+     -                    54*L**4*M0**2)**2)/2.)**0.3333333333333333 + 
+     -    (a**6 - 33*a**4*L**2 - 33*a**2*L**4 +L**6+54*L**4*M0**2+
+     -            Sqrt(-4*(a**4 + 14*a**2*L**2 + L**4)**3 + 
+     -               4*(a**6 - 33*a**4*L**2 - 33*a**2*L**4 + L**6 + 
+     -                   54*L**4*M0**2)**2)/2.)**0.3333333333333333)))/
+     -  (2.*Sqrt(3.))
+
+        dahchi=PI/(AH_Nchi-1)
+        dahphi=2*PI/(AH_Nphi-1)
+
+        min_AH_R=1;
+        max_AH_R=0;
+
+          do i=1,AH_Nchi
+           do j=1,AH_Nphi
+
+            !these are the angles obtained from the Cartesian coordinates of the code
+            AH_chi=(i-1)*dahchi
+            AH_phi=(j-1)*dahphi
+
+            !position of event horizon in uncompactified spherical coordinates (non-rotating at the boundary)
+            yipshor(i,j)=(Sqrt(2.)*L*
+     -       Sqrt(rblhor**2*(a**2 + rblhor**2)))/
+     -       Sqrt(2*L**2*rblhor**2 + a**2*(L**2 - rblhor**2) 
+     -       + a**2*(L**2 + rblhor**2)*Cos(2*AH_chi))
+
+            !position of event horizon in compactified spherical coordinates: rho=sqrt(x**2+y**2+z**2) where x,y,z are the code coordinates
+            rhohor(i,j)=(-1 + Sqrt(1 + yipshor(i,j)**2))/
+     -            yipshor(i,j)
+
+            AH_R(i,j)=rhohor(i,j)
+
+            if (AH_R(i,j).gt.max_AH_R) max_AH_R=AH_R(i,j)
+
+            if (AH_R(i,j).lt.min_AH_R) min_AH_R=AH_R(i,j)
+
+           end do
+          end do
+
+        return
+        end
+
+
+
+c----------------------------------------------------------------------
+c initializes the metric to an exact Kerr-AdS black hole solution
+c with radius parameter rbh=2*M0, where M0 is the BHmass (r0 has no physical meaning, it is NOT the horizon radius),
+c and rotation parameter a.
+c----------------------------------------------------------------------
+        subroutine init_kerrads4d_bh(rbh,a,L,
+     &                         gb_tt,gb_tx,gb_ty,gb_tz,
+     &                         gb_xx,gb_xy,gb_xz,
+     &                         gb_yy,gb_yz,gb_zz,
+     &                         gb_tt_t,gb_tx_t,gb_ty_t,gb_tz_t,
+     &                         gb_xx_t,gb_xy_t,gb_xz_t,
+     &                         gb_yy_t,gb_yz_t,
+     &                         gb_zz_t,
+     &                         Hb_t,Hb_x,Hb_y,Hb_z,
+     &                         Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
+     &                         phys_bdy,
+     &                         x,y,z,dt,chr,ex,Nx,Ny,Nz,regtype)
+        implicit none
+
+        real*8 PI
+        parameter (PI=3.141592653589793d0)
+
+        integer Nx,Ny,Nz
+        integer regtype
+        integer phys_bdy(6)
+        real*8 rbh,a,M0,M0_min
+        real*8 rblhor
+        real*8 yipshor(Nx,Ny,Nz),rhohor(Ny,Nx,Nz)
+        real*8 dt,ex,L
+        real*8 chr(Nx,Ny,Nz)
+        real*8 Hb_t(Nx,Ny,Nz),Hb_x(Nx,Ny,Nz)
+        real*8 Hb_y(Nx,Ny,Nz)
+        real*8 Hb_z(Nx,Ny,Nz)
+        real*8 Hb_t_t(Nx,Ny,Nz),Hb_x_t(Nx,Ny,Nz)
+        real*8 Hb_y_t(Nx,Ny,Nz)
+        real*8 Hb_z_t(Nx,Ny,Nz)
+        real*8 gb_tt(Nx,Ny,Nz),gb_tx(Nx,Ny,Nz)
+        real*8 gb_ty(Nx,Ny,Nz)
+        real*8 gb_tz(Nx,Ny,Nz)
+        real*8 gb_xx(Nx,Ny,Nz),gb_xy(Nx,Ny,Nz)
+        real*8 gb_xz(Nx,Ny,Nz)
+        real*8 gb_yy(Nx,Ny,Nz),gb_zz(Nx,Ny,Nz)
+        real*8 gb_yz(Nx,Ny,Nz)
+        real*8 gb_tt_t(Nx,Ny,Nz),gb_tx_t(Nx,Ny,Nz)
+        real*8 gb_ty_t(Nx,Ny,Nz),gb_zz_t(Nx,Ny,Nz)
+        real*8 gb_tz_t(Nx,Ny,Nz)
+        real*8 gb_xx_t(Nx,Ny,Nz),gb_xy_t(Nx,Ny,Nz)
+        real*8 gb_xz_t(Nx,Ny,Nz)
+        real*8 gb_yy_t(Nx,Ny,Nz)
+        real*8 gb_yz_t(Nx,Ny,Nz)
+        real*8 x(Nx),y(Ny),z(Nz)
+
+        integer n
+        parameter (n=3)
+
+        integer i,j,k
+
+        real*8 f1,f0,cF0,C0,A0,B0,D0
+        real*8 x0,y0,z0,rho0,theta0,phi0
+        real*8 U,Sigma,Deltatheta,Xi
+        real*8 r_h,rho_h
+        real*8 small
+        parameter (small=1d-10)
+
+        logical is_nan
+
+        real*8 tfunction(Nx,Ny,Nz)
+
+        ! initialize fixed-size variables
+        data i,j,k/0,0,0/
+
+        data rho0,f1,f0,cF0/0.0,0.0,0.0,0.0/
+        data C0,A0,B0,D0/0.0,0.0,0.0,0.0/
+        data x0,y0,z0/0.0,0.0,0.0/
+        data r_h,rho_h/0.0,0.0/
+
+        !--------------------------------------------------------------
+
+        !(NOTE ... here the x0,y0,z0,rho0 are compactified (CODE)
+        ! versions of the coordinates)
+
+      ! Black hole mass
+        M0=rbh/2
+      ! Minimum black hole mass. For M0 below this value, there is a naked singularity
+        M0_min=((2*(1 + a**2/L**2) + Sqrt((1 + a**2/L**2)**2 
+     &       + (12*a**2)/L**2))*Sqrt(-1 + Sqrt((1 + a**2/L**2)**2 
+     &       + (12*a**2)/L**2) - a**2/L**2))/(3.*Sqrt(6.))
+
+        if (a.ge.L) then
+         write (*,*) "ERROR in choice of Kerr-AdS initial parameters: 
+     &   the rotation parameter a must be smaller than the AdS radius L"
+          write (*,*) "a,L=",a,L
+          stop
+        end if
+
+        if (M0.le.M0_min) then
+          write (*,*) "ERROR in choice of Kerr-AdS initial parameters: 
+     &      the black hole mass M0=2*r0 must be larger or equal 
+     &      than the M0_min value"
+          write (*,*) "M0,M0_min=",M0,M0_min
+          stop
+        end if
+
+
+        ! initialize metric
+        do i=1,Nx
+           do j=1,Ny
+            do k=1,Nz
+
+! Kerr-Schild Cartesian compactified coordinates (horizon-penetrating and non-rotating at the boundary): t0,x0,y0,z0
+
+                 x0=x(i)
+                 y0=y(j)
+                 z0=z(k)
+
+! Kerr-Schild spherical compactified coordinates (horizon-penetrating and non-rotating at the boundary):t0,rho0,theta0,phi0
+
+                 rho0=sqrt(x0**2+y0**2+z0**2)
+                 if (rho0.ne.0.0d0) then
+                  theta0=acos(x0/rho0)
+                 end if
+                 if ((y0.ne.0.0d0).or.(z0.ne.0.0d0)) then
+                  phi0=atan2(z0,y0)
+                  if (phi0.lt.0) phi0=phi0+2*PI
+                 end if
+
+
+              if (chr(i,j,k).eq.ex) then
+                 gb_tt(i,j,k)=0
+                 gb_tx(i,j,k)=0
+                 gb_ty(i,j,k)=0
+                 gb_tz(i,j,k)=0
+                 gb_xx(i,j,k)=0
+                 gb_xy(i,j,k)=0
+                 gb_xz(i,j,k)=0
+                 gb_yy(i,j,k)=0
+                 gb_yz(i,j,k)=0
+                 gb_zz(i,j,k)=0
+                 Hb_t(i,j,k)=0
+                 Hb_x(i,j,k)=0
+                 Hb_y(i,j,k)=0
+                 Hb_z(i,j,k)=0
+              else
+
+! Kerr-Schild Cartesian coordinates (horizon-penetrating and non-rotating at the boundary)
+
+              U=Sqrt(2.)/
+     -  (L*Sqrt((-(a**2*L**2) + 
+     -        (4*L**2*rho0**2)/(-1 + rho0**2)**2 - 
+     -        (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -        Sqrt(L**4*(a**2 + (4*rho0**2)/(-1 + rho0**2)**2)**2 + 
+     -          (8*a**2*L**2*
+     -             (a**2 - 2*L**2 - (4*rho0**2)/(-1 + rho0**2)**2)*
+     -             (y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -          (16*a**4*(y0**2 + z0**2)**2)/(-1 + rho0**2)**4))/
+     -      (L**4*(a**2 + (4*rho0**2)/(-1 + rho0**2)**2)**2 + 
+     -        (8*a**2*L**2*(a**2 - 2*L**2 - 
+     -             (4*rho0**2)/(-1 + rho0**2)**2)*(y0**2 + z0**2))/
+     -         (-1 + rho0**2)**2 + 
+     -        (16*a**4*(y0**2 + z0**2)**2)/(-1 + rho0**2)**4)))
+
+                Sigma=Sqrt(L**4*(a**2 + (4*rho0**2)/
+     -           (-1 + rho0**2)**2)**2 + 
+     -    (8*a**2*L**2*(a**2 - 2*L**2 - 
+     -         (4*rho0**2)/(-1 + rho0**2)**2)*(y0**2 + z0**2))/
+     -     (-1 + rho0**2)**2 + 
+     -    (16*a**4*(y0**2 + z0**2)**2)/(-1 + rho0**2)**4)/L**2
+
+                Deltatheta=-(a**2*L**2 - 2*L**4 -
+     -            (4*L**2*rho0**2)/(-1 + rho0**2)**2 + 
+     -     (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -     Sqrt(L**4*(a**2 + (4*rho0**2)/(-1 + rho0**2)**2)**2 + 
+     -       (8*a**2*L**2*(a**2 - 2*L**2 - 
+     -            (4*rho0**2)/(-1 + rho0**2)**2)*(y0**2 + z0**2))/
+     -        (-1 + rho0**2)**2 + 
+     -       (16*a**4*(y0**2 + z0**2)**2)/(-1 + rho0**2)**4))/
+     -  (2.*L**4)
+
+                Xi=1 - a**2/L**2
+
+
+                !the following assumes L=1
+
+        gb_tt(i,j,k)=(2*Deltatheta**2*M0)/(U*Xi**2)
+
+        gb_tx(i,j,k)=(16*Sqrt(2.)*a**2*Deltatheta*M0*Sigma*x0*
+     -     Sqrt(rho0**2 - x0**2)*Sqrt(y0**2 + z0**2)*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4))))/
+     -   (rho0**2*U*Xi*Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) + 
+     -  (8*Sqrt(2.)*Deltatheta*M0*(1 + rho0**2)*Sigma*x0*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4)))*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   ((-1 + rho0)*(1 + rho0)*U*Xi*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))
+
+       if ((abs(y0).gt.10.0d0**(-10))
+     -  .or.(abs(z0).gt.10.0d0**(-10))) then
+
+          gb_ty(i,j,k)=(Deltatheta*M0*z0*(a**2 +
+     -      4*rho0**2 - 4*a**2*rho0**2 + 
+     -       a**2*rho0**4 - 2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -   (a*(-1 + rho0)**2*(1 + rho0)**2*U*Xi**2*(y0**2 + z0**2)) - 
+     -  (16*Sqrt(2.)*a**2*Deltatheta*M0*Sigma*x0**2*y0*
+     -     Sqrt(y0**2 + z0**2)*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4))))/
+     -   (rho0**2*U*Sqrt(rho0**2 - x0**2)*Xi*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) + 
+     -  (8*Sqrt(2.)*Deltatheta*M0*(1 + rho0**2)*Sigma*y0*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4)))*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   ((-1 + rho0)*(1 + rho0)*U*Xi*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))
+
+            else
+              gb_ty(i,j,k)=0
+            end if
+
+       if ((abs(y0).gt.10.0d0**(-10))
+     -  .or.(abs(z0).gt.10.0d0**(-10))) then
+
+            gb_tz(i,j,k)=-((Deltatheta*M0*y0*
+     -       (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -         2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -         Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -     (a*(-1 + rho0)**2*(1 + rho0)**2*U*Xi**2*(y0**2 + z0**2)))
+     -    - (16*Sqrt(2.)*a**2*Deltatheta*M0*Sigma*x0**2*z0*
+     -     Sqrt(y0**2 + z0**2)*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4))))/
+     -   (rho0**2*U*Sqrt(rho0**2 - x0**2)*Xi*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) + 
+     -  (8*Sqrt(2.)*Deltatheta*M0*(1 + rho0**2)*Sigma*z0*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4)))*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   ((-1 + rho0)*(1 + rho0)*U*Xi*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))
+
+            else
+              gb_tz(i,j,k)=0
+            end if
+
+
+            gb_xx(i,j,k)=(256*a**4*M0*(-1 + rho0**2)**6*Sigma**2*x0**2*
+     -     (rho0**2 - x0**2)*(y0**2 + z0**2))/
+     -   (rho0**4*U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -       4*a**4*rho0**4 + a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (256*a**2*M0*(-1 + rho0**2)**5*(1 + rho0**2)*Sigma**2*
+     -     x0**2*Sqrt(rho0**2 - x0**2)*Sqrt(y0**2 + z0**2)*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (rho0**2*U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -       4*a**4*rho0**4 + a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (64*M0*(-1 + rho0**2)**4*(1 + rho0**2)**2*Sigma**2*x0**2*
+     -     (a**4 + 8*rho0**2 - 8*a**2*rho0**2 + a**4*rho0**2 + 
+     -        a**4*rho0**4 + 
+     -        a**4*rho0**2*
+     -         (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) + 
+     -        2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -        a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -        (a**2*(-x0**2 + y0**2 + z0**2)*
+     -           (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -             a**2*(1 + rho0**2)**2 - 
+     -             Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -               4*a**4*rho0**4 + a**4*rho0**8 + 
+     -               4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -                (-x0**2 + y0**2 + z0**2) + 
+     -               2*a**4*rho0**4*
+     -                (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -         rho0**2)**2)/
+     -   (U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2)
+
+       if ((abs(y0).gt.10.0d0**(-10))
+     -  .or.(abs(z0).gt.10.0d0**(-10))) then
+
+          gb_xy(i,j,k)=(-256*a**4*M0*(-1 + rho0**2)**6*
+     -     Sigma**2*x0**3*y0*
+     -     (y0**2 + z0**2))/
+     -   (rho0**4*U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -       4*a**4*rho0**4 + a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (8*Sqrt(2.)*a*M0*Sigma*x0*Sqrt(rho0**2 - x0**2)*z0*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4))))/
+     -   (rho0**2*(-1 + rho0**2)**2*U*Xi*Sqrt(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) - 
+     -  (128*a**2*M0*(-1 + rho0**2)**5*(1 + rho0**2)*Sigma**2*
+     -     x0**3*y0*Sqrt(y0**2 + z0**2)*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (rho0**2*U*Sqrt(rho0**2 - x0**2)*
+     -     (a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (128*a**2*M0*(-1 + rho0**2)**5*(1 + rho0**2)*Sigma**2*x0*
+     -     Sqrt(rho0**2 - x0**2)*y0*Sqrt(y0**2 + z0**2)*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (rho0**2*U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -       4*a**4*rho0**4 + a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) - 
+     -  (4*Sqrt(2.)*M0*(1 + rho0**2)*Sigma*x0*z0*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4)))*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (a*(-1 + rho0**2)**3*U*Xi*(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (-2 + a**2 - 2*rho0**4 + a**2*rho0**4 + 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) + 
+     -  (64*M0*(-1 + rho0**2)**4*(1 + rho0**2)**2*Sigma**2*x0*y0*
+     -     (a**4 + 8*rho0**2 - 8*a**2*rho0**2 + a**4*rho0**2 + 
+     -        a**4*rho0**4 + 
+     -        a**4*rho0**2*
+     -         (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) + 
+     -        2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -        a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -        (a**2*(-x0**2 + y0**2 + z0**2)*
+     -           (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -             a**2*(1 + rho0**2)**2 - 
+     -             Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -               4*a**4*rho0**4 + a**4*rho0**8 + 
+     -               4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -                (-x0**2 + y0**2 + z0**2) + 
+     -               2*a**4*rho0**4*
+     -                (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -         rho0**2)**2)/
+     -   (U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2)
+
+            else
+              gb_xy(i,j,k)=0
+            end if
+
+       if ((abs(y0).gt.10.0d0**(-10))
+     -  .or.(abs(z0).gt.10.0d0**(-10))) then
+
+          gb_xz(i,j,k)=(-256*a**4*M0*(-1 + rho0**2)**6*
+     -     Sigma**2*x0**3*z0*
+     -     (y0**2 + z0**2))/
+     -   (rho0**4*U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -       4*a**4*rho0**4 + a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) - 
+     -  (8*Sqrt(2.)*a*M0*Sigma*x0*Sqrt(rho0**2 - x0**2)*y0*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4))))/
+     -   (rho0**2*(-1 + rho0**2)**2*U*Xi*Sqrt(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) - 
+     -  (128*a**2*M0*(-1 + rho0**2)**5*(1 + rho0**2)*Sigma**2*
+     -     x0**3*z0*Sqrt(y0**2 + z0**2)*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (rho0**2*U*Sqrt(rho0**2 - x0**2)*
+     -     (a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (128*a**2*M0*(-1 + rho0**2)**5*(1 + rho0**2)*Sigma**2*x0*
+     -     Sqrt(rho0**2 - x0**2)*z0*Sqrt(y0**2 + z0**2)*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (rho0**2*U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -       4*a**4*rho0**4 + a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (4*Sqrt(2.)*M0*(1 + rho0**2)*Sigma*x0*y0*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4)))*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (a*(-1 + rho0**2)**3*U*Xi*(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (-2 + a**2 - 2*rho0**4 + a**2*rho0**4 + 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) + 
+     -  (64*M0*(-1 + rho0**2)**4*(1 + rho0**2)**2*Sigma**2*x0*z0*
+     -     (a**4 + 8*rho0**2 - 8*a**2*rho0**2 + a**4*rho0**2 + 
+     -        a**4*rho0**4 + 
+     -        a**4*rho0**2*
+     -         (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) + 
+     -        2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -        a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -        (a**2*(-x0**2 + y0**2 + z0**2)*
+     -           (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -             a**2*(1 + rho0**2)**2 - 
+     -             Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -               4*a**4*rho0**4 + a**4*rho0**8 + 
+     -               4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -                (-x0**2 + y0**2 + z0**2) + 
+     -               2*a**4*rho0**4*
+     -                (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -         rho0**2)**2)/
+     -   (U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2)
+
+            else
+              gb_xz(i,j,k)=0
+            end if
+
+       if ((abs(y0).gt.10.0d0**(-10))
+     -  .or.(abs(z0).gt.10.0d0**(-10))) then
+
+            gb_yy(i,j,k)=(M0*z0**2*(a**2 + 4*rho0**2 - 4*a**2*rho0**2 + 
+     -        a**2*rho0**4 - 2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2)/
+     -   (2.*a**2*(-1 + rho0**2)**4*U*Xi**2*(y0**2 + z0**2)**2) + 
+     -  (256*a**4*M0*(-1 + rho0**2)**6*Sigma**2*x0**4*y0**2*
+     -     (y0**2 + z0**2))/
+     -   (rho0**4*U*(rho0**2 - x0**2)*
+     -     (a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) - 
+     -  (16*Sqrt(2.)*a*M0*Sigma*x0**2*y0*z0*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4))))/
+     -   (rho0**2*(-1 + rho0**2)**2*U*Sqrt(rho0**2 - x0**2)*Xi*
+     -     Sqrt(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) - 
+     -  (256*a**2*M0*(-1 + rho0**2)**5*(1 + rho0**2)*Sigma**2*
+     -     x0**2*y0**2*Sqrt(y0**2 + z0**2)*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (rho0**2*U*Sqrt(rho0**2 - x0**2)*
+     -     (a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) - 
+     -  (8*Sqrt(2.)*M0*(1 + rho0**2)*Sigma*y0*z0*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4)))*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (a*(-1 + rho0**2)**3*U*Xi*(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (-2 + a**2 - 2*rho0**4 + a**2*rho0**4 + 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) + 
+     -  (64*M0*(-1 + rho0**2)**4*(1 + rho0**2)**2*Sigma**2*y0**2*
+     -     (a**4 + 8*rho0**2 - 8*a**2*rho0**2 + a**4*rho0**2 + 
+     -        a**4*rho0**4 + 
+     -        a**4*rho0**2*
+     -         (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) + 
+     -        2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -        a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -        (a**2*(-x0**2 + y0**2 + z0**2)*
+     -           (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -             a**2*(1 + rho0**2)**2 - 
+     -             Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -               4*a**4*rho0**4 + a**4*rho0**8 + 
+     -               4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -                (-x0**2 + y0**2 + z0**2) + 
+     -               2*a**4*rho0**4*
+     -                (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -         rho0**2)**2)/
+     -   (U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2)
+
+            else
+              gb_yy(i,j,k)=0
+            end if
+
+       if ((abs(y0).gt.10.0d0**(-10))
+     -  .or.(abs(z0).gt.10.0d0**(-10))) then
+
+            gb_yz(i,j,k)=-(M0*y0*z0*(a**2 +
+     -        4*rho0**2 - 4*a**2*rho0**2 + 
+     -         a**2*rho0**4 - 2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -         Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2)/
+     -   (2.*a**2*(-1 + rho0**2)**4*U*Xi**2*(y0**2 + z0**2)**2) + 
+     -  (256*a**4*M0*(-1 + rho0**2)**6*Sigma**2*x0**4*y0*z0*
+     -     (y0**2 + z0**2))/
+     -   (rho0**4*U*(rho0**2 - x0**2)*
+     -     (a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (8*Sqrt(2.)*a*M0*Sigma*x0**2*y0**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4))))/
+     -   (rho0**2*(-1 + rho0**2)**2*U*Sqrt(rho0**2 - x0**2)*Xi*
+     -     Sqrt(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) - 
+     -  (8*Sqrt(2.)*a*M0*Sigma*x0**2*z0**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4))))/
+     -   (rho0**2*(-1 + rho0**2)**2*U*Sqrt(rho0**2 - x0**2)*Xi*
+     -     Sqrt(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) - 
+     -  (256*a**2*M0*(-1 + rho0**2)**5*(1 + rho0**2)*Sigma**2*
+     -     x0**2*y0*z0*Sqrt(y0**2 + z0**2)*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (rho0**2*U*Sqrt(rho0**2 - x0**2)*
+     -     (a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (4*Sqrt(2.)*M0*(1 + rho0**2)*Sigma*y0**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4)))*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (a*(-1 + rho0**2)**3*U*Xi*(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (-2 + a**2 - 2*rho0**4 + a**2*rho0**4 + 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) - 
+     -  (4*Sqrt(2.)*M0*(1 + rho0**2)*Sigma*z0**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4)))*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (a*(-1 + rho0**2)**3*U*Xi*(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (-2 + a**2 - 2*rho0**4 + a**2*rho0**4 + 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) + 
+     -  (64*M0*(-1 + rho0**2)**4*(1 + rho0**2)**2*Sigma**2*y0*z0*
+     -     (a**4 + 8*rho0**2 - 8*a**2*rho0**2 + a**4*rho0**2 + 
+     -        a**4*rho0**4 + 
+     -        a**4*rho0**2*
+     -         (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) + 
+     -        2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -        a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -        (a**2*(-x0**2 + y0**2 + z0**2)*
+     -           (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -             a**2*(1 + rho0**2)**2 - 
+     -             Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -               4*a**4*rho0**4 + a**4*rho0**8 + 
+     -               4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -                (-x0**2 + y0**2 + z0**2) + 
+     -               2*a**4*rho0**4*
+     -                (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -         rho0**2)**2)/
+     -   (U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2)
+
+            else
+              gb_yz(i,j,k)=0
+            end if
+
+       if ((abs(y0).gt.10.0d0**(-10))
+     -  .or.(abs(z0).gt.10.0d0**(-10))) then
+
+            gb_zz(i,j,k)=(M0*y0**2*(a**2 + 4*rho0**2 - 4*a**2*rho0**2 + 
+     -        a**2*rho0**4 - 2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2)/
+     -   (2.*a**2*(-1 + rho0**2)**4*U*Xi**2*(y0**2 + z0**2)**2) + 
+     -  (256*a**4*M0*(-1 + rho0**2)**6*Sigma**2*x0**4*z0**2*
+     -     (y0**2 + z0**2))/
+     -   (rho0**4*U*(rho0**2 - x0**2)*
+     -     (a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (16*Sqrt(2.)*a*M0*Sigma*x0**2*y0*z0*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4))))/
+     -   (rho0**2*(-1 + rho0**2)**2*U*Sqrt(rho0**2 - x0**2)*Xi*
+     -     Sqrt(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) - 
+     -  (256*a**2*M0*(-1 + rho0**2)**5*(1 + rho0**2)*Sigma**2*
+     -     x0**2*z0**2*Sqrt(y0**2 + z0**2)*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (rho0**2*U*Sqrt(rho0**2 - x0**2)*
+     -     (a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2) + 
+     -  (8*Sqrt(2.)*M0*(1 + rho0**2)*Sigma*y0*z0*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     Sqrt(1/
+     -       (-a**2 + (4*rho0**2)/(-1 + rho0**2)**2 - 
+     -         (4*a**2*(y0**2 + z0**2))/(-1 + rho0**2)**2 + 
+     -         Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -             4*a**4*rho0**4 + a**4*rho0**8 + 
+     -             4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -              (-x0**2 + y0**2 + z0**2) + 
+     -             2*a**4*rho0**4*
+     -              (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -           (-1 + rho0**2)**4)))*
+     -     (-a**4 - 8*rho0**2 + 8*a**2*rho0**2 - a**4*rho0**2 - 
+     -       a**4*rho0**4 - 
+     -       a**4*rho0**2*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) - 
+     -       2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -       a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -       (a**2*(-x0**2 + y0**2 + z0**2)*
+     -          (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -            a**2*(1 + rho0**2)**2 - 
+     -            Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -              4*a**4*rho0**4 + a**4*rho0**8 + 
+     -              4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -               (-x0**2 + y0**2 + z0**2) + 
+     -              2*a**4*rho0**4*
+     -               (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -        rho0**2))/
+     -   (a*(-1 + rho0**2)**3*U*Xi*(y0**2 + z0**2)*
+     -     Sqrt((a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))/
+     -       (-1 + rho0**2)**4)*
+     -     (-2 + a**2 - 2*rho0**4 + a**2*rho0**4 + 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) - 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))) + 
+     -  (64*M0*(-1 + rho0**2)**4*(1 + rho0**2)**2*Sigma**2*z0**2*
+     -     (a**4 + 8*rho0**2 - 8*a**2*rho0**2 + a**4*rho0**2 + 
+     -        a**4*rho0**4 + 
+     -        a**4*rho0**2*
+     -         (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4) + 
+     -        2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) - 
+     -        a**2*Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -           4*a**4*rho0**4 + a**4*rho0**8 + 
+     -           4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -            (-x0**2 + y0**2 + z0**2) + 
+     -           2*a**4*rho0**4*
+     -            (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)) + 
+     -        (a**2*(-x0**2 + y0**2 + z0**2)*
+     -           (-2 - 4*rho0**2 - 2*rho0**4 + 
+     -             a**2*(1 + rho0**2)**2 - 
+     -             Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -               4*a**4*rho0**4 + a**4*rho0**8 + 
+     -               4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -                (-x0**2 + y0**2 + z0**2) + 
+     -               2*a**4*rho0**4*
+     -                (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))))/
+     -         rho0**2)**2)/
+     -   (U*(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 4*a**4*rho0**4 + 
+     -       a**4*rho0**8 + 
+     -       4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -        (-x0**2 + y0**2 + z0**2) + 
+     -       2*a**4*rho0**4*(1 - (8*x0**2*(y0**2 + z0**2))/rho0**4))
+     -      *(-a**2 + 4*rho0**2 - a**2*rho0**4 - 
+     -       2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -       Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -         4*a**4*rho0**4 + a**4*rho0**8 + 
+     -         4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -          (-x0**2 + y0**2 + z0**2) + 
+     -         2*a**4*rho0**4*
+     -          (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))*
+     -     (2 - a**2 + 2*rho0**4 - a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2*
+     -     (a**2 + 4*rho0**2 - 4*a**2*rho0**2 + a**2*rho0**4 - 
+     -        2*a**2*(-x0**2 + y0**2 + z0**2) + 
+     -        Sqrt(a**4 + 16*rho0**4 - 16*a**2*rho0**4 + 
+     -          4*a**4*rho0**4 + a**4*rho0**8 + 
+     -          4*a**2*(-2 + a**2)*(1 + rho0**4)*
+     -           (-x0**2 + y0**2 + z0**2) + 
+     -          2*a**4*rho0**4*
+     -           (1 - (8*x0**2*(y0**2 + z0**2))/rho0**4)))**2)
+
+            else
+              gb_zz(i,j,k)=0
+            end if
+
+!              if (is_nan(gb_tt(i,j,k)).or.is_nan(gb_tx(i,j,k))
+!     &        .or.is_nan(gb_ty(i,j,k))
+!     &        .or.is_nan(gb_tz(i,j,k))
+!     &        .or.is_nan(gb_xx(i,j,k)).or.is_nan(gb_xy(i,j,k))
+!     &        .or.is_nan(gb_xz(i,j,k))
+!     &        .or.is_nan(gb_yy(i,j,k))
+!     &        .or.is_nan(gb_yz(i,j,k)).or.is_nan(gb_zz(i,j,k)) ) then
+
+!        if ( (abs(x0).lt.10.0d0**(-10)).and.
+!     &  (abs(y0+0.0625d0).lt.10.0d0**(-10)).and.
+!     &  (abs(z0+0.1875d0).lt.10.0d0**(-10)) ) then
+!
+!       write (*,*) 'L,i,j,k,x0,y0,z0,rho0=',
+!     &      L,i,j,k,x0,y0,z0,rho0
+!       write (*,*) ' U=',U
+!       write (*,*) ' Sigma=',Sigma
+!       write (*,*) ' Deltatheta=',Deltatheta
+!       write (*,*) ' Xi=',Xi
+!       write (*,*) ' gb_tt=',gb_tt(i,j,k)
+!       write (*,*) ' gb_tx=',gb_tx(i,j,k)
+!       write (*,*) ' gb_ty=',gb_ty(i,j,k)
+!       write (*,*) ' gb_tz=',gb_tz(i,j,k)
+!       write (*,*) ' gb_xx=',gb_xx(i,j,k)
+!       write (*,*) ' gb_xy=',gb_xy(i,j,k)
+!       write (*,*) ' gb_xz=',gb_xz(i,j,k)
+!       write (*,*) ' gb_yy=',gb_yy(i,j,k)
+!       write (*,*) ' gb_yz=',gb_yz(i,j,k)
+!       write (*,*) ' gb_zz=',gb_zz(i,j,k)
+!
+!        end if
 
               end if
             end do
@@ -3919,7 +6206,7 @@ c----------------------------------------------------------------------
        end if
         
        return
-       end  
+       end
 
 c----------------------------------------------------------------------
 c calculates all the tensorial objects in x,y coordinates, at point i,j
@@ -3986,7 +6273,7 @@ c----------------------------------------------------------------------
         real*8 grad_phi1_sq
 
         !--------------------------------------------------------------
-        ! variables for tensor manipulations 
+        ! variables for tensor manipulations
         !(indices are t,x,w,y,z)
         !--------------------------------------------------------------
         real*8 g0_ll(4,4),g0_uu(4,4)
@@ -4542,10 +6829,10 @@ c----------------------------------------------------------------------
         ! set phi1 value
         phi10=phi1_n(i,j,k)
 
-!CHECKED WITH MATHEMATICA UP TO HERE
+!CHECKED WITH Mathematica UP TO HERE
 
 !!!!!!!2+1 version!!!!!
-!        ! ASSUMES L=1
+!        ! Assumes L=1
 !        g0_tt_ads_x  =(8*x0*(1 + rho0**2))/(L**2*(-1 + rho0**2)**3)
 !        g0_tt_ads_y  =(8*y0*(1 + rho0**2))/(L**2*(-1 + rho0**2)**3)
 !        g0_tt_ads_z  =0
@@ -5233,7 +7520,7 @@ c----------------------------------------------------------------------
      &                 /((-1+rho0**2)**4
      &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
 
-!!!CHECKED WITH MATHEMATICA UP TO HERE!!
+!!!CHECKED WITH Mathematica UP TO HERE!!
 
         g0_yy_ads_x  =-((16*x0*(L**4*(-1+rho0**2)**2
      &                *(1+x0**4+6*y0**2-2*z0**2+2*x0**2*(-1+y0**2+z0**2)
@@ -5689,7 +7976,7 @@ c----------------------------------------------------------------------
      &                  /((-1+rho0**2)**4
      &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
 
-!!!CHECKED WITH MATHEMATICA UP TO HERE!!
+!!!CHECKED WITH Mathematica UP TO HERE!!
 
 !       write (*,*) 'L,i,j,k,x0,y0,z0,rho0=',L,i,j,k,x0,y0,z0,rho0
 !
@@ -6149,7 +8436,7 @@ c----------------------------------------------------------------------
         g0_ll(3,4)=g0_yz_ads0+gb_yz0
         g0_ll(4,4)=g0_zz_ads0+gb_zz0
 
-!CHECKED WITH MATHEMATICA UP TO HERE
+!CHECKED WITH Mathematica UP TO HERE
 
 !       write (*,*) 'L,i,j,k,x0,y0,z0,rho0=',L,i,j,k,x0,y0,z0,rho0
 !       write (*,*) 'g0_ll(1,1)=',g0_ll(1,1)
@@ -6629,7 +8916,7 @@ c----------------------------------------------------------------------
 !       write (*,*) 'g0_uu(3,4)=',g0_uu(3,4)
 !       write (*,*) 'g0_uu(4,4)=',g0_uu(4,4)
 
-!CHECKED WITH MATHEMATICA UP TO HERE
+!CHECKED WITH Mathematica UP TO HERE
 
         do a=1,3
           do b=a+1,4
@@ -7545,7 +9832,7 @@ c----------------------------------------------------------------------
      &               +phi1_z*(2)*(-4*z0)*(1-rho0**2)
      &               +phi10*(-4*(1-rho0**2)+8*z0**2)
 
-!!!CHECKED WITH MATHEMATICA UP TO HERE!!
+!!!CHECKED WITH Mathematica UP TO HERE!!
 
         do a=1,3
           do b=a+1,4
@@ -7553,7 +9840,7 @@ c----------------------------------------------------------------------
           end do
         end do
 
-        ! calculate Riemann tensor at point i,j
+        ! calculate riemann tensor at point i,j
         !(R^a_bcd =gamma^a_bd,c - gamma^a_bc,d
         !          +gamma^a_ce gamma^e_bd - gamma^a_de gamma^e_bc)
         do a=1,4

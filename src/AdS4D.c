@@ -16,6 +16,9 @@
 #include "AdS4D.h"
 #include "apph.h"
 
+//maximum value for AH_Nchi+AH_Nchi*AH_Nphi determining the resolution of the AH finder: the resolution of each AH cannot be larger than MAX_AH_Nchi_AH_Nphi_AH_finder
+#define MAX_AH_Nchi_AH_Nphi_AH_FINDER 162 //2178=33+33*65, 162=9+9*17
+
 //=============================================================================
 // if axisym=1, then 2+1 simulation in (x,y) plane 
 //=============================================================================
@@ -40,7 +43,7 @@ real phi1_amp_1,phi1_B_1,phi1_C_1,phi1_r0_1,phi1_delta_1,phi1_x0_1[3],phi1_ecc_1
 real phi1_amp_2,phi1_B_2,phi1_C_2,phi1_r0_2,phi1_delta_2,phi1_x0_2[3],phi1_ecc_2[3];
 
 // if > 0, initialize with exact BH
-real ief_bh_r0;
+real ief_bh_r0,a_rot0;
 
 //gauge parameters:
 int gauge_t;
@@ -54,11 +57,12 @@ real rhoc,rhod;
 
 int cp_version; 
 
-// excision parameters x-ex_xc  ex_r
+// excision parameters
 real ex_rbuf[MAX_BHS];
 int ex_reset_rbuf;
 int ex_max_repop,ex_repop_buf,ex_repop_io;
-//Option important when restarting from checkpoint: in case the excision surface of the new run is smaller than the one in the old one, this option makes sure that all the points excised in the previous run are excised in the current one
+int excision_type;
+//Option relevant when restarting from checkpoint: in case the excision surface of the new run is smaller than the one in the old one, this option makes sure that all the points excised in the previous run are excised in the current one
 int excise_prev_run_ex_pts;
 real prev_run_ex_r[MAX_BHS][3];
 
@@ -106,7 +110,9 @@ int diss_kmax,diss_eps_k_cutoff_n,diss_bdy_k,diss_all_past_k,diss_all;
 real ex_rbuf_a[MAX_BHS];
 
 // AH parameters
+real rh,rhoh,M0,E,J0,Xi,rblhor;
 int AH_Nchi[MAX_BHS],AH_Nphi[MAX_BHS],AH_Lmin[MAX_BHS],AH_Lmax[MAX_BHS],AH_find_best_fit[MAX_BHS];
+int np;
 int AH_max_iter[MAX_BHS],AH_freq[MAX_BHS],AH_freq_aft[MAX_BHS],AH_rsteps[MAX_BHS],AH_maxinc[MAX_BHS];
 real AH_tol[MAX_BHS],AH_tol_aft[MAX_BHS],AH_r0[MAX_BHS],AH_lambda[MAX_BHS],AH_lambda_min[MAX_BHS];
 real AH_eps[MAX_BHS],AH_r1[MAX_BHS],AH_tol_scale[MAX_BHS],AH_reset_scale[MAX_BHS];
@@ -622,7 +628,11 @@ int gu_xy_gfn,gu_xz_gfn,gu_yy_gfn,gu_yz_gfn,gu_zz_gfn,m_g_det_gfn;
 //=============================================================================
 // arrays holding AH shape and other hypersurface info
 //=============================================================================
+real min_AH_R0=1;
+real max_AH_R0=1;
+
 real *AH_theta[MAX_BHS],*AH_R[MAX_BHS];
+real AH_R_for_ex_mask[MAX_BHS][MAX_AH_Nchi_AH_Nphi_AH_FINDER]={1.0};
 real *AH_x0[MAX_BHS],*AH_y0[MAX_BHS],*AH_z0[MAX_BHS];
 real *AH_g0_xx[MAX_BHS];
 real *AH_g0_xy[MAX_BHS];
@@ -1340,6 +1350,10 @@ real *xibdy0_fixedpts_extraporder3_paramset2;
 //=============================================================================
 void set_gfns(void)
 {
+
+//    MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("beginning set_gnfs\n"); fflush(stdout); }
+
     if ((cl_res_gfn   = PAMR_get_gfn("cl_res",PAMR_AMRH,1))<0) AMRD_stop("set_gnfs error",0);
 
     if ((phi1_gfn     = PAMR_get_gfn("phi1",PAMR_MGH, 0))<0) AMRD_stop("set_gnfs error",0);
@@ -1566,6 +1580,9 @@ void set_gfns(void)
     if ((m_g_det_gfn = PAMR_get_gfn("m_g_det",PAMR_AMRH,1))<0) AMRD_stop("set_gnfs error",0);
 
     g_norms=AMRD_get_global_norms();
+
+//        MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("end set_gnfs\n"); fflush(stdout); }
 }
 
 //=============================================================================
@@ -1573,6 +1590,9 @@ void set_gfns(void)
 //=============================================================================
 void ldptr_bbox(void)
 {
+
+//	MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("beginning ldptr_bbox\n"); fflush(stdout); }
   	real dx0[3];
   	static int first=1;	
 
@@ -1605,11 +1625,17 @@ void ldptr_bbox(void)
   	Ny=shape[1];
   	Nz=shape[2];	
   	size=Nx*Ny*Nz;
+
+//  		MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("end ldptr_bbox\n"); fflush(stdout); }
 }
 
 void ldptr(void)
 {
-    real *x0[3],*gfs[PAMR_MAX_GFNS];    
+
+//		MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("beginning ldptr\n"); fflush(stdout); }
+    real *x0[3],*gfs[PAMR_MAX_GFNS];
 
     ldptr_bbox();   
     PAMR_get_g_x(x0);   
@@ -1809,6 +1835,9 @@ void ldptr(void)
     gu_zz = gfs[gu_zz_gfn-1];
     m_g_det = gfs[m_g_det_gfn-1];
 
+//    	MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("end ldptr\n"); fflush(stdout); }
+
 }
 
 //=============================================================================
@@ -1817,6 +1846,9 @@ void ldptr(void)
 //=============================================================================
 void ldptr_mg(void)
 {
+
+//	    	MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("beginning ldptr_mg\n"); fflush(stdout); }
    real lambda;
 
    ldptr();
@@ -1824,6 +1856,9 @@ void ldptr_mg(void)
    dx=x[1]-x[0]; dy=y[1]-y[0]; dz=z[1]-z[0];
    PAMR_get_lambda(&lambda);
    dt=lambda*dx;
+
+//   	    	MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("end ldptr_mg\n"); fflush(stdout); }
 }
 
 //=============================================================================
@@ -1994,6 +2029,9 @@ int AdS4D_id(void)
 //=============================================================================
 void AdS4D_var_pre_init(char *pfile)
 {
+
+//		    	MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("beginning AdS4D_var_pre_init\n"); fflush(stdout); }
     AMRD_echo_params=1;
     AMRD_int_param(pfile,"echo_params",&AMRD_echo_params,1);    
     cp_version=ADS5D_CP_VERSION;
@@ -2004,12 +2042,16 @@ void AdS4D_var_pre_init(char *pfile)
     interptype=2; AMRD_int_param(pfile,"interptype",&interptype,1);
     i_shift=0; AMRD_int_param(pfile,"i_shift",&i_shift,1);  
 
+//		    	MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("end AdS4D_var_pre_init\n"); fflush(stdout); }
+
     return;
 }
 
 void AdS4D_var_post_init(char *pfile)
 {
     int i,j,k,ind,l;
+    int i0,j0,ind0;
     char buf[64];
     real rmin,deltar;   
     int valid;  
@@ -2138,19 +2180,19 @@ void AdS4D_var_post_init(char *pfile)
         }
     }   
     // set fraction, 1-ex_rbuf, of AH radius to be excised
-    for (j=0; j<MAX_BHS; j++)
+    for (l=0; l<MAX_BHS; l++)
     {
-        if (!AMRD_cp_restart || ex_reset_rbuf || ex_r[j][0]<=0)
+        if (!AMRD_cp_restart || ex_reset_rbuf || ex_r[l][0]<=0)
         {
-            if (j==0) { if (!AMRD_cp_restart) ex_rbuf[j]=0; sprintf(buf,"ex_rbuf"); }
-            else { if (!AMRD_cp_restart) ex_rbuf[j]=ex_rbuf[0]; sprintf(buf,"ex_rbuf_%i",j+1); }
-            AMRD_real_param(pfile,buf,&ex_rbuf[j],1);
-            if (ex_rbuf[j]<0 || ex_rbuf[j]>1 ) printf("WARNING ... ex_rbuf[%i]=%lf is outside of standard range\n",j,ex_rbuf[j]);
+            if (l==0) { if (!AMRD_cp_restart) ex_rbuf[l]=0; sprintf(buf,"ex_rbuf"); }
+            else { if (!AMRD_cp_restart) ex_rbuf[l]=ex_rbuf[0]; sprintf(buf,"ex_rbuf_%i",l+1); }
+            AMRD_real_param(pfile,buf,&ex_rbuf[l],1);
+            if (ex_rbuf[l]<0 || ex_rbuf[l]>1 ) printf("WARNING ... ex_rbuf[%i]=%lf is outside of standard range\n",l,ex_rbuf[l]);
         }   
         if (!AMRD_cp_restart)
         {
-            ex_xc[j][0]=ex_xc[j][1]=ex_xc[j][2]=0;
-            ex_r[j][0]=ex_r[j][1]=ex_r[j][2]=0;
+            ex_xc[l][0]=ex_xc[l][1]=ex_xc[l][2]=0;
+            ex_r[l][0]=ex_r[l][1]=ex_r[l][2]=0;
         }
     }   
     // set AH parameters
@@ -2159,7 +2201,7 @@ void AdS4D_var_post_init(char *pfile)
     for (l=0; l<MAX_BHS; l++)
     {
         // if restoring from check-point files, then this just searches for AH from scratch
-        if (AMRD_cp_restart) found_AH[l]=0; 
+        if (AMRD_cp_restart) found_AH[l]=0;
 
         // because the AH shape is saved, we can't currently change that upon a restart (unless we haven't yet found one)
         if (!AMRD_cp_restart || !found_AH[l])
@@ -2178,6 +2220,8 @@ void AdS4D_var_post_init(char *pfile)
                     " AN ODD NUMBER OF POINTS IN AH_Nchi,AH_Nphi\n\n\n\n\n");
             }
         }
+
+        if (MAX_AH_Nchi_AH_Nphi_AH_FINDER < AH_Nchi[l]*AH_Nphi[l]) AMRD_stop("the resolution of the AH finder must be smaller than MAX_AH_Nchi_AH_Nphi_AH_FINDER\n",""); 
 
         if (l==0) { AH_Lmin[l]=2; sprintf(buf,"AH_Lmin"); }
         else { AH_Lmin[l]=AH_Lmin[0]; sprintf(buf,"AH_Lmin_%i",l+1); }
@@ -2242,14 +2286,15 @@ void AdS4D_var_post_init(char *pfile)
             else sprintf(buf,"AH_xc_%i",l+1);
             AMRD_real_param(pfile,buf,AH_xc[l],AMRD_dim);
         }
-	if (AMRD_cp_restart) {excise_prev_run_ex_pts=0; AMRD_int_param(pfile,"excise_prev_run_ex_pts",&excise_prev_run_ex_pts,1);}
-	if (AMRD_cp_restart&&excise_prev_run_ex_pts)
-	{
-		for (i=0;i<AMRD_dim;i++) {prev_run_ex_r[l][i]=0.0;}
-		if (l==0) sprintf(buf,"prev_run_ex_r");
+        excision_type=0; AMRD_int_param(pfile,"excision_type",&excision_type,1);
+		excise_prev_run_ex_pts=0; if (AMRD_cp_restart) {AMRD_int_param(pfile,"excise_prev_run_ex_pts",&excise_prev_run_ex_pts,1);}
+		if (AMRD_cp_restart&&excise_prev_run_ex_pts)
+		{
+			for (i=0;i<AMRD_dim;i++) {prev_run_ex_r[l][i]=0.0;}
+			if (l==0) sprintf(buf,"prev_run_ex_r");
 	        else sprintf(buf,"prev_run_ex_r_%i",l+1);
         	AMRD_real_param(pfile,buf,prev_run_ex_r[l],AMRD_dim);
-	}
+		}
  
         if (AH_rsteps[l]<1) AMRD_stop("error ... AH_rsteps<1\n","");    
         AH_theta[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)); 
@@ -2280,60 +2325,214 @@ void AdS4D_var_post_init(char *pfile)
         AH_theta_ads[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
         AH_own[l]=(int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int));
         AH_lev[l]=(int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int)); 
-    }   
+    }  
     ex_max_repop=0; AMRD_int_param(pfile,"ex_max_repop",&ex_max_repop,1);
     ex_repop_buf=1; AMRD_int_param(pfile,"ex_repop_buf",&ex_repop_buf,1);
     ex_repop_io=1; AMRD_int_param(pfile,"ex_repop_io",&ex_repop_io,1);
     if (abs(ex_repop_io)<1 || abs(ex_repop_io)>4) AMRD_stop("invalid |ex_repop_io| ... must be 1,2,3 or 4",""); 
-    ief_bh_r0=0; AMRD_real_param(pfile,"ief_bh_r0",&ief_bh_r0,1);   
+    ief_bh_r0=0; AMRD_real_param(pfile,"ief_bh_r0",&ief_bh_r0,1);
+    a_rot0=0; AMRD_real_param(pfile,"a_rot0",&a_rot0,1);
     // later have a proper routine to convert from AH to excision parameters.
-    // rh is radius in uncompcatified coordicates, rhoh in compactified,
-    // ief_bh_r0 is BH radius parameter, ex_r is excision radius
+    // rh is radius in uncompactified coordicates, rhoh in compactified,
+    // ief_bh_r0 is BH radius parameter, i.e., M=2*ief_bh_r0, ex_r is excision radius
     int ah_finder_is_off=1; 
     for (l=0; l<MAX_BHS; l++) {if (AH_max_iter[l]!=0) ah_finder_is_off=0;}
-    if (ief_bh_r0)
+    //Considering only one AH, generalize later
+    if ((ief_bh_r0>0)&&(a_rot0<pow(10,-10)))
     { 
-        real rh,rhoh,mh;
         rh=-pow(AdS_L,2)
             /(pow(3,(1.0/3.0)))
             /(pow((9*pow(AdS_L,2)*(ief_bh_r0/2)+sqrt(3.0)*sqrt(pow(AdS_L,6)+27*pow(AdS_L,4)*pow((ief_bh_r0/2),2))),(1.0/3.0)))
             +(pow((9*pow(AdS_L,2)*(ief_bh_r0/2)+sqrt(3.0)*sqrt(pow(AdS_L,6)+27*pow(AdS_L,4)*pow((ief_bh_r0/2),2))),(1.0/3.0)))
             /(pow(3,(2.0/3.0)));
-        mh=ief_bh_r0/2;
+        M0=ief_bh_r0/2;
         rhoh=(-1 + sqrt(1 + pow(rh,2)))/rh;
         if (my_rank==0) 
         {
-            printf("\nBH initial data\n"
-                            "r0/L=%lf, rh/L=%lf, mass M = r0/2 = rh*(1+rh^2/L^2)/2 = %lf\n"
-                            "Initial BH Schwarzschild radius=%lf, (%lf in compactified (code) coords)\n" 
+            printf("\nSchwarzschild-AdS initial data\n"
+                            "r0/L=%lf\n"
+                            "Initial horizon radius in Schwarzschild coordinates: rh/L=%lf, (in compactified (code) coords rhoh=%lf )\n" 
+                            "Mass M0 = r0/2 = rh*(1+rh^2/L^2)/2 = %lf\n"
                             "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
-                            ,ief_bh_r0/AdS_L,rh/AdS_L,mh,rh,rhoh,ex_rbuf[0]);
+                            ,ief_bh_r0/AdS_L,rh/AdS_L,rhoh,M0,ex_rbuf[0]);
         }     
-        ex_r[0][0]=ex_r[0][1]=ex_r[0][2]=rhoh;   
+        for (i0=0;i0<AH_Nchi[0];i0++)
+        {
+        	for (j0=0;j0<AH_Nphi[0];j0++)
+        	{
+        		ind0=i0+AH_Nchi[0]*j0;
+        		AH_R[0][ind0]=rhoh; 
+        		AH_R_for_ex_mask[0][ind0]=AH_R[0][ind0];
+        	}
+        }
+		min_AH_R0=rhoh;
+        max_AH_R0=rhoh;
+        ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
+        ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
+        ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
         if (ah_finder_is_off) 
-        {   //       ex_r[0][0]=ex_r[0][1]=ex_r[0][2]=rhoh;
-            if (my_rank==0)   printf("\n ... AH finder is off so we excise, AT ALL TIME STEPS, points with compactified radius smaller than rhoh*(1-ex_rbuf[0])=%lf ... \n",rhoh*(1-ex_rbuf[0]));
+        {
+            if (my_rank==0) printf("\n ... AH finder is off so we excise, AT ALL TIME STEPS, points with compactified radius smaller than rhoh*(1-ex_rbuf[0])=%lf ... \n",rhoh*(1-ex_rbuf[0]));
         }
         else //if we start from bh initial data and AH finder is not off
         {
-            //we change AH_r0[l] to avoid looking for AH in the excised region
-            for (l=0; l<MAX_BHS; l++)
-            { 
-                if (rhoh*(1-ex_rbuf[0])>AH_r0[l]) AH_r0[l]=rhoh;  
-                if (rhoh*(1-ex_rbuf[0])>AH_r1[l]) AH_r1[l]=rhoh;
+           	//AH_rsteps[l]=1;
+           	//AH_r0[l]=rhoh;
+          	//AH_r1[l]=rhoh;
+            if (rhoh*(1-ex_rbuf[0])>AH_r0[0])
+            {
+           		printf("WARNING: smallest radius of sample spheres for AH finder at t>0 is smaller than horizon radius - setting to horizon radius: AH_r0[0]=rhoh\n");
+           		AH_r0[0]=rhoh;
             }
+            if (rhoh*(1-ex_rbuf[0])>AH_r1[0])
+            {
+               	printf("WARNING: largest radius of sample spheres for AH finder at t>0 is smaller than horizon radius - setting to horizon radius: AH_r1[0]=rhoh\n");
+              	AH_r1[0]=rhoh;
+            }
+            
         }   
+    }
+    else if ((ief_bh_r0>0)&&(a_rot0>0))
+    {
+    	M0=ief_bh_r0/2;
+    	Xi=1-pow(a_rot0,2)/pow(AdS_L,2);
+    	E= M0/pow(Xi,2);
+    	J0=M0*a_rot0/pow(Xi,2);
+    	rblhor=(sqrt(-2*pow(AdS_L,2) - 2*pow(a_rot0,2) + 
+       (pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4))/
+        pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+          33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2) + 
+          sqrt(-4*pow(pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4),3) + 
+             4*pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+                33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2),2)
+             )/2.,0.3333333333333333) + pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+         33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2) + 
+         sqrt(-4*pow(pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4),3) + 
+            4*pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+               33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2),2))
+           /2.,0.3333333333333333)) + sqrt(-4*pow(AdS_L,2) - 4*pow(a_rot0,2) - 
+       (pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4))/
+        pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+          33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2) + 
+          sqrt(-4*pow(pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4),3) + 
+             4*pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+                33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2),2)
+             )/2.,0.3333333333333333) - pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+         33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2) + 
+         sqrt(-4*pow(pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4),3) + 
+            4*pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+               33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2),2))
+           /2.,0.3333333333333333) + (12*sqrt(3)*pow(AdS_L,2)*M0)/
+        sqrt(-2*pow(AdS_L,2) - 2*pow(a_rot0,2) + 
+          (pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4))/
+           pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+             33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2) + 
+             sqrt(-4*pow(pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4),3) + 
+                4*pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+                   33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2)
+                   ,2))/2.,0.3333333333333333) + 
+          pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+            33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2) + 
+            sqrt(-4*pow(pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4),3) + 
+               4*pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
+                  33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2),
+                 2))/2.,0.3333333333333333))))/(2.*sqrt(3));
+
+
+		set_kerrads4d_ahr_(&ief_bh_r0,&a_rot0,&AdS_L,AH_R[0],&min_AH_R0,&max_AH_R0,&AH_Nchi[0],&AH_Nphi[0]);
+        ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
+        ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
+        ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
+		if (excision_type==3)
+		{
+	        for (i0=0;i0<AH_Nchi[0];i0++)
+    	    {
+        		for (j0=0;j0<AH_Nphi[0];j0++)
+        		{
+        			ind0=i0+AH_Nchi[0]*j0;
+	        		AH_R_for_ex_mask[0][ind0]=AH_R[0][ind0];
+    	    	}
+        	}
+    	}
+        if (my_rank==0) 
+    	{
+            printf("\nKerr-AdS initial data\n"
+                   "r0/L=%lf, mass M = r0/2 = %lf, rotation parameter a/L= %lf\n"
+                   "energy (the one employed in the first law of BH thermodynamics) E=M/(1-a^2/L^2)^2=%lf, angular momentum J0= M a/(1-a^2/L^2)^2= %lf\n"
+                   "Initial BH radius in Boyer-Lindquist coordinates rotating at the boundary (not the ones used in the code)=%lf\n" 
+                   "Minimum and maximum BH radius in Kerr-Schild spherical compactified coordinates: rhomin=%lf, rhomax=%lf\n"
+                   "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
+                   ,ief_bh_r0/AdS_L,M0,a_rot0/AdS_L,E,J0,rblhor,min_AH_R0,max_AH_R0,ex_rbuf[0]);
+        } 
+
+		if (ah_finder_is_off) 
+        {
+            if (my_rank==0)   printf("\n ... AH finder is off so the excision region is the same AT ALL TIME STEPS\n");
+        }
+        else //if we start from bh initial data and AH finder is not off
+        {
+			printf("\n ... AH finder is on: initial range of sample sphere radius set to [min_Kerr_AdS_horizon_radius,max_Kerr_AdS_horizon_radius]\n");        	
+            AH_r0[0]=min_AH_R0;
+            AH_r1[0]=max_AH_R0;
+        }
+
     }
     else
     {
         if (my_rank==0) printf("\nscalar field initial data from Hamiltonian constraint solver\n");
+        for (i0=0;i0<AH_Nchi[0];i0++)
+        {
+       		for (j0=0;j0<AH_Nphi[0];j0++)
+        	{
+        		ind0=i0+AH_Nchi[0]*j0;
+        		AH_R[0][ind0]=1;
+        		AH_R_for_ex_mask[0][ind0]=AH_R[0][ind0];
+        	}
+        }
+        min_AH_R0=1;
+        max_AH_R0=1;
+        ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
+        ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
+        ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
         if (ah_finder_is_off)
         {
-            ex_r[0][0]=ex_r[0][1]=ex_r[0][2]=1;
             if (my_rank==0)   printf("\n ... AH finder is off so we excise, AT ALL TIME STEPS, points with compactified radius smaller than (1-ex_rbuf[0])=%lf ... \n",(1-ex_rbuf[0]));
         }
     }   
+
     if (AMRD_do_ex==0) AMRD_stop("require excision to be on","");   
+    if (my_rank==0)
+    {
+		l=0;
+
+	    	if (excision_type==0) printf("No internal excision\n");
+		    if ((excision_type==1)&&(min_AH_R0<1)) 
+		    {
+		    	printf("Spherical excised region with radius min_AH_R*(1-ex_rbuf[l])=%lf\n",min_AH_R0*(1-ex_rbuf[l]));
+		    	if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
+		    }
+	    	if ((excision_type==2)&&(min_AH_R0<1))
+	    	{
+	    		printf("Excision ellipse semiaxes: (ex_r0[0]*(1-ex_rbuf[l]),ex_r0[1]*(1-ex_rbuf[l]),ex_r0[2]*(1-ex_rbuf[l]))=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
+	    		if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
+	        	{     
+					if (prev_run_ex_r[l][0])
+					{    
+						if ((prev_run_ex_r[l][0]>ex_r[l][0])||(prev_run_ex_r[l][1]>ex_r[l][1])||(prev_run_ex_r[l][2]>ex_r[l][2]))
+						{  
+							printf("WARNING: for excised region %i, at least one excision ellipse semi-axis is smaller than the last corresponding one in the previous run...\n",l);
+							printf("...excising points that were excised in the previous run but are outside the excision surface of the current run\n");                      
+							printf("effective excision ellipse semiaxes (read from parameter file for now!): (prev_run_ex_r[%i][0],prev_run_ex_r[%i][1],prev_run_ex_r[%i][2])=(%lf,%lf,%lf)\n",l,l,l,prev_run_ex_r[l][0],prev_run_ex_r[l][1],prev_run_ex_r[l][2]);
+						}
+					}	
+				}
+			}
+	   		if ((excision_type==3)&&(min_AH_R0<1)) 
+	   		{
+	   			printf("AH-shaped excised region: minimum and maximum of AH radius: min_AH_R=%lf, max_AH_R=%lf\n",min_AH_R0,max_AH_R0);
+	   			if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
+	   		}
+   	}
     PAMR_excision_on("chr",&AdS4D_fill_ex_mask,AMRD_ex,1);  
     if (my_rank==0) printf("===================================================================\n");
     return;
@@ -2597,23 +2796,45 @@ void AdS4D_t0_cnst_data(void)
         //       }    
         //      }   
         //   } 
-            init_schwads4d_bh_(&ief_bh_r0,&AdS_L,gb_tt,gb_tx,gb_ty,
-                            gb_tz,
-                            gb_xx,gb_xy,
-                            gb_xz,
-                            gb_yy,
-                            gb_yz,
-                            gb_zz,gb_tt_t_n,gb_tx_t_n,gb_ty_t_n,
-                            gb_tz_t_n,
-                            gb_xx_t_n,gb_xy_t_n,
-                            gb_xz_t_n,
-                            gb_yy_t_n,
-                            gb_yz_t_n,
-                            gb_zz_t_n,Hb_t,Hb_x,Hb_y,
-                            Hb_z,
-                            Hb_t_t_n,Hb_x_t_n,Hb_y_t_n,
-                            Hb_z_t_n,
-                            phys_bdy,x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);   
+        	if (ief_bh_r0&&(a_rot0==0))
+        	{
+            	init_schwads4d_bh_(&ief_bh_r0,&AdS_L,gb_tt,gb_tx,gb_ty,
+                	            gb_tz,
+                    	        gb_xx,gb_xy,
+                        	    gb_xz,
+                            	gb_yy,
+	                            gb_yz,
+    	                        gb_zz,gb_tt_t_n,gb_tx_t_n,gb_ty_t_n,
+        	                    gb_tz_t_n,
+            	                gb_xx_t_n,gb_xy_t_n,
+                	            gb_xz_t_n,
+                    	        gb_yy_t_n,
+                        	    gb_yz_t_n,
+                            	gb_zz_t_n,Hb_t,Hb_x,Hb_y,
+	                            Hb_z,
+    	                        Hb_t_t_n,Hb_x_t_n,Hb_y_t_n,
+        	                    Hb_z_t_n,
+            	                phys_bdy,x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);   
+        	}
+        	else if (ief_bh_r0&&a_rot0)
+        	{
+//        			MPI_Barrier(MPI_COMM_WORLD);
+//    				if (my_rank==0) {printf("pre init_kerrads4d_bh_\n"); fflush(stdout);}
+        		init_kerrads4d_bh_(&ief_bh_r0,&a_rot0,&AdS_L,
+                            gb_tt,gb_tx,gb_ty,gb_tz,
+                            gb_xx,gb_xy,gb_xz,
+                            gb_yy,gb_yz,gb_zz,
+                            gb_tt_t,gb_tx_t,gb_ty_t,gb_tz_t,
+                            gb_xx_t,gb_xy_t,gb_xz_t,
+                            gb_yy_t,gb_yz_t,
+                            gb_zz_t,
+                            Hb_t,Hb_x,Hb_y,Hb_z,
+                            Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
+                            phys_bdy,
+                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);
+//        		        			MPI_Barrier(MPI_COMM_WORLD);
+//    				if (my_rank==0) {printf("post init_kerrads4d_bh_\n"); fflush(stdout);}
+        	}
 	//   for (i=0; i<Nx; i++)  
 	//   {    
 	//      for (j=0; j<Ny; j++)    
@@ -2653,8 +2874,7 @@ void AdS4D_t0_cnst_data(void)
     }
     else
     {   
-        if (gb_xx_nm1) 
-        //"np1,n,nm1" variables only allocated on finest MG level //IT WAS NOT HERE IN PREVIOUS VERSIONS, ASK HANS
+        if (gb_xx_nm1) //"np1,n,nm1" variables only allocated on finest MG level
         {   
         //   for (i=0; i<Nx; i++)  
         //   {    
@@ -6366,23 +6586,33 @@ void AdS4D_evolve(int iter)
     return;
 }
 
+
+
+
 //=============================================================================
 // sets excision mask (NO ITERATOR, SO DON'T LOAD POINTERS!!!)
-// 
+// for excised region following the shape of the AH at each value of chi and phi
 // outside rho=1 grid is also excised
 //=============================================================================
 void AdS4D_fill_ex_mask(real *mask, int dim, int *shape, real *bbox, real excised)
 {
+
+//	MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("beginning fill_ex_mask\n"); fflush(stdout);}
+
     int i,j,k,ind,l;
     real x,y,z,dx,dy,dz,rho,xp,yp,zp,ex_r_xp,ex_r_yp,ex_r_zp,r; 
+    real rhop,chip,phip;
+    real dahchi,dahphi;
+    int i0,j0;
+    real ft,fp;
+    real AH_Rp,AH_xp,AH_yp,AH_zp;
+    real ex_xp,ex_yp,ex_zp,ex_rhop;
     real prev_run_ex_r_xp,prev_run_ex_r_yp,prev_run_ex_r_zp,prev_run_r;
-
-    //if (my_rank==0) {printf("AdS4D_fill_ex_mask is called\n");  fflush(stdout);}
 
     dx=(bbox[1]-bbox[0])/(shape[0]-1);
     dy=(bbox[3]-bbox[2])/(shape[1]-1);
     dz=(bbox[5]-bbox[4])/(shape[2]-1); 
-
 
     for (i=0; i<shape[0]; i++)
     {
@@ -6408,55 +6638,261 @@ void AdS4D_fill_ex_mask(real *mask, int dim, int *shape, real *bbox, real excise
                     //       printf("EX_MASK: x=%lf,y=%lf,z=%lf,rho=%lf\n",x,y,z,rho);   
                     //       printf("EX_MASK: mask[ind]=%lf\n",mask[ind]);
                     //when MAX_BHS.ne.0, excise inside a fraction ex_r of the horizon
-                    for (l=0; l<MAX_BHS; l++)
+
+                    //for just one AH. Generalize later
+                    l=0;
+                    //for (l=0; l<MAX_BHS; l++)
+                    //{
+
+					if ((excision_type==1)&&(min_AH_R0<1)) //spherical excised region with radius min_AH_R0*(1-ex_rbuf[l])
                     {
-                        if (ex_r[l][0]>0)
-                        {
-                            xp=(x-ex_xc[l][0]);
-                            yp=(y-ex_xc[l][1]);
-                            zp=(z-ex_xc[l][2]);
-                            ex_r_xp=(ex_r[l][0]*(1-ex_rbuf[l]));
-                            ex_r_yp=(ex_r[l][1]*(1-ex_rbuf[l]));
-                            ex_r_zp=(ex_r[l][2]*(1-ex_rbuf[l]));    
-                            //                 printf("xp=%lf,yp=%lf,zp=%lf\n",xp,yp,zp);   
-                            //                 printf("ex_r_xp=%lf,ex_r_yp=%lf,ex_r_zp=%lf\n",ex_r_xp,ex_r_yp,ex_r_zp);    
+                    		//Cartesian coordinates of point p w.r.t. the centre of the AH
+                        	xp=(x-ex_xc[l][0]);
+                        	yp=(y-ex_xc[l][1]);
+                       		zp=(z-ex_xc[l][2]);
+
+                       		rhop=sqrt(xp*xp+yp*yp+zp*zp);
+
+                       		if (rhop<min_AH_R0*(1-ex_rbuf[l]))
+	                        {
+	                            mask[ind]=excised;
+	                        }
+                    }
+                    else if ((excision_type==2)&&(min_AH_R0<1)) //elliptic excised region with semiaxes ex_r[l][0],ex_r[l][1],ex_r[l][2]
+                    {
+                    		//Cartesian coordinates of point p w.r.t. the centre of the AH
+                        	xp=(x-ex_xc[l][0]);
+                        	yp=(y-ex_xc[l][1]);
+                       		zp=(z-ex_xc[l][2]);
+
+                       		rhop=sqrt(xp*xp+yp*yp+zp*zp);
+
+                            ex_r_xp=ex_r[l][0];
+                            ex_r_yp=ex_r[l][1];
+                            ex_r_zp=ex_r[l][2]; 
+
                             r=sqrt(xp*xp/ex_r_xp/ex_r_xp+yp*yp/ex_r_yp/ex_r_yp+zp*zp/ex_r_zp/ex_r_zp);
                             if (r<1) 
                             {
                                 mask[ind]=excised;
                             }
 
- 	    	            //when restarting from checkpoint, it is possible that the new excision surface is smaller than the old one (usually because the AH found is smaller than the one in the old run), which causes issues. In that case, there might be (depending on the value of the excision buffer and the shape of the AH) points not excised where the various grid functions (e.g. gb_xx_n) are 0 because they were excised in the previous run. The next piece makes sure that those points are also excised. SET excise_prev_run_ex_pts=1 IF YOU WANT TO DO THIS
+//when restarting from checkpoint, it is possible that the new excision surface is smaller than the old one (usually because the AH found is smaller than the one in the old run), which causes issues. 
+//In that case, there might be (depending on the value of the excision buffer and the shape of the AH) points not excised where the various grid functions (e.g. gb_xx_n) are 0 because they were excised in the previous run.
+//The next piece makes sure that those points are also excised. SET excise_prev_run_ex_pts=1 IF YOU WANT TO DO THIS
 
-			    else if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
-			    {
-				if (ex_r[l][0]>0.0)
-				{
-					prev_run_ex_r_xp=prev_run_ex_r[l][0];
-                                        prev_run_ex_r_yp=prev_run_ex_r[l][1];
-                                        prev_run_ex_r_zp=prev_run_ex_r[l][2];
-					if ((prev_run_ex_r_xp>ex_r_xp)||(prev_run_ex_r_yp>ex_r_yp)||(prev_run_ex_r_zp>ex_r_zp))
-					{
-                                        	prev_run_r=sqrt(xp*xp/prev_run_ex_r_xp/prev_run_ex_r_xp+yp*yp/prev_run_ex_r_yp/prev_run_ex_r_yp+zp*zp/prev_run_ex_r_zp/prev_run_ex_r_zp);
-                                                if (prev_run_r<1)
-                                                {
-                                           	     mask[ind]=excised;
-                                                }
-                                        }
-				}
-			    }
-
-
-
-			   
-                        }
+			    			else if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
+			    			{
+								if (prev_run_ex_r[l][0]>0)
+								{
+									prev_run_ex_r_xp=prev_run_ex_r[l][0];
+                    				prev_run_ex_r_yp=prev_run_ex_r[l][1];
+                    				prev_run_ex_r_zp=prev_run_ex_r[l][2];
+									if ((prev_run_ex_r_xp>ex_r_xp)||(prev_run_ex_r_yp>ex_r_yp)||(prev_run_ex_r_zp>ex_r_zp))
+									{
+                            			prev_run_r=sqrt(xp*xp/prev_run_ex_r_xp/prev_run_ex_r_xp+yp*yp/prev_run_ex_r_yp/prev_run_ex_r_yp+zp*zp/prev_run_ex_r_zp/prev_run_ex_r_zp);
+                            			if (prev_run_r<1)
+                            			{
+                            				mask[ind]=excised;
+                            			}
+                        			}
+								}
+			    			}
                     }
+                    else if ((excision_type==3)&&(min_AH_R0<1)) //AH-shaped excised region
+                    {
+                        	//Cartesian coordinates of point p w.r.t. the centre of the AH
+                            xp=(x-ex_xc[l][0]);
+                            yp=(y-ex_xc[l][1]);
+                            zp=(z-ex_xc[l][2]);
+
+                            if (!((fabs(xp)<pow(10,-10))&&(fabs(yp)<pow(10,-10))&&(fabs(zp)<pow(10,-10))))
+                           	{
+                           	    //corresponding spherical coordinates
+	                            rhop=sqrt(xp*xp+yp*yp+zp*zp);
+	                            chip=acos(xp/rhop);
+	                 			phip=atan2(zp,yp);
+	                 			if (phip<0) {phip=phip+2*M_PI;}
+	            //chip,phip is in general NOT on the AH_Nchi,AH_Nphi grid.
+	            // i0 is the index of the point with chi value, closest to chip on the AH_Nchi grid (indices going from 0 to AH_Nchi-1),
+	            // and larger than chip (except if chip=Pi, then it is smaller)
+	            // similarly for j0
+	                 			dahchi=M_PI/(AH_Nchi[l]-1);
+	        					dahphi=2*M_PI/(AH_Nphi[l]-1);
+	                 			i0=floor(chip/dahchi+1)-1;
+	                 			if (AH_Nchi[l]-1-1<i0) i0=AH_Nchi[l]-1-1;
+	                 			j0=floor(phip/dahphi+1)-1;
+	                 			if (AH_Nphi[l]-1-1<j0) j0=AH_Nphi[l]-1-1;
+	                 			ft=((chip-i0*dahchi))/dahchi;
+	                			fp=((phip-j0*dahphi))/dahphi;
+	
+	                			//bi-linear interpolated value of AH radius at (chip,phip)
+	                			AH_Rp=	AH_R_for_ex_mask[l][i0+AH_Nchi[l]*j0]*(1-ft)*(1-fp)+
+	    		                		AH_R_for_ex_mask[l][i0+1+AH_Nchi[l]*j0]*(ft)*(1-fp)+
+	                		    		AH_R_for_ex_mask[l][i0+AH_Nchi[l]*(j0+1)]*(1-ft)*(fp)+
+	                    				AH_R_for_ex_mask[l][i0+1+AH_Nchi[l]*(j0+1)]*(ft)*(fp);
+
+	                    		//Cartesian coordinates of AH point at (AH_Rp,chip,phip) w.r.t. centre of AH
+	                    		AH_xp=AH_Rp*cos(chip);
+	        					AH_yp=AH_Rp*sin(chip)*cos(phip);
+	        					AH_zp=AH_Rp*sin(chip)*sin(phip);
+	
+	        					//Cartesian coordinates of first excised point on the line (chip,phip) w.r.t. centre of AH
+	        					ex_xp=AH_xp*(1-ex_rbuf[l]);
+	        					ex_yp=AH_yp*(1-ex_rbuf[l]);
+	        					ex_zp=AH_zp*(1-ex_rbuf[l]);
+	        					//radius of this point w.r.t. centre of AH
+	        					ex_rhop=sqrt(ex_xp*ex_xp+ex_yp*ex_yp+ex_zp*ex_zp);
+	
+	                            if (rhop<ex_rhop)
+	                            {
+	                                mask[ind]=excised;
+	                            }
+
+//	                            if ((fabs(xp-0.140625)<pow(10,-10))&&(fabs(yp+0.0625)<pow(10,-10))&&(fabs(zp+0.03125)<pow(10,-10)))
+//	                            {
+//	                            	printf("rhop=%lf,chip=%lf,phip=%lf\n",rhop,chip,phip);
+//	                            	printf("AH_Rp=%lf\n",AH_Rp);
+//	                            	printf("AH_Rp*(1-ex_rbuf[l])=%lf,ex_rhop=%lf\n",AH_Rp*(1-ex_rbuf[l]),ex_rhop);
+//	                            	printf("(i0-1)*dahchi=%lf,(j0-1)*dahphi=%lf\n",(i0-1)*dahchi,(j0-1)*dahphi);
+//	                            	printf("AH_R_for_ex_mask[l][i0+AH_Nchi[l]*j0]=%lf\n",AH_R_for_ex_mask[l][i0+AH_Nchi[l]*j0]);
+//	                            }
+
+
+	                        }
+	                        else //case in which xp=yp=zp=0
+	                        {
+	                        	mask[ind]=excised;
+	                        }
+                    }
+                    //}
                 }
             }
         }
     }
 
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////=============================================================================
+//// sets excision mask (NO ITERATOR, SO DON'T LOAD POINTERS!!!)
+//// for excised region given by an ellipsoid interior to the ellipsoid approximation of the AH
+//// outside rho=1 grid is also excised
+////=============================================================================
+//void AdS4D_fill_ex_mask(real *mask, int dim, int *shape, real *bbox, real excised)
+//{
+//    int i,j,k,ind,l;
+//    real x,y,z,dx,dy,dz,rho,xp,yp,zp,ex_r_xp,ex_r_yp,ex_r_zp,r; 
+//    real prev_run_ex_r_xp,prev_run_ex_r_yp,prev_run_ex_r_zp,prev_run_r;
+//
+//    //if (my_rank==0) {printf("AdS4D_fill_ex_mask is called\n");  fflush(stdout);}
+//
+//    dx=(bbox[1]-bbox[0])/(shape[0]-1);
+//    dy=(bbox[3]-bbox[2])/(shape[1]-1);
+//    dz=(bbox[5]-bbox[4])/(shape[2]-1); 
+//
+//
+//    for (i=0; i<shape[0]; i++)
+//    {
+//        x=bbox[0]+i*dx;
+//        for (j=0; j<shape[1]; j++)
+//        {
+//            y=bbox[2]+j*dy;
+//            for (k=0; k<shape[2]; k++)
+//            {
+//                z=bbox[4]+k*dz;
+//                rho=sqrt(x*x+y*y+z*z);
+//                ind=i+shape[0]*(j+shape[1]*k);  
+//                if (rho>=(1-dx_Lc/2)) 
+//                {
+//                    //excise outside rho>=1-dx
+//                    mask[ind]=excised; 
+//                }
+//                else 
+//                {
+//                    mask[ind]=excised-1;    
+//                    //       printf("point not excised");   
+//                    //       printf("EX_MASK: i=%i,j=%i,k=%i,ind=%i\n",i,j,k,ind); 
+//                    //       printf("EX_MASK: x=%lf,y=%lf,z=%lf,rho=%lf\n",x,y,z,rho);   
+//                    //       printf("EX_MASK: mask[ind]=%lf\n",mask[ind]);
+//                    //when MAX_BHS.ne.0, excise inside a fraction ex_r of the horizon
+//                    for (l=0; l<MAX_BHS; l++)
+//                    {
+//                        if (ex_r[l][0]>0)
+//                        {
+//                            xp=(x-ex_xc[l][0]);
+//                            yp=(y-ex_xc[l][1]);
+//                            zp=(z-ex_xc[l][2]);
+//                            ex_r_xp=ex_r[l][0];
+//                            ex_r_yp=ex_r[l][1];
+//                            ex_r_zp=ex_r[l][2];    
+//                            //                 printf("xp=%lf,yp=%lf,zp=%lf\n",xp,yp,zp);   
+//                            //                 printf("ex_r_xp=%lf,ex_r_yp=%lf,ex_r_zp=%lf\n",ex_r_xp,ex_r_yp,ex_r_zp);    
+//                            r=sqrt(xp*xp/ex_r_xp/ex_r_xp+yp*yp/ex_r_yp/ex_r_yp+zp*zp/ex_r_zp/ex_r_zp);
+//                            if (r<1) 
+//                            {
+//                                mask[ind]=excised;
+//                            }
+//
+////when restarting from checkpoint, it is possible that the new excision surface is smaller than the old one (usually because the AH found is smaller than the one in the old run), which causes issues. 
+////In that case, there might be (depending on the value of the excision buffer and the shape of the AH) points not excised where the various grid functions (e.g. gb_xx_n) are 0 because they were excised in the previous run.
+////The next piece makes sure that those points are also excised. SET excise_prev_run_ex_pts=1 IF YOU WANT TO DO THIS
+//
+//			    			else if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
+//			    			{
+//								if (ex_r[l][0]>0.0)
+//								{
+//									prev_run_ex_r_xp=prev_run_ex_r[l][0];
+//                    				prev_run_ex_r_yp=prev_run_ex_r[l][1];
+//                    				prev_run_ex_r_zp=prev_run_ex_r[l][2];
+//									if ((prev_run_ex_r_xp>ex_r_xp)||(prev_run_ex_r_yp>ex_r_yp)||(prev_run_ex_r_zp>ex_r_zp))
+//									{
+//                            			prev_run_r=sqrt(xp*xp/prev_run_ex_r_xp/prev_run_ex_r_xp+yp*yp/prev_run_ex_r_yp/prev_run_ex_r_yp+zp*zp/prev_run_ex_r_zp/prev_run_ex_r_zp);
+//                            			if (prev_run_r<1)
+//                            			{
+//                            				mask[ind]=excised;
+//                            			}
+//                        			}
+//								}
+//			    			}
+//
+//
+//
+			   //
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//}
 
 
 //=============================================================================
@@ -6491,9 +6927,10 @@ void AdS4D_pre_tstep(int L)
     real tol_save;      
     int omt;    
     int n,i,j,k,ind,j_red,l,e,Lf,Lc;
+    int i0,j0,ind0;
     int count_relkretschcentregrid;
     real rho;
-    real rh,mh,rhoh;
+    real rh,rhoh;
 
 
     //MPI_Barrier(MPI_COMM_WORLD);
@@ -15059,23 +15496,36 @@ void AdS4D_pre_tstep(int L)
             //   and ex_r0[0],ex_r0[1],ex_r0[2] are filled with principle axis radii for excision )
 	            if (found_AH[l] && AH[l] && AMRD_do_ex)
     	        {
-        	        fill_ex_params_(AH_R[l],AH_xc[l],ex_r0,ex_xc0,&AH_Nchi[l],&AH_Nphi[l],&dx,&dy,&dz,&axisym); 
+        	        fill_ex_params_(AH_R[l],AH_xc[l],&min_AH_R0,&max_AH_R0,ex_r0,ex_xc0,&AH_Nchi[l],&AH_Nphi[l],&dx,&dy,&dz,&axisym); 
+        	        if (excision_type==3)
+        	        {
+        	        	for (i0=0;i0<AH_Nchi[l];i0++)
+        				{
+        					for (j0=0;j0<AH_Nphi[l];j0++)
+        					{
+        						ind0=i0+AH_Nchi[l]*j0;
+        						AH_R_for_ex_mask[l][ind0]=AH_R[l][ind0];
+       	 					}
+        				}
+        			}
+
             	    if (no_AH_intersect(ex_r0,ex_xc0,l))
                 	{
 	                    do_reinit_ex=1;
     	                do_repop=1;
         	            // saves local ex_r0,ex_xc0 to global ex_r, ex_xc
-            	        ex_r[l][0]=ex_r0[0]; ////AH ellipse x-semiaxis
-                	    ex_r[l][1]=ex_r0[1]; //AH ellipse y-semiaxis
-                    	ex_r[l][2]=ex_r0[2]; //AH ellipse z-semiaxis
+            	        ex_r[l][0]=ex_r0[0]*(1-ex_rbuf[l]); //excision ellipse x-semiaxis
+                	    ex_r[l][1]=ex_r0[1]*(1-ex_rbuf[l]); //excision ellipse y-semiaxis
+                    	ex_r[l][2]=ex_r0[2]*(1-ex_rbuf[l]); //excision ellipse z-semiaxis
 	                    ex_xc[l][0]=ex_xc0[0]; //excision ellipse x-coordinate center
     	                ex_xc[l][1]=ex_xc0[1]; //excision ellipse y-coordinate center 
         	            ex_xc[l][2]=ex_xc0[2]; //excision ellipse z-coordinate center
             	    }   
                 	if (my_rank==0) 
 	                {
-    	                printf("AH ellipse x/y/z-semiaxis: (ex_r[0],ex_r[1],ex_r[2])=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
-        	            printf("excision ellipse semiaxes: (ex_r[0]*(1-ex_rbuf[l]),ex_r[1]*(1-ex_rbuf[l]),ex_r[2]*(1-ex_rbuf[l]))=(%lf,%lf,%lf)\nexcision ellipse center:   (ex_xc[0],ex_xc[1],ex_xc[2])=(%lf,%lf,%lf)\n",ex_r[l][0]*(1-ex_rbuf[l]),ex_r[l][1]*(1-ex_rbuf[l]),ex_r[l][2]*(1-ex_rbuf[l]),ex_xc[l][0],ex_xc[l][1],ex_xc[l][2]);
+    	                printf("AH best-fit ellipse x/y/z-semiaxis: (ex_r0[0],ex_r0[1],ex_r0[2])=(%lf,%lf,%lf)\n",ex_r0[0],ex_r0[1],ex_r0[2]);
+    	                printf("Minimum and maximum of AH radius: min_AH_R=%lf, max_AH_R=%lf\n",min_AH_R0,max_AH_R0);
+    	                printf("Center of excised region: (ex_xc[0],ex_xc[1],ex_xc[2])=(%lf,%lf,%lf)\n",ex_xc[l][0],ex_xc[l][1],ex_xc[l][2]);
             	        printf("Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n",ex_rbuf[0]);
                 	}
 	            }   
@@ -15096,43 +15546,62 @@ void AdS4D_pre_tstep(int L)
     // re-initialize mask function
     if (do_reinit_ex)
     {   //     remove_redundant_AH();
-	//if (my_rank==0) {printf("...setting excision mask...\n");}
-        if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
-        {
-
-	        if (my_rank==0)
-	        {       
-				for (l=0;l<MAX_BHS;l++)
-				{       
-					if (ex_r[l][0]>0.0)
+    	if (my_rank==0)
+    	{
+    		l=0;
+	    	if (excision_type==0) printf("No internal excision\n");
+		    if ((excision_type==1)&&(min_AH_R0<1)) 
+		    {
+		    	printf("Spherical excised region with radius min_AH_R*(1-ex_rbuf[l])=%lf\n",min_AH_R0*(1-ex_rbuf[l]));
+		    	if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
+		    }
+	    	if ((excision_type==2)&&(min_AH_R0<1))
+	    	{
+	    		printf("Excision ellipse semiaxes: (ex_r0[0]*(1-ex_rbuf[l]),ex_r0[1]*(1-ex_rbuf[l]),ex_r0[2]*(1-ex_rbuf[l]))=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
+	    		if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
+	        	{    
+					if (prev_run_ex_r[l][0])
 					{     
-						if ((prev_run_ex_r[l][0]>ex_r[l][0]*(1-ex_rbuf[l]))||(prev_run_ex_r[l][1]>ex_r[l][1]*(1-ex_rbuf[l]))||(prev_run_ex_r[l][2]>ex_r[l][2]*(1-ex_rbuf[l])))
+						if ((prev_run_ex_r[l][0]>ex_r[l][0])||(prev_run_ex_r[l][1]>ex_r[l][1])||(prev_run_ex_r[l][2]>ex_r[l][2]))
 						{  
 							printf("WARNING: for excised region %i, at least one excision ellipse semi-axis is smaller than the last corresponding one in the previous run...\n",l);
 							printf("...excising points that were excised in the previous run but are outside the excision surface of the current run\n");                      
 							printf("effective excision ellipse semiaxes (read from parameter file for now!): (prev_run_ex_r[%i][0],prev_run_ex_r[%i][1],prev_run_ex_r[%i][2])=(%lf,%lf,%lf)\n",l,l,l,prev_run_ex_r[l][0],prev_run_ex_r[l][1],prev_run_ex_r[l][2]);
 						}
-					}
+					}	
 				}
-	        }		
-		}
+			}
+	   		if ((excision_type==3)&&(min_AH_R0<1)) 
+	   		{
+	   			printf("AH-shaped excised region: minimum and maximum of AH radius: min_AH_R=%lf, max_AH_R=%lf\n",min_AH_R0,max_AH_R0);
+	   			if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
+	   		}
+   		}
         PAMR_excision_on("chr",&AdS4D_fill_ex_mask,AMRD_ex,1);
-
     }   
         // displays initial black hole radius and excision radius
         if (my_rank==0)
         {
-	        if (ief_bh_r0!=0) 
+	        if ((ief_bh_r0>0)&&(a_rot0==0)) 
 	        {
 	            rh=-pow(AdS_L,2)
 	            /(pow(3,(1.0/3.0)))
 	            /(pow((9*pow(AdS_L,2)*(ief_bh_r0/2)+sqrt(3.0)*sqrt(pow(AdS_L,6)+27*pow(AdS_L,4)*pow((ief_bh_r0/2),2))),(1.0/3.0)))
 	            +(pow((9*pow(AdS_L,2)*(ief_bh_r0/2)+sqrt(3.0)*sqrt(pow(AdS_L,6)+27*pow(AdS_L,4)*pow((ief_bh_r0/2),2))),(1.0/3.0)))
 	            /(pow(3,(2.0/3.0)));
-	            mh=ief_bh_r0/2;
-	            rhoh=(-1 + sqrt(1 + pow(rh,2)))/rh; //         ex_r[0][0]=ex_r[0][1]=ex_r[0][2]=rhoh*(1-ex_rbuf[0]);
-	            printf("\n ... we started with a BH of mass mh=%lf, Schwarzschild radius rh=%lf and compactified radius rhoh=%lf. \n",mh,rh,rhoh);
+	            M=ief_bh_r0/2;
+	            rhoh=(-1 + sqrt(1 + pow(rh,2)))/rh;
+	            printf("\n ... we started with a Schwarzschild-AdS BH of mass M=%lf, uncompactified horizon radius rh=%lf and compactified horizon radius rhoh=%lf \n",M,rh,rhoh);
 	            printf("Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n",ex_rbuf[0]);
+	        }
+	        else if ((ief_bh_r0>0)&&(a_rot0>0))
+	        {
+   	            printf("\n... we started with a Kerr-AdS BH\n"
+               		"r0/L=%lf, mass M = r0/2 = %lf, rotation parameter a= %lf\n"
+                    "energy (the one employed in the first law of BH thermodynamics) E=M/(1-a^2/L^2)^2=%lf, angular momentum J0= M a/(1-a^2/L^2)^2= %lf\n"
+                    "Initial BH radius in Boyer-Lindquist coordinates rotating at the boundary (not the ones used in the code)=%lf\n" 
+                    "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
+                    ,ief_bh_r0/AdS_L,M0,a_rot0,E,J0,rblhor,ex_rbuf[0]);
 	        }
         }   
 
