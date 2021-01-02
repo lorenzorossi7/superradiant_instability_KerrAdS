@@ -17,7 +17,7 @@
 #include "apph.h"
 
 //maximum value for AH_Nchi+AH_Nchi*AH_Nphi determining the resolution of the AH finder: the resolution of each AH cannot be larger than MAX_AH_Nchi_AH_Nphi_AH_finder
-#define MAX_AH_Nchi_AH_Nphi_AH_FINDER 162 //2178=33+33*65, 162=9+9*17
+#define MAX_AH_Nchi_AH_Nphi_AH_FINDER 2178 //2178=33+33*65, 162=9+9*17
 
 //=============================================================================
 // if axisym=1, then 2+1 simulation in (x,y) plane 
@@ -110,7 +110,7 @@ int diss_kmax,diss_eps_k_cutoff_n,diss_bdy_k,diss_all_past_k,diss_all;
 real ex_rbuf_a[MAX_BHS];
 
 // AH parameters
-real rh,rhoh,M0,E,J0,Xi,rblhor;
+real rh,rhoh,M0,E,J0,Xi;
 int AH_Nchi[MAX_BHS],AH_Nphi[MAX_BHS],AH_Lmin[MAX_BHS],AH_Lmax[MAX_BHS],AH_find_best_fit[MAX_BHS];
 int np;
 int AH_max_iter[MAX_BHS],AH_freq[MAX_BHS],AH_freq_aft[MAX_BHS],AH_rsteps[MAX_BHS],AH_maxinc[MAX_BHS];
@@ -2381,12 +2381,12 @@ void AdS4D_var_post_init(char *pfile)
           	//AH_r1[l]=rhoh;
             if (rhoh*(1-ex_rbuf[0])>AH_r0[0])
             {
-           		printf("WARNING: smallest radius of sample spheres for AH finder at t>0 is smaller than horizon radius - setting to horizon radius: AH_r0[0]=rhoh\n");
+           		if (my_rank==0) printf("WARNING: smallest radius of sample spheres for AH finder at t>0 is smaller than excision radius - setting to horizon radius: AH_r0[0]=rhoh\n");
            		AH_r0[0]=rhoh;
             }
             if (rhoh*(1-ex_rbuf[0])>AH_r1[0])
             {
-               	printf("WARNING: largest radius of sample spheres for AH finder at t>0 is smaller than horizon radius - setting to horizon radius: AH_r1[0]=rhoh\n");
+               	if (my_rank==0) printf("WARNING: largest radius of sample spheres for AH finder at t>0 is smaller than excision radius - setting to horizon radius: AH_r1[0]=rhoh\n");
               	AH_r1[0]=rhoh;
             }
             
@@ -2398,7 +2398,7 @@ void AdS4D_var_post_init(char *pfile)
     	Xi=1-pow(a_rot0,2)/pow(AdS_L,2);
     	E= M0/pow(Xi,2);
     	J0=M0*a_rot0/pow(Xi,2);
-    	rblhor=(sqrt(-2*pow(AdS_L,2) - 2*pow(a_rot0,2) + 
+    	rh=(sqrt(-2*pow(AdS_L,2) - 2*pow(a_rot0,2) + 
        (pow(AdS_L,4) + 14*pow(AdS_L,2)*pow(a_rot0,2) + pow(a_rot0,4))/
         pow(pow(AdS_L,6) - 33*pow(AdS_L,4)*pow(a_rot0,2) - 
           33*pow(AdS_L,2)*pow(a_rot0,4) + pow(a_rot0,6) + 54*pow(AdS_L,4)*pow(M0,2) + 
@@ -2462,7 +2462,7 @@ void AdS4D_var_post_init(char *pfile)
                    "Initial BH radius in Boyer-Lindquist coordinates rotating at the boundary (not the ones used in the code)=%lf\n" 
                    "Minimum and maximum BH radius in Kerr-Schild spherical compactified coordinates: rhomin=%lf, rhomax=%lf\n"
                    "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
-                   ,ief_bh_r0/AdS_L,M0,a_rot0/AdS_L,E,J0,rblhor,min_AH_R0,max_AH_R0,ex_rbuf[0]);
+                   ,ief_bh_r0/AdS_L,M0,a_rot0/AdS_L,E,J0,rh,min_AH_R0,max_AH_R0,ex_rbuf[0]);
         } 
 
 		if (ah_finder_is_off) 
@@ -2798,23 +2798,39 @@ void AdS4D_t0_cnst_data(void)
         //   } 
         	if (ief_bh_r0&&(a_rot0==0))
         	{
-            	init_schwads4d_bh_(&ief_bh_r0,&AdS_L,gb_tt,gb_tx,gb_ty,
-                	            gb_tz,
-                    	        gb_xx,gb_xy,
-                        	    gb_xz,
-                            	gb_yy,
-	                            gb_yz,
-    	                        gb_zz,gb_tt_t_n,gb_tx_t_n,gb_ty_t_n,
-        	                    gb_tz_t_n,
-            	                gb_xx_t_n,gb_xy_t_n,
-                	            gb_xz_t_n,
-                    	        gb_yy_t_n,
-                        	    gb_yz_t_n,
-                            	gb_zz_t_n,Hb_t,Hb_x,Hb_y,
-	                            Hb_z,
-    	                        Hb_t_t_n,Hb_x_t_n,Hb_y_t_n,
-        	                    Hb_z_t_n,
-            	                phys_bdy,x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);   
+//Analytic Schwarzschild-AdS initial data in horizon penetrating coordinates defined ad hoc for Schwarzschild-AdS.
+// The expressions are more complicated than using the coordinates for Kerr-AdS below and the residual is dumped in more iterations.
+//            	init_schwads4d_bh_(&ief_bh_r0,&AdS_L,gb_tt,gb_tx,gb_ty,
+//                	            gb_tz,
+//                    	        gb_xx,gb_xy,
+//                        	    gb_xz,
+//                            	gb_yy,
+//	                            gb_yz,
+//    	                        gb_zz,gb_tt_t_n,gb_tx_t_n,gb_ty_t_n,
+//        	                    gb_tz_t_n,
+//            	                gb_xx_t_n,gb_xy_t_n,
+//                	            gb_xz_t_n,
+//                    	        gb_yy_t_n,
+//                        	    gb_yz_t_n,
+//                            	gb_zz_t_n,Hb_t,Hb_x,Hb_y,
+//	                            Hb_z,
+//    	                        Hb_t_t_n,Hb_x_t_n,Hb_y_t_n,
+//        	                    Hb_z_t_n,
+//            	                phys_bdy,x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);   
+
+//When a_rot==0 this gives Schwarzschild-AdS initial data in the Cartesian coordinates used for Kerr-AdS. Using this is preferable w.r.t. Schwarzschild data in the set of coordinates used in the function above
+            	        init_kerrads4d_bh_(&ief_bh_r0,&a_rot0,&AdS_L,
+                            gb_tt,gb_tx,gb_ty,gb_tz,
+                            gb_xx,gb_xy,gb_xz,
+                            gb_yy,gb_yz,gb_zz,
+                            gb_tt_t,gb_tx_t,gb_ty_t,gb_tz_t,
+                            gb_xx_t,gb_xy_t,gb_xz_t,
+                            gb_yy_t,gb_yz_t,
+                            gb_zz_t,
+                            Hb_t,Hb_x,Hb_y,Hb_z,
+                            Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
+                            phys_bdy,
+                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);
         	}
         	else if (ief_bh_r0&&a_rot0)
         	{
@@ -15601,7 +15617,7 @@ void AdS4D_pre_tstep(int L)
                     "energy (the one employed in the first law of BH thermodynamics) E=M/(1-a^2/L^2)^2=%lf, angular momentum J0= M a/(1-a^2/L^2)^2= %lf\n"
                     "Initial BH radius in Boyer-Lindquist coordinates rotating at the boundary (not the ones used in the code)=%lf\n" 
                     "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
-                    ,ief_bh_r0/AdS_L,M0,a_rot0,E,J0,rblhor,ex_rbuf[0]);
+                    ,ief_bh_r0/AdS_L,M0,a_rot0,E,J0,rh,ex_rbuf[0]);
 	        }
         }   
 

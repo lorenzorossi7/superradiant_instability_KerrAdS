@@ -96,7 +96,7 @@ int fill_own(int Lmax, int ltrace, int *first)
 real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat, real *c_polar, real *c_polar2, int *is_ex,
                           int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, int output_metricAH_sph_ascii, int output_diagnosticAH_ascii)
 {
-   int i,np,valid,dvtrace=0,i0,j0,is_int;
+   int i,j,np,valid,dvtrace=0,i0,j0,is_int;
    static int num_trace=0;
    char name[256];
    int AH_shape[3],rank;
@@ -193,7 +193,7 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
    // for each i point on the AH surface, save max{AH_theta0[i]}_allprocessors into AH_w1[i],
    MPI_Allreduce(AH_theta0,AH_w1[c_AH],np,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
    // copy AH_w1 into AH_theta0
-   for (i=0; i<np; i++) {AH_theta0[i]=AH_w1[c_AH][i];}
+            for (i=0; i<np; i++) {AH_theta0[i]=AH_w1[c_AH][i];}
 
    // and sum{area_owned[i]} into area_global[i]
    MPI_Allreduce(area_owned,area_global,4,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
@@ -675,7 +675,12 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
 
          // update AH_R[i], for each i point on the AH surface, by a fraction AH_lambda of AH_theta
          //(NOTE: AH_R decreases when theta positive, and AH_R increases when theta negative)
-         for (i=0; i<np; i++) AH_R[c_AH][i]+=(-AH_lambda[c_AH]*AH_theta[c_AH][i]);
+            for (i=0; i<np; i++)
+            {
+                  //printf("pre AH finder update:  i,j=%i,%i: AH_theta=%lf, R=%lf\n",i,j,(AH_theta[c_AH])[i+j*AH_Nchi[c_AH]],(AH_R[c_AH])[i+j*AH_Nchi[c_AH]]);
+                  AH_R[c_AH][i]+=(-AH_lambda[c_AH]*AH_theta[c_AH][i]);
+                  //printf("post AH finder update: AH_R[c_AH][i]=%lf\n",AH_R[c_AH][i+j*AH_Nchi[c_AH]]);
+            }
 
          if (SMOOTH_R && eps1>0)
          {

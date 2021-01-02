@@ -4052,7 +4052,6 @@ c----------------------------------------------------------------------
           stop
         end if
 
-
         ! initialize metric
         do i=1,Nx
            do j=1,Ny
@@ -4094,6 +4093,8 @@ c----------------------------------------------------------------------
               else
 
 ! Kerr-Schild Cartesian coordinates (horizon-penetrating and non-rotating at the boundary)
+
+                if (a.gt.0) then
 
               U=Sqrt(2.)/
      -  (L*Sqrt((-(a**2*L**2) + 
@@ -6057,6 +6058,39 @@ c----------------------------------------------------------------------
             else
               gb_zz(i,j,k)=0
             end if
+          else if (a.lt.10.0d0**(-10)) then !a=0: Schwarzschild case
+
+              gb_tt(i,j,k)=M0/rho0 - M0*rho0
+
+              gb_tx(i,j,k)=(2*M0*(1 - 2*rho0**2 + rho0**4)*x0)/
+     -  (rho0**2*Sqrt((-1 + rho0**2)**2)*(1 + rho0**2))
+
+              gb_ty(i,j,k)=(2*M0*(1 - 2*rho0**2 + rho0**4)*y0)/
+     -  (rho0**2*Sqrt((-1 + rho0**2)**2)*(1 + rho0**2))
+
+              gb_tz(i,j,k)=(2*M0*(1 - 2*rho0**2 + rho0**4)*z0)/
+     -  (rho0**2*Sqrt((-1 + rho0**2)**2)*(1 + rho0**2))
+
+              gb_xx(i,j,k)=(-4*M0*(-1 + rho0**2)*x0**2)/
+     -         (rho0**3*(1 + rho0**2)**2)
+
+              gb_xy(i,j,k)=(-4*M0*(-1 + rho0**2)*x0*y0)/
+     -         (rho0**3*(1 + rho0**2)**2)
+
+              gb_xz(i,j,k)=(-4*M0*(-1 + rho0**2)*x0*z0)/
+     -         (rho0**3*(1 + rho0**2)**2)
+
+              gb_yy(i,j,k)=(-4*M0*(-1 + rho0**2)*y0**2)/
+     -         (rho0**3*(1 + rho0**2)**2)
+
+              gb_yz(i,j,k)=(-4*M0*(-1 + rho0**2)*y0*z0)/
+     -         (rho0**3*(1 + rho0**2)**2)
+
+              gb_zz(i,j,k)=(-4*M0*(-1 + rho0**2)*z0**2)/
+     -         (rho0**3*(1 + rho0**2)**2)
+
+          end if
+
 
 !              if (is_nan(gb_tt(i,j,k)).or.is_nan(gb_tx(i,j,k))
 !     &        .or.is_nan(gb_ty(i,j,k))
@@ -6066,9 +6100,9 @@ c----------------------------------------------------------------------
 !     &        .or.is_nan(gb_yy(i,j,k))
 !     &        .or.is_nan(gb_yz(i,j,k)).or.is_nan(gb_zz(i,j,k)) ) then
 
-!        if ( (abs(x0).lt.10.0d0**(-10)).and.
-!     &  (abs(y0+0.0625d0).lt.10.0d0**(-10)).and.
-!     &  (abs(z0+0.1875d0).lt.10.0d0**(-10)) ) then
+!        if ( (abs(x0-0.1875d0).lt.10.0d0**(-10)).and.
+!     &  (abs(y0+0.0d0).lt.10.0d0**(-10)).and.
+!     &  (abs(z0+0.0d0).lt.10.0d0**(-10)) ) then
 !
 !       write (*,*) 'L,i,j,k,x0,y0,z0,rho0=',
 !     &      L,i,j,k,x0,y0,z0,rho0

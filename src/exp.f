@@ -89,6 +89,7 @@ c----------------------------------------------------------------------
         parameter (PI=3.141592653589793d0)
 
         real*8 x0,y0,z0
+        real*8 rho0,theta0
         real*8 dx,dy,dz
 
         real*8 zeros(Nx,Ny,Nz)
@@ -237,6 +238,8 @@ c----------------------------------------------------------------------
                x0=x(i)
                y0=y(j)              
                z0=z(k)
+               rho0=sqrt(x0**2+y0**2+z0**2)
+               theta0=acos(x0/rho0)
  
                ! computes tensors at point i,j 
                call tensor_init(
@@ -281,6 +284,7 @@ c----------------------------------------------------------------------
               ! define unit time-like vector n, normal to t=const
               ! surfaces
               n_l(1)=-1/sqrt(-g0_uu(1,1))
+
               do a=1,4
                 n_u(a)=n_l(1)*g0_uu(a,1)+
      &                 n_l(2)*g0_uu(a,2)+
@@ -300,6 +304,7 @@ c----------------------------------------------------------------------
      &                       n_l(2)*g0_uu_x(a,2,b)+
      &                       n_l(3)*g0_uu_x(a,3,b)+
      &                       n_l(4)*g0_uu_x(a,4,b)
+
                 end do
               end do
 
@@ -358,12 +363,14 @@ c----------------------------------------------------------------------
               do a=1,4
                 s_u(a)=s_u(a)/sqrt(normsusq)
               end do
+
               do a=1,4
                 s_l(a)=s_u(1)*g0_ll(a,1)+
      &                 s_u(2)*g0_ll(a,2)+
      &                 s_u(3)*g0_ll(a,3)+
      &                 s_u(4)*g0_ll(a,4)
               end do
+
 
               nufx=0
               do a=1,4
@@ -404,10 +411,10 @@ c----------------------------------------------------------------------
               do c=1,4
                 do d=1,4
                   theta(i,j,k)=theta(i,j,k)
-     &                   +sig_uu(c,d)*(n_l_x(c,d)+s_l_x(c,d))
+     &         +(1/sqrt(2.))*sig_uu(c,d)*(n_l_x(c,d)+s_l_x(c,d))
                   do e=1,4
                     theta(i,j,k)=theta(i,j,k)
-     &                   -sig_uu(c,d)*gamma_ull(e,c,d)*(n_l(e)+s_l(e))
+     &       -(1/sqrt(2.))*sig_uu(c,d)*gamma_ull(e,c,d)*(n_l(e)+s_l(e))
                   end do
                 end do
               end do
@@ -502,9 +509,6 @@ c-----------------------------------------------------------------------
             ! AH_R,AH_chi: polar coordinates of point on AH, wrt center of AH
             ! AH_xc(1),AH_xc(2),AH_xc(3): cartesian coordinates of center of AH, wrt origin
             ! x,y,z cartesian coordinates of point on AH, wrt origin
-!            x=AH_R(i,j)*sin(AH_chi)*cos(AH_phi)+AH_xc(1)
-!            y=AH_R(i,j)*sin(AH_chi)*sin(AH_phi)+AH_xc(2)
-!            z=AH_R(i,j)*cos(AH_chi)+AH_xc(3)
 
             x=AH_R(i,j)*cos(AH_chi)+AH_xc(1)
             y=AH_R(i,j)*sin(AH_chi)*cos(AH_phi)+AH_xc(2)
@@ -830,10 +834,8 @@ c-----------------------------------------------------------------------
                  r=sqrt( (xb-AH_xc(1))**2
      &                  +(yb-AH_xc(2))**2 
      &                  +(zb-AH_xc(3))**2 )
-!                 AH_chi=acos( zb-AH_xc(3)/r )
-!                 AH_phi=atan2( yb-AH_xc(2),xb-AH_xc(1) )
 
-                 AH_chi=acos( xb-AH_xc(1)/r )
+                 AH_chi=acos( (xb-AH_xc(1))/r )
                  AH_phi=atan2( zb-AH_xc(3),yb-AH_xc(2) )
 
                  if (AH_phi.lt.0) AH_phi=AH_phi+2*PI
@@ -1194,8 +1196,27 @@ c-----------------------------------------------------------------------
      &                    (  fx)*(1-fy)*(  fz)*theta(i+1,j,k+1)+
      &                    (1-fx)*(  fy)*(  fz)*theta(i,j+1,k+1)+
      &                    (  fx)*(  fy)*(  fz)*theta(i+1,j+1,k+1)
-        end if
 
+! DEBUGGING
+!          write (*,*) "i0,j0=",i0,j0
+!          write (*,*) "theta,phi=",
+!     &     (i0-1)*PI/(AH_Nchi-1),(j0-1)*2*PI/(AH_Nphi-1)
+!          write (*,*) "AH_R(i0,j0)=",AH_R(i0,j0)
+!          write (*,*) "AH_theta(i0,j0)=",AH_theta(i0,j0)
+!          write (*,*) "i,j,k=",i,j,k
+!          write (*,*) "x,y,z=",x(i),y(j),z(k)
+!          write (*,*) "xp1,yp1,zp1=",x(i+1),y(j+1),z(k+1)
+!          write (*,*) "rho=",sqrt(x(i)**2+y(j)**2+z(k)**2)
+!          write (*,*) "theta(i,j,k)=",theta(i,j,k)
+!          write (*,*) "theta(i+1,j,k)=",theta(i+1,j,k)
+!          write (*,*) "theta(i,j+1,k)=",theta(i,j+1,k)
+!          write (*,*) "theta(i,j,k+1)=",theta(i,j,k+1)
+!          write (*,*) "theta(i+1,j+1,k)=",theta(i,j,k)
+!          write (*,*) "theta(i+1,j,k+1)=",theta(i,j,k)
+!          write (*,*) "theta(i,j+1,k+1)=",theta(i,j,k)
+!          write (*,*) "theta(i+1,j+1,k+1)=",theta(i+1,j+1,k+1)
+
+        end if
 
 
         rho0=sqrt(x0**2+y0**2+z0**2)
@@ -2176,7 +2197,7 @@ c-----------------------------------------------------------------------
         !--------------------------------------------------------------
 
         !HB!
-        if (AH_Nphi.eq.1) then !set by zero-derivative extrapolation along phi (can do this because there is only one point, so can never be multivalued)
+        if (AH_Nphi.eq.1) then !set by zero-derivative extrapolation along chi (can do this because there is only one point, so can never be multivalued)
            AH_r(1,1)=(AH_r(2,1)*4-AH_r(3,1))/3
            AH_r(AH_Nchi,1)=(AH_r(AH_Nchi-1,1)*4-AH_r(AH_Nchi-2,1))/3
         else 
@@ -2205,6 +2226,41 @@ c-----------------------------------------------------------------------
            end do
 
         end if
+
+!        !LR: Other attempts!
+!
+!          do j=1,AH_Nphi !set chi=0,PI by zero-derivative extrapolation along chi
+!!              AH_R(2,j)=(4*AH_R(3,j)-AH_R(4,j))/3
+!              AH_R(1,j)=(4*AH_R(2,j)-AH_R(3,j))/3
+!              AH_R(2,j)=(AH_R(3,j)+3*AH_R(1,j))/4
+!!              AH_R(AH_Nchi-1,j)=(4*AH_R(AH_Nchi-2,j)-AH_R(AH_Nchi-3,j))/3
+!              AH_R(AH_Nchi,j)=(4*AH_R(AH_Nchi-1,j)-AH_R(AH_Nchi-2,j))/3
+!              AH_R(AH_Nchi-1,j)=(AH_R(AH_Nchi-2,j)+3*AH_R(AH_Nchi,j))/4
+!          end do
+!
+!          if (AH_Nphi.gt.1) then
+!           r0=0 
+!           r1=0
+!           do j=1,AH_Nphi
+!              r0=r0+AH_R(1,j)
+!              r1=r1+AH_R(AH_Nchi,j)
+!           end do
+!           r0=r0/AH_Nphi
+!           r1=r1/AH_Nphi
+!           do j=1,AH_Nphi
+!              AH_R(1,j)=r0       !set the chi=0,PI to their average value along the phi direction to ensure that they are all the same value
+!              AH_R(AH_Nchi,j)=r1
+!           end do
+!
+!           do i=1,AH_Nchi
+!               AH_R(i,1)=AH_R(i,AH_Nphi)
+!               AH_R(i,2)=(AH_R(i,3)+3*AH_R(i,1))/4
+!               AH_R(i,AH_Nphi-1)=(AH_R(i,AH_Nphi-2)+3*AH_R(i,AH_Nphi))/4
+!           end do
+!
+!          end if
+
+
 
         return 
         end
@@ -2265,9 +2321,6 @@ c-----------------------------------------------------------------------
 
               !x0,y0,z0 cartesian coordinates of point on AH, wrt center of AH
               !AH_R,AH_chi,AH_phi polar coordinates of point on AH, wrt center of AH
-!              x0=AH_R(i,j)*sin(AH_chi)*cos(AH_phi)+AH_xc(1)
-!              y0=AH_R(i,j)*sin(AH_chi)*sin(AH_phi)+AH_xc(2)
-!              z0=AH_R(i,j)*cos(AH_chi)+AH_xc(3)
 
               x0=AH_R(i,j)*cos(AH_chi)+AH_xc(1)
               y0=AH_R(i,j)*sin(AH_chi)*cos(AH_phi)+AH_xc(2)
@@ -2317,9 +2370,6 @@ c-----------------------------------------------------------------------
 
               !x0,y0,z0 cartesian coordinates of point on AH, wrt center of AH
               !AH_R,AH_chi,AH_phi polar coordinates of point on AH, wrt center of AH
-!              x0=AH_R(i,j)*sin(AH_chi)*cos(AH_phi)+AH_xc(1)
-!              y0=AH_R(i,j)*sin(AH_chi)*sin(AH_phi)+AH_xc(2)
-!              z0=AH_R(i,j)*cos(AH_chi)+AH_xc(3)
 
               x0=AH_R(i,j)*cos(AH_chi)+AH_xc(1)
               y0=AH_R(i,j)*sin(AH_chi)*cos(AH_phi)+AH_xc(2)
