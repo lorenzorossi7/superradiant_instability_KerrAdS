@@ -6946,7 +6946,6 @@ void AdS4D_pre_tstep(int L)
     int i0,j0,ind0;
     int count_relkretschcentregrid;
     real rho;
-    real rh,rhoh;
 
 
     //MPI_Barrier(MPI_COMM_WORLD);

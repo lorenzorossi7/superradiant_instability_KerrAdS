@@ -19,13 +19,13 @@ stype := 0
 
 #AdS4D-Kerr BH ID#
 ief_bh_r0 := 0.6
-a_rot0 := 0.0
+a_rot0 := 0.2
 
 #AH-finder#
 AH_Lmin := 1
 AH_rsteps := 10
 AH_eps := 0.0
-AH_max_iter := 10000
+AH_max_iter := 0000
 AH_lambda := 0.001
 AH_tol := 1e-2
 AH_r0 := 0.2
@@ -36,7 +36,7 @@ AH_Nphi := 33
 AH_freq := 24
 AH_freq_aft := 240
 #excision_type=0: no internal excision - excision_type=1: spherical excised region - excision_type=2: elliptic excised region - excision_type=3: AH-shaped excised region
-excision_type := 1
+excision_type := 2
 #excision buffer, i.e. how wide the region to evolve within the AH (or the AdS boundary if there is no BH) is
 ex_rbuf := 0.35
 AH_reset_scale := 1.1
