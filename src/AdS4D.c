@@ -14300,12 +14300,9 @@ void AdS4D_pre_tstep(int L)
                 }//closes condition on bdy_fixedpts_extrap  
             }//closes output_bdyquantities if-condition
         }//closes lsteps==0 if-condition
-    }// closes L==Lc && ct==0 if-condition  
 
 
     //free memory for boundary quantities
-    if (L==Lc && ct==0)
-    {   
         valid=PAMR_init_s_iter(L,PAMR_AMRH,0);
         while(valid)
         {   
@@ -15640,15 +15637,12 @@ void AdS4D_post_tstep(int L)
     int n,i,j,k,ind,m,l,j_red,Lf,Lc;
     int is,ie,js,je,ks,ke;  
 
-    //printf("AdS4D_post_tstep is called");
-    //fflush(stdout); 
-
-    dx=x[1]-x[0]; dy=y[1]-y[0]; dz=z[1]-z[0];
-
+    //MPI_Barrier(MPI_COMM_WORLD);
+    //if (my_rank==0) {printf("AdS4D_post_tstep is called\n"); fflush(stdout);}
 
     ct = PAMR_get_time(L);  
     Lf=PAMR_get_max_lev(PAMR_AMRH);
-    Lc=PAMR_get_min_lev(PAMR_AMRH);  //if (PAMR_get_max_lev(PAMR_AMRH)>1) Lc=2; elise Lc=1;
+    Lc=PAMR_get_min_lev(PAMR_AMRH);  //if (PAMR_get_max_lev(PAMR_AMRH)>1) Lc=2; else Lc=1;
     int lsteps=AMRD_lsteps[Lc-1];
     int ivecNt=AMRD_steps/AMRD_save_ivec0[3]+1; //+1 to include t=0
 
@@ -25961,11 +25955,8 @@ void AdS4D_post_tstep(int L)
                 }//closes condition on bdy_fixedpts_extrap 
             }//closes output_bdyquantities if-condition
         }//closes if condition on lsteps
-    } //closes if condition on L==Lc
 
     //free memory for boundary quantities
-    if (L==Lc)
-    {   
         valid=PAMR_init_s_iter(L,PAMR_AMRH,0);
         while(valid)
         {   
