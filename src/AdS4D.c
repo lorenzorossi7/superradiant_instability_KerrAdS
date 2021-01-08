@@ -2533,7 +2533,12 @@ void AdS4D_var_post_init(char *pfile)
 	   			if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
 	   		}
    	}
-    PAMR_excision_on("chr",&AdS4D_fill_ex_mask,AMRD_ex,1);  
+    PAMR_excision_on("chr",&AdS4D_fill_ex_mask,AMRD_ex,1);
+
+
+
+
+    
     if (my_rank==0) printf("===================================================================\n");
     return;
 }
@@ -3165,7 +3170,7 @@ void AdS4D_pre_io_calc(void)
         //(NOTE: for t=t0, have *not* cycled time sequence, so still np1,n,nm1,
         // so here, time level np1 is the most advanced time level) 
         //we call the following functions just to save and output the values of the grid functions chrbdy, leadordcoeff_phi1 and quasiset_ll for t=0. These will be later then used to extrapolate the value of bdyphi and quasiset componenents at the AdS boundary in pre_tstep for t=0 (and post_tstep for later times)
-        if (output_bdyquantities)
+        if (output_bdyquantities&&(g_L==Lc))
         {  
 
  

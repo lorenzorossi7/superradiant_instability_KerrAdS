@@ -70,7 +70,7 @@ prev_run_ex_r_4 := [0.0 0.0 0.0]
 background := 0
 skip_constraints := 1
 output_ires := 1
-output_bdyquantities := 0
+output_bdyquantities := 1
 output_outermostpts := 1
 bdy_extrap_freepts := 1
 bdy_extrap_fixedpts := 1
@@ -127,16 +127,16 @@ evo_DV_trace_t_off := 1
 ID_DV_trace := 0
 
 #------ grid/parallel/AMR parameters ---------------------------------------
-ratio_Lhighres_Llowres := 1.5
+ratio_Lhighres_Llowres := 2.0
 #resolution_degree is the degree of the current resolution w.r.t. to the lowest resolution that we are going to use to for the convergence factor, i.e. 1 for the lowest resolution, 2 for the middle one and  3 for the highest one
 resolution_degree := 1
 max_resolution_degree := 4
 #reduction_factor is the factor by which we need to reduce the number points of the lowest resolution used for convergence (i.e. the resolution with degree 1) so that we only select points that are present also in the resolutions with degree 2 and 3. To get the exact same points in higher resolutions, we need to reduce by a factor (reduction_factor**(max_resolution_degree-1))*((ratio_Lhighres_Llowres)**(resolution_degree-1)). ratio_Lhighres_Llowres and reduction_factor must be chosen so that this factor is an integer for all resolutions
 reduction_factor := 2
 
-base_shape := [65 65 65]
-max_lev := 1
-lambda := 0.3
+base_shape := [33 33 33]
+#max_lev := 1
+lambda := 0.2
 rho_sp := 2
 rho_tm := 2
 
@@ -162,6 +162,17 @@ regrid_script_name = "AdS4D.rgs"
 cls_merge_dist := 8
 cls_method := 0
 cls_align_mode := 1
+
+#------ initial AMR parameters -------------------------------------------------
+
+#HB: if you set base_shape := [33 33 33], then remember that self-shadow hierarchy gives you base levels [33 33 33] and [65 65 65] i.e. the first two levels are the "base level" in an AMR evo 
+#HB: try to keep 16 points in the parent level before reaching the boundary of finer level
+max_lev := 2
+init_depth := 2
+init_bbox_3 := [-0.50 +0.50   -0.50 +0.50   -0.50 +0.50]
+init_bbox_4 := [-0.25 +0.25   -0.25 +0.25   -0.25 +0.25]
+init_bbox_b_3 := [-0.50 +0.50   -0.50 +0.50   -0.50 +0.50]
+init_bbox_b_4 := [-0.25 +0.25   -0.25 +0.25   -0.25 +0.25]
 
 #------ constraint damping -------------------------------------------------
           
@@ -224,10 +235,10 @@ cp_restore_fname := "cp_L2_A"
 
 #------- solution related -------------------------------------------------
 
-steps := 1
+steps := 2
 evo_max_iter := 25
 evo_min_iter := 1
-evo_tol := 1.0e-10
+evo_tol := 1.0e-6
 
 MG_max_iter := 25
 MG_min_iter := 1
@@ -235,7 +246,7 @@ MG_max_citer := 1000
 MG_pre_swp := 3
 MG_pst_swp := 3
 MG_w0 := 1.0
-MG_tol := 1.0e-8
+MG_tol := 1.0e-6
 MG_crtol := 1.0e-2
 MG_extrap_method := 0
 MG_eps_c := 1.0
@@ -253,8 +264,8 @@ max_t_interp_order := 3
 
 #------- IO ---------------------------------------------------------------
 
-num_save_1_vars := 4
-save_1_vars := [ "iresall" "gb_res" "kg_ires" "chr" ]
+num_save_1_vars := 0
+#save_1_vars := [ "iresall" "gb_res" "kg_ires" "chr" ]
 
 num_save_2_vars := 6
 save_2_vars := [ "gb_xx" "gb_zz" "Hb_x" "phi1" "relkretsch" "relriemanncube" ]
@@ -267,6 +278,6 @@ global_var_norm_floor := 1
 
 save_tag := "AdS4D_3p1_gauge3_L2_"
 
-save_ivec := 1-*/24
+save_ivec := 1-*/1
 
 #-----------------------------------------------------
