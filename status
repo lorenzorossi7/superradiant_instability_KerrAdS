@@ -2,6 +2,8 @@ STATUS OF THIS BRANCH:
 3+1 Cartesian code for study of superradiance of Kerr-AdS4D with no symmetries. The first commit is taken from the Lorenzo-ahfinder-qlsettensor-wip branch of the AdS4D repository.
 Implemented analytic Kerr-AdS initial data.
 
+Implemented the possibility of evolving deviations of Kerr-AdS and Schwarzschild-AdS in Kerr-Schild coordinates.
+
 Implemented AH-shaped excision and spherical excision with radius given by the minimum of the AH radius (times (1-ex_rbuf)).
 
 New derivative stencils in z have been tested.

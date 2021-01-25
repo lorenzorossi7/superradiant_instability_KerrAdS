@@ -297,9 +297,10 @@ void g_evo_opt_(real *gb_res, real *phi1_res, real *cl_res,
                 int *phys_bdy, int *ghost_width, int *Nx, int *Ny, int *Nz,
                 int *background, real *kappa_cd, real *rho_cd,
                 int *interptype, int *i_shift, int *regtype,
-                int *diss_kmax, real *tfunction);
+                int *diss_kmax, real *tfunction,
+                real *ief_bh_r0,real *a_rot0,int *kerrads_perturb);
 
-void init_schwads4d_bh_(real *ief_bh_r0, real *AdS_L, real *gb_tt, real *gb_tx, real *gb_ty,
+void init_schwads4d_bh_adhoc_coords(real *ief_bh_r0, real *AdS_L, real *gb_tt, real *gb_tx, real *gb_ty,
                   real *gb_tz,
                   real *gb_xx, real *gb_xy, 
                   real *gb_xz,
@@ -318,7 +319,7 @@ void init_schwads4d_bh_(real *ief_bh_r0, real *AdS_L, real *gb_tt, real *gb_tx, 
                   int *phys_bdy, real *x, real *y, real *z, real *dt, real *chr, 
                   real *ex, int *Nx, int *Ny, int *Nz, int *regtype);
 
-void init_ghb_ads_(real *gb_tt, real *gb_tx, real *gb_ty,
+void init_ghb_background_metr_(real *gb_tt, real *gb_tx, real *gb_ty,
                    real *gb_tz,
                    real *gb_xx, real *gb_xy, 
                    real *gb_xz,
@@ -400,7 +401,8 @@ void ires_(real *efe_all_ires,
            real *Hb_z_np1, real *Hb_z_n, real *Hb_z_nm1,
            real *phi1_np1, real *phi1_n, real *phi1_nm1,
            real *x, real *y, real *z, real *dt, real *chr, 
-           real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width);
+           real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width,
+           real *ief_bh_r0,real *a_rot0,int *kerrads_perturb);
 
 void kretsch_(real *relkretsch_n,
            real *relkretschcentregrid,
@@ -420,7 +422,8 @@ void kretsch_(real *relkretsch_n,
            real *Hb_z_np1, real *Hb_z_n, real *Hb_z_nm1,
            real *phi1_np1, real *phi1_n, real *phi1_nm1,
            real *x, real *y, real *z, real *dt, real *chr,
-           real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width);
+           real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width,
+           real *ief_bh_r0,real *a_rot0,int *kerrads_perturb);
 
 void riemanncube_(real *relriemanncube_n,
            real *gb_tt_np1, real *gb_tt_n, real *gb_tt_nm1,
@@ -439,7 +442,8 @@ void riemanncube_(real *relriemanncube_n,
            real *Hb_z_np1, real *Hb_z_n, real *Hb_z_nm1,
            real *phi1_np1, real *phi1_n, real *phi1_nm1,
            real *x, real *y, real *z, real *dt, real *chr,
-           real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width);
+           real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width,
+           real *ief_bh_r0,real *a_rot0,int *kerrads_perturb);
 
 void gu_calc_(real *gb_tt, real *gb_tx, real *gb_ty, real *gb_xx, 
               real *gb_xy, real *gb_yy, real *gb_zz, 
@@ -485,7 +489,8 @@ void init_nm1_(real *gb_tt_np1, real *gb_tt_n, real *gb_tt_nm1, real *gb_tt_t_n,
                real *Hb_z_np1, real *Hb_z_n, real *Hb_z_nm1, real *Hb_z_t_n,
                real *phi1_np1, real *phi1_n, real *phi1_nm1, real *phi1_t_n, real *tfunction,
                real *AdS_L, int *phys_bdy, real *x, real *y, real *z, real *dt,
-               real *chr, real *ex, int *Nx, int *Ny, int *Nz, int *regtype);
+               real *chr, real *ex, int *Nx, int *Ny, int *Nz, int *regtype,
+               real *ief_bh_r0,real *a_rot0,int *kerrads_perturb);
 
 void init_hb_(real *gb_tt_np1, real *gb_tt_n, real *gb_tt_nm1,
               real *gb_tx_np1, real *gb_tx_n, real *gb_tx_nm1,
@@ -500,7 +505,8 @@ void init_hb_(real *gb_tt_np1, real *gb_tt_n, real *gb_tt_nm1,
               real *Hb_t_n, real *Hb_x_n, real *Hb_y_n, 
               real *Hb_z_n,
               real *AdS_L, int *phys_bdy, real *x, real *y, real *z, real *dt, real *chr, real *ex,
-              int *Nx, int *Ny, int *Nz, int *regtype);
+              int *Nx, int *Ny, int *Nz, int *regtype,
+              real *ief_bh_r0,real *a_rot0,int *kerrads_perturb);
 
 void init_ghbdot_(real *gb_tt_n, real *gb_tx_n, real *gb_ty_n,
                   real *gb_tz_n,
@@ -586,7 +592,7 @@ void calc_quasiset_ll_(
                   real *gb_zz_np1,real *gb_zz_n,real *gb_zz_nm1,
                   real *x, real *y, real *z, real *dt, real *chr, real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width);
 
-void extrap_quasiset_freepts_(    real *quasiset_tt, real *quasiset_tchi, real *quasiset_txi, real *quasiset_chichi, real *quasiset_chixi,
+void extrap_quasiset_freepts_(real *quasiset_tt, real *quasiset_tchi, real *quasiset_txi, real *quasiset_chichi, real *quasiset_chixi,
                    real *quasiset_xixi,
                    real *quasiset_trace,
                    real *quasiset_massdensity,
@@ -599,7 +605,7 @@ void extrap_quasiset_freepts_(    real *quasiset_tt, real *quasiset_tchi, real *
                    int *extrap_order,
                    real *x, real *y, real *z, real *dt, real *chr, real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width);
 
-void extrap_quasiset_fixedpts_( real *quasiset_tt, real *quasiset_tchi, real *quasiset_txi, real *quasiset_chichi, real *quasiset_chixi,
+void extrap_quasiset_fixedpts_(real *quasiset_tt, real *quasiset_tchi, real *quasiset_txi, real *quasiset_chichi, real *quasiset_chixi,
                    real *quasiset_xixi,
                    real *quasiset_trace,
                    real *quasiset_massdensity,
@@ -626,6 +632,6 @@ void init_kerrads4d_bh_(real *ief_bh_r0, real *a_rot, real *AdS_L,
                             real *Hb_t,real *Hb_x,real *Hb_y,real *Hb_z,
                             real *Hb_t_t,real *Hb_x_t,real *Hb_y_t,real *Hb_z_t,
                             int *phys_bdy,
-                            real *x, real *y, real *z, real *dt,real *chr_mg,real *ex,int *Nx,int *Ny,int *Nz,int *regtype);
+                            real *x, real *y, real *z, real *dt,real *chr_mg,real *ex,int *Nx,int *Ny,int *Nz,int *regtype, int *kerrads_perturb);
 
 #endif

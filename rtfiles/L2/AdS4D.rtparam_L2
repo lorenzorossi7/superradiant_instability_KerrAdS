@@ -2,6 +2,8 @@ dim := 3
 
 refsym := 0
 
+kerrads_perturb := 1
+
 #------ Initial Data -------------------------------------------------------
 
 #scalar field ID#
@@ -134,7 +136,7 @@ max_resolution_degree := 4
 #reduction_factor is the factor by which we need to reduce the number points of the lowest resolution used for convergence (i.e. the resolution with degree 1) so that we only select points that are present also in the resolutions with degree 2 and 3. To get the exact same points in higher resolutions, we need to reduce by a factor (reduction_factor**(max_resolution_degree-1))*((ratio_Lhighres_Llowres)**(resolution_degree-1)). ratio_Lhighres_Llowres and reduction_factor must be chosen so that this factor is an integer for all resolutions
 reduction_factor := 2
 
-base_shape := [33 33 33]
+base_shape := [129 129 129]
 #max_lev := 1
 lambda := 0.2
 rho_sp := 2
@@ -167,8 +169,8 @@ cls_align_mode := 1
 
 #HB: if you set base_shape := [33 33 33], then remember that self-shadow hierarchy gives you base levels [33 33 33] and [65 65 65] i.e. the first two levels are the "base level" in an AMR evo 
 #HB: try to keep 16 points in the parent level before reaching the boundary of finer level
-max_lev := 2
-init_depth := 2
+max_lev := 1
+#init_depth := 1
 init_bbox_3 := [-0.50 +0.50   -0.50 +0.50   -0.50 +0.50]
 init_bbox_4 := [-0.25 +0.25   -0.25 +0.25   -0.25 +0.25]
 init_bbox_b_3 := [-0.50 +0.50   -0.50 +0.50   -0.50 +0.50]

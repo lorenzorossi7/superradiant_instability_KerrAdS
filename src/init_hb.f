@@ -13,8 +13,11 @@ c----------------------------------------------------------------------
      &                     gb_zz_np1,gb_zz_n,gb_zz_nm1,
      &                     Hb_t_n,Hb_x_n,Hb_y_n,
      &                     Hb_z_n,
-     &                     L,phys_bdy,x,y,z,dt,chr,ex,Nx,Ny,Nz,regtype)
+     &                     L,phys_bdy,x,y,z,dt,chr,ex,Nx,Ny,Nz,regtype,
+     &                     rbh,a_rot,kerrads_perturb)
         implicit none
+        real*8 rbh,a_rot
+        integer kerrads_perturb
         integer Nx,Ny,Nz
         integer phys_bdy(6),ghost_width(6)
         integer regtype
@@ -170,7 +173,8 @@ c----------------------------------------------------------------------
      &              riemann_ulll,ricci_ll,ricci_lu,ricci,
      &              einstein_ll,set_ll,
      &              phi10_x,phi10_xx,
-     &              x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k)
+     &              x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
+     &              rbh,a_rot,kerrads_perturb)
 
               ! calculate boxx^c at point i,j
               ! (boxx^c = -g^ab gamma^c_ab)

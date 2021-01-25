@@ -28,8 +28,11 @@ c----------------------------------------------------------------------
      &                       phys_bdy,ghost_width,Nx,Ny,Nz,
      &                       background,kappa_cd,rho_cd,
      &                       interptype,i_shift,regtype,
-     &                       diss_kmax,tfunction)
+     &                       diss_kmax,tfunction,
+     &                       rbh,a_rot,kerrads_perturb)
         implicit none
+        real*8 rbh,a_rot
+        integer kerrads_perturb
         integer Nx,Ny,Nz
         integer phys_bdy(6),ghost_width(6)
         integer background
@@ -800,7 +803,8 @@ c----------------------------------------------------------------------
      &                riemann_ulll,ricci_ll,ricci_lu,ricci,
      &                einstein_ll,set_ll,
      &                phi10_x,phi10_xx,
-     &                x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k)
+     &                x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
+     &                rbh,a_rot,kerrads_perturb)
 
 
                 do a=1,4

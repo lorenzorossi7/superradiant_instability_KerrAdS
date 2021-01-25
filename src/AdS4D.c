@@ -25,6 +25,13 @@
 int axisym=1;
 
 //=============================================================================
+// if kerrads_perturb is set to 1 (read from parameter file) then we evolve a
+// perturbation of Kerr-AdS in 4D in Cartesian Kerr-Schild coordinates,
+// rather than a perturbation of pure AdS in Cartesian coordianates
+//=============================================================================
+int kerrads_perturb;
+
+//=============================================================================
 // set in fparam for now
 //=============================================================================
 real AdS_L;
@@ -2081,6 +2088,8 @@ void AdS4D_var_post_init(char *pfile)
     AMRD_real_param(pfile,"phi1_x0_2",phi1_x0_2,AMRD_dim);
     AMRD_real_param(pfile,"phi1_ecc_2",phi1_ecc_2,AMRD_dim);  
 
+    kerrads_perturb=0; AMRD_int_param(pfile,"kerrads_perturb",&kerrads_perturb,1);  
+
     kappa_cd=0; AMRD_real_param(pfile,"kappa_cd",&kappa_cd,1);
     rho_cd=0; AMRD_real_param(pfile,"rho_cd",&rho_cd,1);    
     diss_eps_k=0; AMRD_real_param(pfile,"diss_eps_k",&diss_eps_k,1);
@@ -2570,7 +2579,7 @@ void AdS4D_AMRH_var_clear(void)
 //      }
 //   }
 
-   init_ghb_ads_(gb_tt_n,gb_tx_n,gb_ty_n,
+   init_ghb_background_metr_(gb_tt_n,gb_tx_n,gb_ty_n,
                  gb_tz_n,
                  gb_xx_n,gb_xy_n,
                  gb_xz_n,
@@ -2727,7 +2736,7 @@ void AdS4D_t0_cnst_data(void)
     //        if (sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k])<1)    
     //        { 
     //         ind=i+Nx*(j+Ny*k);    
-    //         printf("AdS4D_AMRH_var_clear-PRE init_ghb_ads_\n");  
+    //         printf("AdS4D_AMRH_var_clear-PRE init_ghb_background_metr_\n");  
     //         printf("i=%i,j=%i,k=%i,Nx=%i,Ny=%i,Nz=%i,x[i]=%lf,y[j]=%lf,z[k]=%lf,rho=%lf\n" 
     //                ,i,j,k,Nx,Ny,Nz,x[i],y[j],z[k],sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k]));   
     //         printf("gb_tt_nm1[ind]=%lf,gb_tt_n[ind]=%lf,gb_tt_np1[ind]=%lf\n",gb_tt_nm1[ind],gb_tt_n[ind],gb_tt_np1[ind]);  
@@ -2735,7 +2744,7 @@ void AdS4D_t0_cnst_data(void)
     //       } 
     //      }    
     //   }  
-        init_ghb_ads_(gb_tt,gb_tx,gb_ty,
+        init_ghb_background_metr_(gb_tt,gb_tx,gb_ty,
                     gb_tz,
                     gb_xx,gb_xy,
                     gb_xz,
@@ -2753,7 +2762,7 @@ void AdS4D_t0_cnst_data(void)
                     //        if (sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k])<1)  
                     //        {   
                     //         ind=i+Nx*(j+Ny*k);  
-                    //         printf("AdS4D_AMRH_var_clear-POST init_ghb_ads_\n");   
+                    //         printf("AdS4D_AMRH_var_clear-POST init_ghb_background_metr_\n");   
                     //         printf("i=%i,j=%i,k=%i,Nx=%i,Ny=%i,Nz=%i,x[i]=%lf,y[j]=%lf,z[k]=%lf,rho=%lf\n"  
                     //                ,i,j,k,Nx,Ny,Nz,x[i],y[j],z[k],sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k]));    
                     //         printf("gb_tt_nm1[ind]=%lf,gb_tt_n[ind]=%lf,gb_tt_np1[ind]=%lf\n",gb_tt_nm1[ind],gb_tt_n[ind],gb_tt_np1[ind]);   
@@ -2801,11 +2810,11 @@ void AdS4D_t0_cnst_data(void)
         //       }    
         //      }   
         //   } 
-        	if (ief_bh_r0&&(a_rot0==0))
+        	if (ief_bh_r0&&(fabs(a_rot0)<pow(10,-10)))
         	{
-//Analytic Schwarzschild-AdS initial data in horizon penetrating coordinates defined ad hoc for Schwarzschild-AdS.
+//Analytic Schwarzschild-AdS initial data (around pure AdS!!) in horizon penetrating coordinates defined ad hoc for Schwarzschild-AdS.
 // The expressions are more complicated than using the coordinates for Kerr-AdS below and the residual is dumped in more iterations.
-//            	init_schwads4d_bh_(&ief_bh_r0,&AdS_L,gb_tt,gb_tx,gb_ty,
+//            	init_schwads4d_bh_adhoc_coords(&ief_bh_r0,&AdS_L,gb_tt,gb_tx,gb_ty,
 //                	            gb_tz,
 //                    	        gb_xx,gb_xy,
 //                        	    gb_xz,
@@ -2824,6 +2833,8 @@ void AdS4D_t0_cnst_data(void)
 //            	                phys_bdy,x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);   
 
 //When a_rot==0 this gives Schwarzschild-AdS initial data in the Cartesian coordinates used for Kerr-AdS. Using this is preferable w.r.t. Schwarzschild data in the set of coordinates used in the function above
+//        		    MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("calling init_kerrads4d_bh_\n"); fflush(stdout); }
             	        init_kerrads4d_bh_(&ief_bh_r0,&a_rot0,&AdS_L,
                             gb_tt,gb_tx,gb_ty,gb_tz,
                             gb_xx,gb_xy,gb_xz,
@@ -2835,12 +2846,10 @@ void AdS4D_t0_cnst_data(void)
                             Hb_t,Hb_x,Hb_y,Hb_z,
                             Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
                             phys_bdy,
-                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);
+                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_perturb);
         	}
         	else if (ief_bh_r0&&a_rot0)
         	{
-//        			MPI_Barrier(MPI_COMM_WORLD);
-//    				if (my_rank==0) {printf("pre init_kerrads4d_bh_\n"); fflush(stdout);}
         		init_kerrads4d_bh_(&ief_bh_r0,&a_rot0,&AdS_L,
                             gb_tt,gb_tx,gb_ty,gb_tz,
                             gb_xx,gb_xy,gb_xz,
@@ -2852,7 +2861,7 @@ void AdS4D_t0_cnst_data(void)
                             Hb_t,Hb_x,Hb_y,Hb_z,
                             Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
                             phys_bdy,
-                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);
+                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_perturb);
 //        		        			MPI_Barrier(MPI_COMM_WORLD);
 //    				if (my_rank==0) {printf("post init_kerrads4d_bh_\n"); fflush(stdout);}
         	}
@@ -2978,6 +2987,8 @@ void AdS4D_t0_cnst_data(void)
     //          }  
     //         }  
     //       }    
+//    	        		    MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("pre init_hb_\n"); fflush(stdout); }
         init_hb_(gb_tt_np1,gb_tt_n,gb_tt_nm1,
                 gb_tx_np1,gb_tx_n,gb_tx_nm1,
                 gb_ty_np1,gb_ty_n,gb_ty_nm1,
@@ -2990,7 +3001,10 @@ void AdS4D_t0_cnst_data(void)
                 gb_zz_np1,gb_zz_n,gb_zz_nm1,
                 Hb_t_n,Hb_x_n,Hb_y_n,
                 Hb_z_n,
-                &AdS_L,phys_bdy,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);   
+                &AdS_L,phys_bdy,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,
+                &ief_bh_r0,&a_rot0,&kerrads_perturb);   
+//            	        		    MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("post init_hb- pre init_nm1\n"); fflush(stdout); }
         init_nm1_(gb_tt_np1,gb_tt_n,gb_tt_nm1,gb_tt_t_n,
                     gb_tx_np1,gb_tx_n,gb_tx_nm1,gb_tx_t_n,
                     gb_ty_np1,gb_ty_n,gb_ty_nm1,gb_ty_t_n,
@@ -3006,7 +3020,10 @@ void AdS4D_t0_cnst_data(void)
                     Hb_y_np1,Hb_y_n,Hb_y_nm1,Hb_y_t_n,
                     Hb_z_np1,Hb_z_n,Hb_z_nm1,Hb_z_t_n,
                     phi1_np1,phi1_n,phi1_nm1,phi1_t_n,tfunction,
-                    &AdS_L,phys_bdy,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);   
+                    &AdS_L,phys_bdy,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,
+                    &ief_bh_r0,&a_rot0,&kerrads_perturb);   
+//                    	        		    MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("post init_nm1\n"); fflush(stdout); }
                     //   for (i=0; i<Nx; i++)
                     //   {    //      for (j=0; j<Ny; j++)
                     //      { //       for (k=0; k<Nz; k++)
@@ -3069,7 +3086,8 @@ void AdS4D_t0_cnst_data(void)
                     Hb_y_np1,Hb_y_n,Hb_y_nm1,
                     Hb_z_np1,Hb_z_n,Hb_z_nm1,
                     phi1_np1,phi1_n,phi1_nm1,
-                    x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                    x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
+                    &ief_bh_r0,&a_rot0,&kerrads_perturb);
             //NOTICE: relkretsch_np1 is not synchronized yet at this stage, meaning that only 1 process has a non-zero value at x=y=z=0. This is crucial for how we save and print relkretschcentregrid in pre_tstep    
         }
 
@@ -3091,7 +3109,8 @@ void AdS4D_t0_cnst_data(void)
                     Hb_y_np1,Hb_y_n,Hb_y_nm1,
                     Hb_z_np1,Hb_z_n,Hb_z_nm1,
                     phi1_np1,phi1_n,phi1_nm1,
-                    x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                    x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
+                    &ief_bh_r0,&a_rot0,&kerrads_perturb);
         }
 
     }     
@@ -3162,7 +3181,8 @@ void AdS4D_pre_io_calc(void)
                 Hb_y_n,Hb_y_nm1,Hb_y_np1,
                 Hb_z_n,Hb_z_nm1,Hb_z_np1,
                 phi1_n,phi1_nm1,phi1_np1,
-                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
+                &ief_bh_r0,&a_rot0,&kerrads_perturb);    
         }   
     }
     else
@@ -6211,7 +6231,8 @@ void AdS4D_pre_io_calc(void)
                 Hb_y_np1,Hb_y_n,Hb_y_nm1,
                 Hb_z_np1,Hb_z_n,Hb_z_nm1,
                 phi1_np1,phi1_n,phi1_nm1,
-                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
+                &ief_bh_r0,&a_rot0,&kerrads_perturb);    
         }   
     } //closes condition on ct==0   
 
@@ -6500,7 +6521,8 @@ void AdS4D_evolve(int iter)
                 phys_bdy,ghost_width,&Nx,&Ny,&Nz,
                 &background,&kappa_cd,&rho_cd,
                 &interptype,&i_shift,&regtype,
-                &diss_kmax,tfunction);  
+                &diss_kmax,tfunction,
+                &ief_bh_r0,&a_rot0,&kerrads_perturb);  
 
                 //     MPI_Comm_size(MPI_COMM_WORLD,&uniSize);    
                 //     for (m=0; m<uniSize; m++)    
@@ -6580,7 +6602,8 @@ void AdS4D_evolve(int iter)
                 Hb_y_np1,Hb_y_n,Hb_y_nm1,
                 Hb_z_np1,Hb_z_n,Hb_z_nm1,
                 phi1_np1,phi1_n,phi1_nm1,
-                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    //NOTICE: relkretsch_np1 is not synchronized yet at this stage, meaning that only 1 process has a non-zero value at x=y=z=0. This is crucial for how we save and print relkretschcentregrid in post_tstep   
+                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
+                &ief_bh_r0,&a_rot0,&kerrads_perturb);    //NOTICE: relkretsch_np1 is not synchronized yet at this stage, meaning that only 1 process has a non-zero value at x=y=z=0. This is crucial for how we save and print relkretschcentregrid in post_tstep   
         }
         if (output_riemanncube)
         {       
@@ -6600,7 +6623,8 @@ void AdS4D_evolve(int iter)
                 Hb_y_np1,Hb_y_n,Hb_y_nm1,
                 Hb_z_np1,Hb_z_n,Hb_z_nm1,
                 phi1_np1,phi1_n,phi1_nm1,
-                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
+                &ief_bh_r0,&a_rot0,&kerrads_perturb);
         }   
     }
 
@@ -26992,7 +27016,7 @@ void AdS4D_post_regrid(void)
     int i;  
     if (!background || skip_constraints) return;    
     ldptr();    
-    init_ghb_ads_(gb_tt_n,gb_tx_n,gb_ty_n,
+    init_ghb_background_metr_(gb_tt_n,gb_tx_n,gb_ty_n,
                     gb_tz_n,
                     gb_xx_n,gb_xy_n,
                     gb_xz_n,
