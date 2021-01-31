@@ -2905,7 +2905,7 @@ c----------------------------------------------------------------------
         end
 
 c----------------------------------------------------------------------
-c Background values (either AdS, if kerrads_perturb=0, or Kerr-AdS, if kerrads_perturb=1) ... 
+c Background values (either AdS, if kerrads_background=0, or Kerr-AdS, if kerrads_background=1) ... 
 c with these new variables
 c the (Kerr-)AdS metric has been factored into the maple already
 c----------------------------------------------------------------------
@@ -3679,14 +3679,14 @@ c----------------------------------------------------------------------
      &                  einstein_ll,set_ll,
      &                  phi10_x,phi10_xx,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                  ief_bh_r0,a_rot,kerrads_perturb)
+     &                  ief_bh_r0,a_rot,kerrads_background)
 
         implicit none
 
         integer Nx,Ny,Nz
         integer i,j,k
         real*8  ief_bh_r0,a_rot,M0,M0_min
-        integer kerrads_perturb
+        integer kerrads_background
 
         real*8 chr(Nx,Ny,Nz),ex
         real*8 x(Nx),y(Ny),z(Nz),dt,L
@@ -3916,7 +3916,7 @@ c----------------------------------------------------------------------
 
     !compute background metric and its derivatives 
     ! NOTE: even if the background metric is not pure AdS, we still denote by gads_ll,Hads_l,etc.
-        if (kerrads_perturb.eq.0) then
+        if (kerrads_background.eq.0) then
             call ads_derivs_cartcoords(
      &                  gads_ll,gads_uu,gads_ll_x,
      &                  gads_uu_x,gads_ll_xx,
@@ -3925,7 +3925,7 @@ c----------------------------------------------------------------------
      &                  phi1ads,
      &                  phi1ads_x,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k)
-        else if ((kerrads_perturb.eq.1).and.
+        else if ((kerrads_background.eq.1).and.
      &           (a_rot.gt.10.0d0**(-10)) )  then !the background metric is Kerr-AdS in Kerr-Schild coords
             call kerrads_derivs_kerrschildcoords(
      &                  gads_ll,gads_uu,gads_ll_x,
@@ -3936,7 +3936,7 @@ c----------------------------------------------------------------------
      &                  phi1ads_x,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
      &                  ief_bh_r0,a_rot)
-        else if ((kerrads_perturb.eq.1).and.
+        else if ((kerrads_background.eq.1).and.
      &           (a_rot.lt.10.0d0**(-10)) ) then !the background metric is Schw-AdS in Kerr-Schild coords
             call schwads_derivs_kerrschildcoords(
      &                  gads_ll,gads_uu,gads_ll_x,
@@ -4666,20 +4666,25 @@ c----------------------------------------------------------------------
         h0_ll_xx(4,4,3,4)=g0_ll_xx(4,4,3,4)-gads_ll_xx(4,4,3,4)
         h0_ll_xx(4,4,4,4)=g0_ll_xx(4,4,4,4)-gads_ll_xx(4,4,4,4)
 
-        h0_uu_x(1,2,1)=g0_uu_x(1,2,1)
-        h0_uu_x(1,2,2)=g0_uu_x(1,2,2)
-        h0_uu_x(1,2,3)=g0_uu_x(1,2,3)
-        h0_uu_x(1,2,4)=g0_uu_x(1,2,4)
+        h0_uu_x(1,1,1)=g0_uu_x(1,1,1)-gads_uu_x(1,1,1)
+        h0_uu_x(1,1,2)=g0_uu_x(1,1,2)-gads_uu_x(1,1,2)
+        h0_uu_x(1,1,3)=g0_uu_x(1,1,3)-gads_uu_x(1,1,3)
+        h0_uu_x(1,1,4)=g0_uu_x(1,1,4)-gads_uu_x(1,1,4)
 
-        h0_uu_x(1,3,1)=g0_uu_x(1,3,1) 
-        h0_uu_x(1,3,2)=g0_uu_x(1,3,2) 
-        h0_uu_x(1,3,3)=g0_uu_x(1,3,3) 
-        h0_uu_x(1,3,4)=g0_uu_x(1,3,4)
+        h0_uu_x(1,2,1)=g0_uu_x(1,2,1)-gads_uu_x(1,2,1)
+        h0_uu_x(1,2,2)=g0_uu_x(1,2,2)-gads_uu_x(1,2,2)
+        h0_uu_x(1,2,3)=g0_uu_x(1,2,3)-gads_uu_x(1,2,3)
+        h0_uu_x(1,2,4)=g0_uu_x(1,2,4)-gads_uu_x(1,2,4)
 
-        h0_uu_x(1,4,1)=g0_uu_x(1,4,1)
-        h0_uu_x(1,4,2)=g0_uu_x(1,4,2)
-        h0_uu_x(1,4,3)=g0_uu_x(1,4,3)
-        h0_uu_x(1,4,4)=g0_uu_x(1,4,4)
+        h0_uu_x(1,3,1)=g0_uu_x(1,3,1)-gads_uu_x(1,3,1)
+        h0_uu_x(1,3,2)=g0_uu_x(1,3,2)-gads_uu_x(1,3,2)
+        h0_uu_x(1,3,3)=g0_uu_x(1,3,3)-gads_uu_x(1,3,3)
+        h0_uu_x(1,3,4)=g0_uu_x(1,3,4)-gads_uu_x(1,3,4)
+
+        h0_uu_x(1,4,1)=g0_uu_x(1,4,1)-gads_uu_x(1,4,1)
+        h0_uu_x(1,4,2)=g0_uu_x(1,4,2)-gads_uu_x(1,4,2)
+        h0_uu_x(1,4,3)=g0_uu_x(1,4,3)-gads_uu_x(1,4,3)
+        h0_uu_x(1,4,4)=g0_uu_x(1,4,4)-gads_uu_x(1,4,4)
 
         h0_uu_x(2,2,1)=g0_uu_x(2,2,1)-gads_uu_x(2,2,1)
         h0_uu_x(2,2,2)=g0_uu_x(2,2,2)-gads_uu_x(2,2,2)

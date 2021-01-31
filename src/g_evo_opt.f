@@ -29,10 +29,10 @@ c----------------------------------------------------------------------
      &                       background,kappa_cd,rho_cd,
      &                       interptype,i_shift,regtype,
      &                       diss_kmax,tfunction,
-     &                       rbh,a_rot,kerrads_perturb)
+     &                       rbh,a_rot,kerrads_background)
         implicit none
         real*8 rbh,a_rot
-        integer kerrads_perturb
+        integer kerrads_background
         integer Nx,Ny,Nz
         integer phys_bdy(6),ghost_width(6)
         integer background
@@ -804,7 +804,7 @@ c----------------------------------------------------------------------
      &                einstein_ll,set_ll,
      &                phi10_x,phi10_xx,
      &                x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                rbh,a_rot,kerrads_perturb)
+     &                rbh,a_rot,kerrads_background)
 
 
                 do a=1,4
@@ -3268,9 +3268,12 @@ c----------------------------------------------------------------------
                   write(*,*) ' gads_tt :',gads_ll(1,1)
                   write(*,*) ' gads_tx :',gads_ll(1,2)
                   write(*,*) ' gads_ty :',gads_ll(1,3)
+                  write(*,*) ' gads_tz :',gads_ll(1,4)
                   write(*,*) ' gads_xx :',gads_ll(2,2)
                   write(*,*) ' gads_xy :',gads_ll(2,3)
+                  write(*,*) ' gads_xz :',gads_ll(2,4)
                   write(*,*) ' gads_yy :',gads_ll(3,3)
+                  write(*,*) ' gads_yz :',gads_ll(3,4)
                   write(*,*) ' gads_zz:',gads_ll(4,4)
                   write(*,*) ' h0_tt :',h0_ll(1,1)
                   write(*,*) ' h0_tx :',h0_ll(1,2)

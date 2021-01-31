@@ -22,10 +22,10 @@ c----------------------------------------------------------------------
      &                      Hb_z_np1,Hb_z_n,Hb_z_nm1,Hb_z_t_n,
      &                      phi1_np1,phi1_n,phi1_nm1,phi1_t_n,tfunction,
      &                      L,phys_bdy,x,y,z,dt,chr,ex,Nx,Ny,Nz,regtype,
-     &                      rbh,a_rot,kerrads_perturb)
+     &                      rbh,a_rot,kerrads_background)
         implicit none
         real*8 rbh,a_rot
-        integer kerrads_perturb
+        integer kerrads_background
         integer Nx,Ny,Nz
         integer phys_bdy(6),ghost_width(6)
         integer regtype
@@ -279,7 +279,7 @@ c----------------------------------------------------------------------
      &                einstein_ll,set_ll,
      &                phi10_x,phi10_xx,
      &                x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                rbh,a_rot,kerrads_perturb)
+     &                rbh,a_rot,kerrads_background)
 
 !      write (*,*) 'gb_tt_np1(i,j,k),gb_tt_n(i,j,k),gb_tt_nm1(i,j,k)='
 !     &            ,gb_tt_np1(i,j,k),gb_tt_n(i,j,k),gb_tt_nm1(i,j,k)
@@ -1030,6 +1030,27 @@ c----------------------------------------------------------------------
               ! diagnostic
               tfunction(i,j,k)=gb_tt_tt0
 
+!            if ((abs(gb_tt_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_tt_nm1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_tx_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_tx_nm1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_ty_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_ty_nm1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_tz_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_tz_nm1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_xx_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_xx_nm1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_xy_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_xy_nm1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_xz_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_xz_nm1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_yy_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_yy_nm1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_yz_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_yz_nm1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_zz_np1(i,j,k)).gt.10.0d0**(-10)).or.
+!     -          (abs(gb_zz_nm1(i,j,k)).gt.10.0d0**(-10)) ) then
+!
 !      write (*,*) 'gb_tt_np1(i,j,k),gb_tt_n(i,j,k),gb_tt_nm1(i,j,k)='
 !     &            ,gb_tt_np1(i,j,k),gb_tt_n(i,j,k),gb_tt_nm1(i,j,k)
 !      write (*,*) 'gb_tx_np1(i,j,k),gb_tx_n(i,j,k),gb_tx_nm1(i,j,k)='
@@ -1058,6 +1079,35 @@ c----------------------------------------------------------------------
 !     &            ,Hb_y_np1(i,j,k),Hb_y_n(i,j,k),Hb_y_nm1(i,j,k)
 !      write (*,*) 'Hb_z_np1(i,j,k),Hb_z_n(i,j,k),Hb_z_nm1(i,j,k)='
 !     &            ,Hb_z_np1(i,j,k),Hb_z_n(i,j,k),Hb_z_nm1(i,j,k)
+!      write (*,*) 'gb_tx_t0=',gb_tx_t0
+!      write (*,*) 'gb_tx_tt0=',gb_tx_tt0
+!      do a=1,4
+!       do b=1,4
+!        write (*,*) 'a,b=',a,b
+!        write (*,*) 'term1sub(a,b)=',term1sub(a,b)
+!        write (*,*) 'term2(a,b)=',term2(a,b)
+!        write (*,*) 'term3(a,b)=',term3(a,b)
+!        write (*,*) 'term4(a,b)=',term4(a,b)
+!        write (*,*) 'term5(a,b)=',term5(a,b)
+!        write (*,*) 'term6(a,b)=',term6(a,b)
+!        write (*,*) 'term7(a,b)=',term7(a,b)
+!        write (*,*) 'term8(a,b)=',term8(a,b)
+!
+!       end do
+!      end do
+!
+!      do a=1,4
+!       do b=1,4
+!        do c=1,4
+!         write (*,*) 'a,b,c=',a,b,c
+!         write (*,*) 'h0_ll_x(a,b,c)=',h0_ll_x(a,b,c)
+!         write (*,*) 'h0_uu_x(a,b,c)=',h0_uu_x(a,b,c)
+!        end do
+!       end do
+!      end do
+!      stop
+!
+!            end if
 
             end if
            end do

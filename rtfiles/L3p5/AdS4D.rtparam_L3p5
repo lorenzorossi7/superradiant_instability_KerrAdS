@@ -2,6 +2,8 @@ dim := 3
 
 refsym := 0
 
+kerrads_background := 1
+
 #------ Initial Data -------------------------------------------------------
 
 #scalar field ID#

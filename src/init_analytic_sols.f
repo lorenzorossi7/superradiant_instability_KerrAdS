@@ -327,8 +327,8 @@ c----------------------------------------------------------------------
         M0=rbh/2
       ! Minimum black hole mass. For M0 below this value, there is a naked singularity
         M0_min=((2*(1 + a_rot**2/L**2) + Sqrt((1 + a_rot**2/L**2)**2 
-     &       + (12*a_rot**2)/L**2))*Sqrt(-1 + Sqrt((1 + a_rot**2/L**2)**2 
-     &       + (12*a_rot**2)/L**2) - a_rot**2/L**2))/(3.*Sqrt(6.))
+     &   + (12*a_rot**2)/L**2))*Sqrt(-1 + Sqrt((1 + a_rot**2/L**2)**2 
+     &   + (12*a_rot**2)/L**2) - a_rot**2/L**2))/(3.*Sqrt(6.))
 
         if (a_rot.ge.L) then
          write (*,*) "ERROR in choice of Kerr-AdS initial parameters: 
@@ -445,7 +445,7 @@ c----------------------------------------------------------------------
      &                         Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
      &                         phys_bdy,
      &                         x,y,z,dt,chr,ex,Nx,Ny,Nz,regtype,
-     &                         kerrads_perturb)
+     &                         kerrads_background)
         implicit none
 
         real*8 PI
@@ -453,7 +453,7 @@ c----------------------------------------------------------------------
 
         integer Nx,Ny,Nz
         integer regtype
-        integer kerrads_perturb
+        integer kerrads_background
         integer phys_bdy(6)
         real*8 rbh,a_rot,M0,M0_min
         real*8 rblhor
@@ -572,7 +572,7 @@ c----------------------------------------------------------------------
                  end if
 
             !Kerr-AdS barred quantities if we evolve a perturbation of Kerr-AdS
-            if (kerrads_perturb.eq.1) then
+            if (kerrads_background.eq.1) then
               gb_tt(i,j,k)=0
               gb_tx(i,j,k)=0
               gb_ty(i,j,k)=0
@@ -589,7 +589,7 @@ c----------------------------------------------------------------------
               Hb_z(i,j,k)=0
 
             !Kerr-AdS barred quantities if we evolve a perturbation of pure AdS
-            else if (kerrads_perturb.eq.0) then
+            else if (kerrads_background.eq.0) then
 
               if (chr(i,j,k).eq.ex) then
                  gb_tt(i,j,k)=0
@@ -1189,7 +1189,7 @@ c----------------------------------------------------------------------
 !        end if
 
               end if !closes condition on chr(i,j,k).eq.ex
-             end if !closes condition on kerrads_perturb.eq.0
+             end if !closes condition on kerrads_background.eq.0
             end do
            end do
         end do

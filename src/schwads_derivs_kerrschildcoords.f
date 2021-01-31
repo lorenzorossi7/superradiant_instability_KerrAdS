@@ -1795,111 +1795,212 @@ c----------------------------------------------------------------------
      &                    boxschwadsx_u(4)*gschwads_ll(a,4)
               end do
 
-        ! calculate Christoffel symbol derivatives at point i,j
-        !(gamma^a_bc,e = 1/2 g^ad_,e(g_bd,c  + g_cd,b  - g_bc,d)
-        !              +   1/2 g^ad(g_bd,ce + g_cd,be - g_bc,de))
-        do a=1,4
-          do b=1,4
-            do c=1,4
-              do e=1,4
-                gammaschwads_ull_x(a,b,c,e)=0
-                do d=1,4
-                  gammaschwads_ull_x(a,b,c,e)=
-     &             gammaschwads_ull_x(a,b,c,e)
-     &              +0.5d0*gschwads_uu_x(a,d,e)*
-     &                  (gschwads_ll_x(b,d,c)+
-     &                    gschwads_ll_x(c,d,b)
-     &                  -gschwads_ll_x(b,c,d))
-     &              +0.5d0*gschwads_uu(a,d)*
-     &                  (gschwads_ll_xx(b,d,c,e)+
-     &                    gschwads_ll_xx(c,d,b,e)
-     &                  -gschwads_ll_xx(b,c,d,e))
-                end do
-              end do
-            end do
-          end do
-        end do
+        !COMPUTE ADDITIONAL, UNNECESSARY QUANTITIES
+!        ! calculate Christoffel symbol derivatives at point i,j
+!        !(gamma^a_bc,e = 1/2 g^ad_,e(g_bd,c  + g_cd,b  - g_bc,d)
+!        !              +   1/2 g^ad(g_bd,ce + g_cd,be - g_bc,de))
+!        do a=1,4
+!          do b=1,4
+!            do c=1,4
+!              do e=1,4
+!                gammaschwads_ull_x(a,b,c,e)=0
+!                do d=1,4
+!                  gammaschwads_ull_x(a,b,c,e)=
+!     &             gammaschwads_ull_x(a,b,c,e)
+!     &              +0.5d0*gschwads_uu_x(a,d,e)*
+!     &                  (gschwads_ll_x(b,d,c)+
+!     &                    gschwads_ll_x(c,d,b)
+!     &                  -gschwads_ll_x(b,c,d))
+!     &              +0.5d0*gschwads_uu(a,d)*
+!     &                  (gschwads_ll_xx(b,d,c,e)+
+!     &                    gschwads_ll_xx(c,d,b,e)
+!     &                  -gschwads_ll_xx(b,c,d,e))
+!                end do
+!              end do
+!            end do
+!          end do
+!        end do
+!
+!        ! calculate riemann tensor at point i,j
+!        !(R^a_bcd =gamma^a_bd,c - gamma^a_bc,d
+!        !          +gamma^a_ce gamma^e_bd - gamma^a_de gamma^e_bc)
+!        do a=1,4
+!          do b=1,4
+!            do c=1,4
+!              do d=1,4
+!                riemannschwads_ulll(a,b,c,d)=
+!     &                gammaschwads_ull_x(a,b,d,c)
+!     &               -gammaschwads_ull_x(a,b,c,d)
+!                do e=1,4
+!                   riemannschwads_ulll(a,b,c,d)=
+!     &                riemannschwads_ulll(a,b,c,d)
+!     &               +gammaschwads_ull(a,c,e)*
+!     &                      gammaschwads_ull(e,b,d)
+!     &               -gammaschwads_ull(a,d,e)*
+!     &                      gammaschwads_ull(e,b,c)
+!                end do
+!              end do
+!            end do
+!          end do
+!        end do
+!
+!        ! calculate Ricci tensor at point i,j
+!        !(R_bd = R^a_bad)
+!        do b=1,4
+!          do d=1,4
+!            riccischwads_ll(b,d)=0
+!            do a=1,4
+!              riccischwads_ll(b,d)=riccischwads_ll(b,d)
+!     &            +riemannschwads_ulll(a,b,a,d)
+!            end do
+!          end do
+!        end do
+!
+!        ! calculate raised Ricci tensor at point i,j
+!        !(R_a^b = R_ad g^db)
+!        do a=1,4
+!          do b=1,4
+!            riccischwads_lu(a,b)=0
+!            do d=1,4
+!              riccischwads_lu(a,b)=riccischwads_lu(a,b)
+!     &         +riccischwads_ll(a,d)*gschwads_uu(d,b)
+!            end do
+!          end do
+!        end do
+!
+!        ! calculate Ricci scalar
+!        !(R = R_a^a)
+!        riccischwads=0
+!        do a=1,4
+!          riccischwads=riccischwads+riccischwads_lu(a,a)
+!        end do
+!
+!        ! calculates Einstein tensor at point i,j
+!        !(G_ab = R_ab - 1/2 R g_ab)
+!        do a=1,4
+!          do b=1,4
+!            einsteinschwads_ll(a,b)=riccischwads_ll(a,b)
+!     &       -0.5d0*riccischwads*gschwads_ll(a,b)
+!          end do
+!        end do
+!
+!        ! calculates stress-energy tensor at point i,j 
+!        !(T_ab = 2*phi1,a phi1,b - (phi1,c phi1,d) g^cd g_ab + ...)
+!        grad_phi1schwads_sq=0
+!        do a=1,4
+!          do b=1,4
+!            grad_phi1schwads_sq=grad_phi1schwads_sq
+!     &        +phi1schwads_x(a)*phi1schwads_x(b)*gschwads_uu(a,b)
+!          end do
+!        end do
+!
+!        do a=1,4
+!          do b=1,4
+!            setschwads_ll(a,b)=
+!     &            phi1schwads_x(a)*phi1schwads_x(b)
+!     &           -gschwads_ll(a,b)*(grad_phi1schwads_sq/2)
+!          end do
+!        end do
 
-        ! calculate riemann tensor at point i,j
-        !(R^a_bcd =gamma^a_bd,c - gamma^a_bc,d
-        !          +gamma^a_ce gamma^e_bd - gamma^a_de gamma^e_bc)
-        do a=1,4
-          do b=1,4
-            do c=1,4
-              do d=1,4
-                riemannschwads_ulll(a,b,c,d)=
-     &                gammaschwads_ull_x(a,b,d,c)
-     &               -gammaschwads_ull_x(a,b,c,d)
-                do e=1,4
-                   riemannschwads_ulll(a,b,c,d)=
-     &                riemannschwads_ulll(a,b,c,d)
-     &               +gammaschwads_ull(a,c,e)*
-     &                      gammaschwads_ull(e,b,d)
-     &               -gammaschwads_ull(a,d,e)*
-     &                      gammaschwads_ull(e,b,c)
-                end do
-              end do
-            end do
-          end do
-        end do
 
-        ! calculate Ricci tensor at point i,j
-        !(R_bd = R^a_bad)
-        do b=1,4
-          do d=1,4
-            riccischwads_ll(b,d)=0
-            do a=1,4
-              riccischwads_ll(b,d)=riccischwads_ll(b,d)
-     &            +riemannschwads_ulll(a,b,a,d)
-            end do
-          end do
-        end do
 
-        ! calculate raised Ricci tensor at point i,j
-        !(R_a^b = R_ad g^db)
-        do a=1,4
-          do b=1,4
-            riccischwads_lu(a,b)=0
-            do d=1,4
-              riccischwads_lu(a,b)=riccischwads_lu(a,b)
-     &         +riccischwads_ll(a,d)*gschwads_uu(d,b)
-            end do
-          end do
-        end do
 
-        ! calculate Ricci scalar
-        !(R = R_a^a)
-        riccischwads=0
-        do a=1,4
-          riccischwads=riccischwads+riccischwads_lu(a,a)
-        end do
-  
-        ! calculates Einstein tensor at point i,j
-        !(G_ab = R_ab - 1/2 R g_ab)
-        do a=1,4
-          do b=1,4
-            einsteinschwads_ll(a,b)=riccischwads_ll(a,b)
-     &       -0.5d0*riccischwads*gschwads_ll(a,b)
-          end do
-        end do
+!!!!!!!!!!!DEBUG!!!!!!!
+!        if ((abs(einsteinschwads_ll(1,1)-3*gschwads_ll(1,1)
+!     -         -8*PI*setschwads_ll(1,1)).gt.10.0d0**(10)).or.
+!     -       (abs(einsteinschwads_ll(1,2)-3*gschwads_ll(1,2)
+!     -         -8*PI*setschwads_ll(1,2)).gt.10.0d0**(10)).or.
+!     -       (abs(einsteinschwads_ll(1,3)-3*gschwads_ll(1,3)
+!     -         -8*PI*setschwads_ll(1,3)).gt.10.0d0**(10)).or.
+!     -       (abs(einsteinschwads_ll(1,4)-3*gschwads_ll(1,4)
+!     -         -8*PI*setschwads_ll(1,4)).gt.10.0d0**(10)).or.
+!     -       (abs(einsteinschwads_ll(2,2)-3*gschwads_ll(2,2)
+!     -         -8*PI*setschwads_ll(2,2)).gt.10.0d0**(10)).or.
+!     -       (abs(einsteinschwads_ll(2,3)-3*gschwads_ll(2,3)
+!     -         -8*PI*setschwads_ll(2,3)).gt.10.0d0**(10)).or.
+!     -       (abs(einsteinschwads_ll(2,4)-3*gschwads_ll(2,4)
+!     -         -8*PI*setschwads_ll(2,4)).gt.10.0d0**(10)).or.
+!     -       (abs(einsteinschwads_ll(3,3)-3*gschwads_ll(3,3)
+!     -         -8*PI*setschwads_ll(3,3)).gt.10.0d0**(10)).or.
+!     -       (abs(einsteinschwads_ll(3,4)-3*gschwads_ll(3,4)
+!     -         -8*PI*setschwads_ll(3,4)).gt.10.0d0**(10)).or.
+!     -       (abs(einsteinschwads_ll(4,4)-3*gschwads_ll(4,4)
+!     -         -8*PI*setschwads_ll(4,4)).gt.10.0d0**(10)) ) then
+!
+!        write (*,*) "NEW POINT"
+!        write (*,*) "x0,y0,z0=",x0,y0,z0
+!        write (*,*) "rho0,theta0,phi0=",rho0,theta0,phi0
+!        do a=1,4
+!          write (*,*) "a,Hschwads_l(a)="
+!     -                   ,a,Hschwads_l(a)
+!         do b=1,4
+!             write (*,*) "a,b,gschwads_ll(a,b)="
+!     -                   ,a,b,gschwads_ll(a,b)
+!             write (*,*) "a,b,gschwads_uu(a,b)="
+!     -                   ,a,b,gschwads_uu(a,b)
+!          do c=1,4
+!             write (*,*) "a,b,c,gschwads_ll_x(a,b,c)="
+!     -                   ,a,b,c,gschwads_ll_x(a,b,c)
+!             write (*,*) "a,b,c,gschwads_ll_sph_x(a,b,c)="
+!     -                   ,a,b,c,gschwads_ll_sph_x(a,b,c)
+!
+!           do d=1,4
+!             write (*,*) "a,b,c,d,gschwads_ll_xx(a,b,c,d)="
+!     -                   ,a,b,c,d,gschwads_ll_xx(a,b,c,d)
+!           end do
+!          end do
+!         end do
+!        end do
+!        do a=1,4
+!         do b=1,4
+!          do c=1,4
+!            write(*,*) "a,b,c,gammaschwads_ull(a,b,c)=",
+!     -           a,b,c,gammaschwads_ull(a,b,c)
+!          end do
+!         end do
+!        end do
+!        do a=1,4
+!         do b=1,4
+!          do c=1,4
+!           do d=1,4
+!            write(*,*) "a,b,c,d,gammaschwads_ull_x(a,b,c,d)=",
+!     -           a,b,c,d,gammaschwads_ull_x(a,b,c,d)
+!           end do
+!          end do
+!         end do
+!        end do
+!        do a=1,4
+!         do b=1,4
+!          do c=1,4
+!           do d=1,4
+!            write(*,*) "a,b,c,d,riemannschwads_ulll(a,b,c,d)=",
+!     -           a,b,c,d,riemannschwads_ulll(a,b,c,d)
+!           end do
+!          end do
+!         end do
+!        end do
+!
+!         do a=1,4
+!          do b=1,4
+!            write (*,*) "a,b,
+!     -       einsteinschwads_ll(a,b)+ Lambda* gschwads_ll(a,b)
+!     -       setschwads_ll(a,b)="
+!     -       ,a,b,
+!     -        einsteinschwads_ll(a,b)-3*gschwads_ll(a,b),
+!     -        setschwads_ll(a,b)
+!          end do
+!         end do
+!         do b=1,4
+!          do c=1,4
+!            write (*,*) "b,c,riccischwads_ll(b,c)="
+!     -       ,b,c,riccischwads_ll(b,c)
+!          end do
+!         end do
+!         write (*,*) "riccischwads=",riccischwads
+!
+!            end if
 
-        ! calculates stress-energy tensor at point i,j 
-        !(T_ab = 2*phi1,a phi1,b - (phi1,c phi1,d) g^cd g_ab + ...)
-        grad_phi1schwads_sq=0
-        do a=1,4
-          do b=1,4
-            grad_phi1schwads_sq=grad_phi1schwads_sq
-     &        +phi1schwads_x(a)*phi1schwads_x(b)*gschwads_uu(a,b)
-          end do
-        end do
 
-        do a=1,4
-          do b=1,4
-            setschwads_ll(a,b)=
-     &            phi1schwads_x(a)*phi1schwads_x(b)
-     &           -gschwads_ll(a,b)*(grad_phi1schwads_sq/2)
-          end do
-        end do
 
 !!!!!!!!!DEBUG!!!!
 !        if ((abs(x0-(-1.0+5*dx)).lt.10.0d0**(-10))

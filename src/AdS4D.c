@@ -25,11 +25,11 @@
 int axisym=1;
 
 //=============================================================================
-// if kerrads_perturb is set to 1 (read from parameter file) then we evolve a
+// if kerrads_background is set to 1 (read from parameter file) then we evolve a
 // perturbation of Kerr-AdS in 4D in Cartesian Kerr-Schild coordinates,
 // rather than a perturbation of pure AdS in Cartesian coordianates
 //=============================================================================
-int kerrads_perturb;
+int kerrads_background;
 
 //=============================================================================
 // set in fparam for now
@@ -2088,7 +2088,7 @@ void AdS4D_var_post_init(char *pfile)
     AMRD_real_param(pfile,"phi1_x0_2",phi1_x0_2,AMRD_dim);
     AMRD_real_param(pfile,"phi1_ecc_2",phi1_ecc_2,AMRD_dim);  
 
-    kerrads_perturb=0; AMRD_int_param(pfile,"kerrads_perturb",&kerrads_perturb,1);  
+    kerrads_background=0; AMRD_int_param(pfile,"kerrads_background",&kerrads_background,1);  
 
     kappa_cd=0; AMRD_real_param(pfile,"kappa_cd",&kappa_cd,1);
     rho_cd=0; AMRD_real_param(pfile,"rho_cd",&rho_cd,1);    
@@ -2846,7 +2846,7 @@ void AdS4D_t0_cnst_data(void)
                             Hb_t,Hb_x,Hb_y,Hb_z,
                             Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
                             phys_bdy,
-                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_perturb);
+                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_background);
         	}
         	else if (ief_bh_r0&&a_rot0)
         	{
@@ -2861,7 +2861,7 @@ void AdS4D_t0_cnst_data(void)
                             Hb_t,Hb_x,Hb_y,Hb_z,
                             Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
                             phys_bdy,
-                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_perturb);
+                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_background);
 //        		        			MPI_Barrier(MPI_COMM_WORLD);
 //    				if (my_rank==0) {printf("post init_kerrads4d_bh_\n"); fflush(stdout);}
         	}
@@ -3002,7 +3002,7 @@ void AdS4D_t0_cnst_data(void)
                 Hb_t_n,Hb_x_n,Hb_y_n,
                 Hb_z_n,
                 &AdS_L,phys_bdy,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,
-                &ief_bh_r0,&a_rot0,&kerrads_perturb);   
+                &ief_bh_r0,&a_rot0,&kerrads_background);   
 //            	        		    MPI_Barrier(MPI_COMM_WORLD);
 //    if (my_rank==0) {printf("post init_hb- pre init_nm1\n"); fflush(stdout); }
         init_nm1_(gb_tt_np1,gb_tt_n,gb_tt_nm1,gb_tt_t_n,
@@ -3021,7 +3021,7 @@ void AdS4D_t0_cnst_data(void)
                     Hb_z_np1,Hb_z_n,Hb_z_nm1,Hb_z_t_n,
                     phi1_np1,phi1_n,phi1_nm1,phi1_t_n,tfunction,
                     &AdS_L,phys_bdy,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,
-                    &ief_bh_r0,&a_rot0,&kerrads_perturb);   
+                    &ief_bh_r0,&a_rot0,&kerrads_background);   
 //                    	        		    MPI_Barrier(MPI_COMM_WORLD);
 //    if (my_rank==0) {printf("post init_nm1\n"); fflush(stdout); }
                     //   for (i=0; i<Nx; i++)
@@ -3087,7 +3087,7 @@ void AdS4D_t0_cnst_data(void)
                     Hb_z_np1,Hb_z_n,Hb_z_nm1,
                     phi1_np1,phi1_n,phi1_nm1,
                     x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
-                    &ief_bh_r0,&a_rot0,&kerrads_perturb);
+                    &ief_bh_r0,&a_rot0,&kerrads_background);
             //NOTICE: relkretsch_np1 is not synchronized yet at this stage, meaning that only 1 process has a non-zero value at x=y=z=0. This is crucial for how we save and print relkretschcentregrid in pre_tstep    
         }
 
@@ -3110,7 +3110,7 @@ void AdS4D_t0_cnst_data(void)
                     Hb_z_np1,Hb_z_n,Hb_z_nm1,
                     phi1_np1,phi1_n,phi1_nm1,
                     x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
-                    &ief_bh_r0,&a_rot0,&kerrads_perturb);
+                    &ief_bh_r0,&a_rot0,&kerrads_background);
         }
 
     }     
@@ -3182,7 +3182,7 @@ void AdS4D_pre_io_calc(void)
                 Hb_z_n,Hb_z_nm1,Hb_z_np1,
                 phi1_n,phi1_nm1,phi1_np1,
                 x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
-                &ief_bh_r0,&a_rot0,&kerrads_perturb);    
+                &ief_bh_r0,&a_rot0,&kerrads_background);    
         }   
     }
     else
@@ -6232,7 +6232,7 @@ void AdS4D_pre_io_calc(void)
                 Hb_z_np1,Hb_z_n,Hb_z_nm1,
                 phi1_np1,phi1_n,phi1_nm1,
                 x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
-                &ief_bh_r0,&a_rot0,&kerrads_perturb);    
+                &ief_bh_r0,&a_rot0,&kerrads_background);    
         }   
     } //closes condition on ct==0   
 
@@ -6276,6 +6276,35 @@ void AdS4D_pre_io_calc(void)
                         iresyz[ind]=efe_yz_ires[ind];
                         ireszz[ind]=efe_zz_ires[ind];
                         ireskg[ind]=kg_ires[ind];
+//                        if ((fabs(iresall[ind])>0)&&
+//                        	(
+//                        	(fabs(gb_tt_n[ind])>0)||
+//                        	(fabs(gb_tx_n[ind])>0)||
+//                        	(fabs(gb_ty_n[ind])>0)||
+//                        	(fabs(gb_tz_n[ind])>0)||
+//                        	(fabs(gb_xx_n[ind])>0)||
+//                        	(fabs(gb_xy_n[ind])>0)||
+//                        	(fabs(gb_xz_n[ind])>0)||
+//                        	(fabs(gb_yy_n[ind])>0)||
+//                        	(fabs(gb_yz_n[ind])>0)||
+//                        	(fabs(gb_zz_n[ind])>0))
+//                        	)
+//                        {	
+//                        	printf("i=%i,j=%i,k=%i,ind=%i\n",i,j,k,ind);
+//                        	printf("x[i]=%lf,y[j]=%lf,z[k]=%lf,rho=%lf\n",x[i],y[j],z[k],rho);
+//                        	printf("iresall[ind]=%lf\n",iresall[ind]);
+//                        	printf("gb_tt_n[ind]=%lf\n",gb_tt_n[ind]);
+//                        	printf("gb_tx_n[ind]=%lf\n",gb_tx_n[ind]);
+//                        	printf("gb_ty_n[ind]=%lf\n",gb_ty_n[ind]);
+//                        	printf("gb_tz_n[ind]=%lf\n",gb_tz_n[ind]);
+//                        	printf("gb_xx_n[ind]=%lf\n",gb_xx_n[ind]);
+//                        	printf("gb_xy_n[ind]=%lf\n",gb_xy_n[ind]);
+//                        	printf("gb_xz_n[ind]=%lf\n",gb_xz_n[ind]);
+//                        	printf("gb_yy_n[ind]=%lf\n",gb_yy_n[ind]);
+//                        	printf("gb_yz_n[ind]=%lf\n",gb_yz_n[ind]);
+//                        	printf("gb_zz_n[ind]=%lf\n",gb_zz_n[ind]);
+//                        	//AMRD_stop("NON zero iresall and metric","");
+//                        }
                     }
                 }
             } 
@@ -6522,7 +6551,7 @@ void AdS4D_evolve(int iter)
                 &background,&kappa_cd,&rho_cd,
                 &interptype,&i_shift,&regtype,
                 &diss_kmax,tfunction,
-                &ief_bh_r0,&a_rot0,&kerrads_perturb);  
+                &ief_bh_r0,&a_rot0,&kerrads_background);  
 
                 //     MPI_Comm_size(MPI_COMM_WORLD,&uniSize);    
                 //     for (m=0; m<uniSize; m++)    
@@ -6603,7 +6632,7 @@ void AdS4D_evolve(int iter)
                 Hb_z_np1,Hb_z_n,Hb_z_nm1,
                 phi1_np1,phi1_n,phi1_nm1,
                 x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
-                &ief_bh_r0,&a_rot0,&kerrads_perturb);    //NOTICE: relkretsch_np1 is not synchronized yet at this stage, meaning that only 1 process has a non-zero value at x=y=z=0. This is crucial for how we save and print relkretschcentregrid in post_tstep   
+                &ief_bh_r0,&a_rot0,&kerrads_background);    //NOTICE: relkretsch_np1 is not synchronized yet at this stage, meaning that only 1 process has a non-zero value at x=y=z=0. This is crucial for how we save and print relkretschcentregrid in post_tstep   
         }
         if (output_riemanncube)
         {       
@@ -6624,7 +6653,7 @@ void AdS4D_evolve(int iter)
                 Hb_z_np1,Hb_z_n,Hb_z_nm1,
                 phi1_np1,phi1_n,phi1_nm1,
                 x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width,
-                &ief_bh_r0,&a_rot0,&kerrads_perturb);
+                &ief_bh_r0,&a_rot0,&kerrads_background);
         }   
     }
 

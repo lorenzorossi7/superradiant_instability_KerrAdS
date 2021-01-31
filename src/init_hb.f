@@ -14,10 +14,10 @@ c----------------------------------------------------------------------
      &                     Hb_t_n,Hb_x_n,Hb_y_n,
      &                     Hb_z_n,
      &                     L,phys_bdy,x,y,z,dt,chr,ex,Nx,Ny,Nz,regtype,
-     &                     rbh,a_rot,kerrads_perturb)
+     &                     rbh,a_rot,kerrads_background)
         implicit none
         real*8 rbh,a_rot
-        integer kerrads_perturb
+        integer kerrads_background
         integer Nx,Ny,Nz
         integer phys_bdy(6),ghost_width(6)
         integer regtype
@@ -174,7 +174,7 @@ c----------------------------------------------------------------------
      &              einstein_ll,set_ll,
      &              phi10_x,phi10_xx,
      &              x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &              rbh,a_rot,kerrads_perturb)
+     &              rbh,a_rot,kerrads_background)
 
               ! calculate boxx^c at point i,j
               ! (boxx^c = -g^ab gamma^c_ab)
@@ -207,6 +207,20 @@ c----------------------------------------------------------------------
               Hb_y_n(i,j,k)=(boxx_l(3)-Hads_l(3))/(1-rho0**2)
               Hb_z_n(i,j,k)=(boxx_l(4)-Hads_l(4))/(1-rho0**2)
 
+!              if ((abs(Hb_t_n(i,j,k)).gt.10.0d0**(-10)).and.
+!     &            (abs(Hb_x_n(i,j,k)).gt.10.0d0**(-10)).and.
+!     &            (abs(Hb_y_n(i,j,k)).gt.10.0d0**(-10)).and.
+!     &            (abs(Hb_z_n(i,j,k)).gt.10.0d0**(-10))  ) then
+!
+!                write (*,*) 'L,i,j,k,x0,y0,z0,rho0='
+!     &                      ,L,i,j,k,x0,y0,z0,rho0
+!        write (*,*) ' Hb_t_n(i,j,k),Hb_x_n(i,j,k),
+!     &                Hb_y_n(i,j,k),Hb_z_n(i,j,k)='
+!     &               ,Hb_t_n(i,j,k),Hb_x_n(i,j,k)
+!     &               ,Hb_y_n(i,j,k),Hb_z_n(i,j,k)
+!
+!              end if
+!
 !        write (*,*) 'L,i,j,k,x0,y0,z0,rho0=',L,i,j,k,x0,y0,z0,rho0
 !        write (*,*) ' Hb_t_n(i,j,k),Hb_x_n(i,j,k),
 !     &                Hb_y_n(i,j,k),Hb_z_n(i,j,k)='

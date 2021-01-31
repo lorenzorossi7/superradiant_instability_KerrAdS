@@ -26,11 +26,11 @@ c----------------------------------------------------------------------
      &                  Hb_z_np1,Hb_z_n,Hb_z_nm1,
      &                  phi1_np1,phi1_n,phi1_nm1,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,phys_bdy,ghost_width,
-     &                  rbh,a_rot,kerrads_perturb)
+     &                  rbh,a_rot,kerrads_background)
 
         implicit none
         real*8 rbh,a_rot
-        integer kerrads_perturb
+        integer kerrads_background
         integer Nx,Ny,Nz
         integer i,j,k
         integer phys_bdy(6),ghost_width(6)
@@ -224,7 +224,7 @@ c----------------------------------------------------------------------
      &                einstein_ll,set_ll,
      &                phi10_x,phi10_xx,
      &                x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                rbh,a_rot,kerrads_perturb)
+     &                rbh,a_rot,kerrads_background)
 
 !       write (*,*) 'L,i,j,k,x0,y0,z0,rho0=',L,i,j,k,x0,y0,z0,rho0
 !       write (*,*) 'g0_ll_x(1,1,1)=',g0_ll_x(1,1,1)
@@ -574,11 +574,11 @@ c-----------------------------------------------------------------------
      &                  Hb_z_np1,Hb_z_n,Hb_z_nm1,
      &                  phi1_np1,phi1_n,phi1_nm1,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,phys_bdy,ghost_width,
-     &                  rbh,a_rot,kerrads_perturb)
+     &                  rbh,a_rot,kerrads_background)
 
         implicit none
         real*8 rbh,a_rot
-        integer kerrads_perturb
+        integer kerrads_background
         integer Nx,Ny,Nz
         integer i,j,k
         integer phys_bdy(6),ghost_width(6)
@@ -771,7 +771,7 @@ c-----------------------------------------------------------------------
      &                einstein_ll,set_ll,
      &                phi10_x,phi10_xx,
      &                x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                rbh,a_rot,kerrads_perturb)
+     &                rbh,a_rot,kerrads_background)
 
                do a=1,4
                 do b=1,4
@@ -884,11 +884,11 @@ c-----------------------------------------------------------------------
      &                  Hb_z_np1,Hb_z_n,Hb_z_nm1,
      &                  phi1_np1,phi1_n,phi1_nm1,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,phys_bdy,ghost_width,
-     &                  rbh,a_rot,kerrads_perturb)
+     &                  rbh,a_rot,kerrads_background)
 
         implicit none
         real*8 rbh,a_rot
-        integer kerrads_perturb
+        integer kerrads_background
         integer Nx,Ny,Nz
         integer i,j,k
         integer phys_bdy(6),ghost_width(6)
@@ -1081,7 +1081,7 @@ c-----------------------------------------------------------------------
      &                einstein_ll,set_ll,
      &                phi10_x,phi10_xx,
      &                x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                rbh,a_rot,kerrads_perturb)
+     &                rbh,a_rot,kerrads_background)
 
                do a=1,4
                 do b=1,4
