@@ -3732,7 +3732,8 @@ c----------------------------------------------------------------------
         real*8 riemann_ulll(4,4,4,4)
         real*8 ricci_ll(4,4),ricci_lu(4,4),ricci
         real*8 einstein_ll(4,4),set_ll(4,4)
-        real*8 Hads_l(4),A_l(4),A_l_x(4,4)
+        real*8 Hads_l(4)
+        real*8 A_l(4),A_l_x(4,4)
         real*8 phi10_x(4),phi10_xx(4,4)
         real*8 gads_ll_sph(4,4),gads_uu_sph(4,4)
         real*8 gads_ll_sph_x(4,4,4),gads_uu_sph_x(4,4,4)
