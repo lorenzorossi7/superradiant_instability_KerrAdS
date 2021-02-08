@@ -6,20 +6,22 @@ c r0 is the radius parameter, i.e. r0=2*M0, where M0 is the BHmass
 c (r0 has no physical meaning, it is NOT the horizon radius)
 c----------------------------------------------------------------------
         subroutine ads_derivs_cartcoords(
-     &                  gads_ll,gads_uu,gads_ll_x,
+     &                  gads_ll,gads_uu,
+     &                  gads_ll_x,
      &                  gads_uu_x,gads_ll_xx,
      &                  Hads_l,
      &                  gammaads_ull,
      &					phi1ads,
      &					phi1ads_x,
-     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k)
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
+     &                  calc_der,calc_adv_quant)
 
         implicit none
 
         integer Nx,Ny,Nz
         integer i,j,k
         real*8  ief_bh_r0,a_rot,M0,M0_min
-        integer kerrads_background
+        logical calc_der,calc_adv_quant
 
         logical is_nan
 
@@ -42,7 +44,6 @@ c----------------------------------------------------------------------
         real*8 gads_ll(4,4),gads_uu(4,4)
         real*8 gads_ll_x(4,4,4),gads_uu_x(4,4,4),gads_ll_xx(4,4,4,4)
         real*8 Hads_l(4),A_l(4),A_l_x(4,4)
-        real*8 phi10_x(4),phi10_xx(4,4)
         real*8 gads_ll_sph(4,4),gads_uu_sph(4,4)
         real*8 gads_ll_sph_x(4,4,4),gads_uu_sph_x(4,4,4)
         real*8 gads_ll_sph_xx(4,4,4,4)
@@ -51,7 +52,7 @@ c----------------------------------------------------------------------
         real*8 d3xsph_dxcardxcardxcar(4,4,4,4)
         real*8 gammaads_ull(4,4,4)
         real*8 boxadsx_u(4)
-        real*8 phi1ads, phi1ads_x(4),phi1ads_xx(4,4)
+        real*8 phi1ads,phi1ads_x(4),phi1ads_xx(4,4)
         real*8 gammaads_ull_x(4,4,4,4)
         real*8 riemannads_ulll(4,4,4,4)
         real*8 ricciads_ll(4,4),ricciads_lu(4,4),ricciads
@@ -352,6 +353,13 @@ c----------------------------------------------------------------------
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !----------------------------------------------------------------------
+
+        if ((calc_adv_quant).and.(.not.calc_der)) then
+         write (*,*) "Error: cannot compute 
+     -    advanced tensorial quantities 
+     -    without computing metric derivatives"
+         stop
+        end if
         
         dx=(x(2)-x(1))
         dy=(y(2)-y(1))
@@ -500,6 +508,7 @@ c----------------------------------------------------------------------
 !        Hads_l(4)=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+
         g0_tt_ads_sph0 =
      -   -((4*rho0**2 + L**2*(-1 + rho0**2)**2)/
      -    (L**2*(-1 + rho0**2)**2))
@@ -538,7 +547,7 @@ c----------------------------------------------------------------------
      &         g0u_thetatheta_ads_sph0,g0u_thetaphi_ads_sph0,
      &         g0u_phiphi_ads_sph0,detg0_ads_sph0)
 
-
+       if (calc_der) then
         g0_tt_ads_sph_t  =
      -   0
         g0_tt_ads_sph_rho  =
@@ -844,7 +853,7 @@ c----------------------------------------------------------------------
         g0_phiphi_ads_sph_phiphi =
      -   0     
 
-
+       end if
 
         ! give values to the AdS metric
         gads_ll_sph(1,1)=g0_tt_ads_sph0
@@ -870,8 +879,7 @@ c----------------------------------------------------------------------
         gads_uu_sph(3,4)=g0u_thetaphi_ads_sph0
         gads_uu_sph(4,4)=g0u_phiphi_ads_sph0
 
-
-
+       if (calc_der) then
         gads_ll_sph_x(1,1,1)   =g0_tt_ads_sph_t
         gads_ll_sph_x(1,1,2)   =g0_tt_ads_sph_rho
         gads_ll_sph_x(1,1,3)   =g0_tt_ads_sph_theta
@@ -1022,18 +1030,22 @@ c----------------------------------------------------------------------
         gads_ll_sph_xx(4,4,3,4)=g0_phiphi_ads_sph_thetaphi
         gads_ll_sph_xx(4,4,4,4)=g0_phiphi_ads_sph_phiphi
 
+       end if
+
 
         do a=1,3
           do b=a+1,4
             gads_ll_sph(b,a)=gads_ll_sph(a,b)
             gads_uu_sph(b,a)=gads_uu_sph(a,b)
-            do c=1,4
-              gads_ll_sph_x(b,a,c)=gads_ll_sph_x(a,b,c)
-              do d=1,4
-                gads_ll_sph_xx(b,a,c,d)=gads_ll_sph_xx(a,b,c,d)
-                gads_ll_sph_xx(c,d,b,a)=gads_ll_sph_xx(c,d,a,b)
-              end do
-            end do
+            if (calc_der) then
+             do c=1,4
+               gads_ll_sph_x(b,a,c)=gads_ll_sph_x(a,b,c)
+               do d=1,4
+                 gads_ll_sph_xx(b,a,c,d)=gads_ll_sph_xx(a,b,c,d)
+                 gads_ll_sph_xx(c,d,b,a)=gads_ll_sph_xx(c,d,a,b)
+               end do
+             end do
+            end if
           end do
         end do
 
@@ -1061,6 +1073,7 @@ c----------------------------------------------------------------------
         dxsph_dxcar(4,3)=-(z0/(y0**2 + z0**2))
         dxsph_dxcar(4,4)=y0/(y0**2 + z0**2)
 
+       if (calc_der) then
         d2xsph_dxcardxcar(1,1,1)=
      -   0
         d2xsph_dxcardxcar(1,1,2)=
@@ -1397,6 +1410,7 @@ c----------------------------------------------------------------------
           end do
          end do
         end do
+       end if !closes condition on calc_der
 
         !compute Cartesian quantities in terms of spherical ones
         do a=1,4
@@ -1408,45 +1422,47 @@ c----------------------------------------------------------------------
             gads_ll_xx(a,b,c,d)=0
             gads_ll(a,b)=gads_ll(a,b)+
      &         dxsph_dxcar(c,a)*dxsph_dxcar(d,b)*gads_ll_sph(c,d)
-            do e=1,4
-             gads_ll_x(a,b,c)=gads_ll_x(a,b,c)+
-     &     d2xsph_dxcardxcar(d,c,a)*dxsph_dxcar(e,b)
-     &     *gads_ll_sph(d,e)+
-     &     dxsph_dxcar(d,a)*d2xsph_dxcardxcar(e,c,b)
-     &     *gads_ll_sph(d,e)
-             do f=1,4
-              gads_ll_x(a,b,c)=gads_ll_x(a,b,c)+
-     &     dxsph_dxcar(d,a)*dxsph_dxcar(e,b)*dxsph_dxcar(f,c)
-     &     *gads_ll_sph_x(d,e,f)
-              gads_ll_xx(a,b,c,d)=gads_ll_xx(a,b,c,d)+
-     &     d3xsph_dxcardxcardxcar(e,d,c,a)*dxsph_dxcar(f,b)
-     &     *gads_ll_sph(e,f)+
-     &     d2xsph_dxcardxcar(e,c,a)*d2xsph_dxcardxcar(f,d,b)
-     &     *gads_ll_sph(e,f)+
-     &     d2xsph_dxcardxcar(e,d,a)*d2xsph_dxcardxcar(f,c,b)
-     &     *gads_ll_sph(e,f)+
-     &     dxsph_dxcar(e,a)*d3xsph_dxcardxcardxcar(f,d,c,b)
-     &     *gads_ll_sph(e,f)
-              do g=1,4
-           gads_ll_xx(a,b,c,d)=gads_ll_xx(a,b,c,d)+
-     &     d2xsph_dxcardxcar(e,c,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,d)
-     &     *gads_ll_sph_x(e,f,g)+
-     &     dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,c,b)*dxsph_dxcar(g,d)
-     &     *gads_ll_sph_x(e,f,g)+
-     &     d2xsph_dxcardxcar(e,d,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,c)
-     &     *gads_ll_sph_x(e,f,g)+
-     &     dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,d,b)*dxsph_dxcar(g,c)
-     &     *gads_ll_sph_x(e,f,g)+
-     &     dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*d2xsph_dxcardxcar(g,d,c)
-     &     *gads_ll_sph_x(e,f,g)
-               do h=1,4
+            if (calc_der) then
+              do e=1,4
+               gads_ll_x(a,b,c)=gads_ll_x(a,b,c)+
+     &       d2xsph_dxcardxcar(d,c,a)*dxsph_dxcar(e,b)
+     &       *gads_ll_sph(d,e)+
+     &       dxsph_dxcar(d,a)*d2xsph_dxcardxcar(e,c,b)
+     &       *gads_ll_sph(d,e)
+               do f=1,4
+                gads_ll_x(a,b,c)=gads_ll_x(a,b,c)+
+     &       dxsph_dxcar(d,a)*dxsph_dxcar(e,b)*dxsph_dxcar(f,c)
+     &       *gads_ll_sph_x(d,e,f)
                 gads_ll_xx(a,b,c,d)=gads_ll_xx(a,b,c,d)+
-     &     dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*
-     &     dxsph_dxcar(g,c)*dxsph_dxcar(h,d)*gads_ll_sph_xx(e,f,g,h)
+     &       d3xsph_dxcardxcardxcar(e,d,c,a)*dxsph_dxcar(f,b)
+     &       *gads_ll_sph(e,f)+
+     &       d2xsph_dxcardxcar(e,c,a)*d2xsph_dxcardxcar(f,d,b)
+     &       *gads_ll_sph(e,f)+
+     &       d2xsph_dxcardxcar(e,d,a)*d2xsph_dxcardxcar(f,c,b)
+     &       *gads_ll_sph(e,f)+
+     &       dxsph_dxcar(e,a)*d3xsph_dxcardxcardxcar(f,d,c,b)
+     &       *gads_ll_sph(e,f)
+                do g=1,4
+             gads_ll_xx(a,b,c,d)=gads_ll_xx(a,b,c,d)+
+     &       d2xsph_dxcardxcar(e,c,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,d)
+     &       *gads_ll_sph_x(e,f,g)+
+     &       dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,c,b)*dxsph_dxcar(g,d)
+     &       *gads_ll_sph_x(e,f,g)+
+     &       d2xsph_dxcardxcar(e,d,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,c)
+     &       *gads_ll_sph_x(e,f,g)+
+     &       dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,d,b)*dxsph_dxcar(g,c)
+     &       *gads_ll_sph_x(e,f,g)+
+     &       dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*d2xsph_dxcardxcar(g,d,c)
+     &       *gads_ll_sph_x(e,f,g)
+                 do h=1,4
+                  gads_ll_xx(a,b,c,d)=gads_ll_xx(a,b,c,d)+
+     &       dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*
+     &       dxsph_dxcar(g,c)*dxsph_dxcar(h,d)*gads_ll_sph_xx(e,f,g,h)
+                 end do
+                end do
                end do
               end do
-             end do
-            end do
+            end if
            end do
           end do
          end do
@@ -1478,6 +1494,7 @@ c----------------------------------------------------------------------
         gads_ll(4,4)=
      -   4/(-1 + x0**2)**2
 
+       if (calc_der) then
         gads_ll_x(1,1,2)=
      -   (8*(x0 + x0**3))/(L**2*(-1 + x0**2)**3)
         gads_ll_x(1,1,3)=
@@ -1806,27 +1823,31 @@ c----------------------------------------------------------------------
      -      L**2*(3 - 4*x0**2 + x0**4)))/
      -  ((-1 + x0**2)**3*
      -    (4*x0**2 + L**2*(-1 + x0**2)**2))
-
+       end if
 
         do a=1,3
           do b=a+1,4
             gads_ll(b,a)=gads_ll(a,b)
-            do c=1,4
-              gads_ll_x(b,a,c)=gads_ll_x(a,b,c)
-            end do
+            if (calc_der) then
+             do c=1,4
+               gads_ll_x(b,a,c)=gads_ll_x(a,b,c)
+             end do
+            end if
           end do
         end do
 
-        do a=1,4
-          do b=1,4
-            do c=1,4
-              do d=1,4
-                gads_ll_xx(a,b,c,d)=
-     &             gads_ll_xx(min(a,b),max(a,b),min(c,d),max(c,d))
+        if (calc_der) then
+          do a=1,4
+            do b=1,4
+              do c=1,4
+                do d=1,4
+                  gads_ll_xx(a,b,c,d)=
+     &               gads_ll_xx(min(a,b),max(a,b),min(c,d),max(c,d))
+                end do
               end do
             end do
           end do
-        end do
+        end if
 
        end if !closes condition on y=z=0
 
@@ -1852,90 +1873,95 @@ c----------------------------------------------------------------------
      	!set values for the FULL bulk scalar field value of the analytic solution
 
      	phi1ads=0
-     	phi1ads_x(1)=0
-     	phi1ads_x(2)=0
-     	phi1ads_x(3)=0
-     	phi1ads_x(4)=0
-     	phi1ads_xx(1,1)=0
-     	phi1ads_xx(1,2)=0
-     	phi1ads_xx(1,3)=0
-     	phi1ads_xx(1,4)=0
-     	phi1ads_xx(2,2)=0
-     	phi1ads_xx(2,3)=0
-     	phi1ads_xx(2,4)=0
-     	phi1ads_xx(3,3)=0
-     	phi1ads_xx(3,4)=0
+        if (calc_der) then
+         phi1ads_x(1)=0
+         phi1ads_x(2)=0
+         phi1ads_x(3)=0
+         phi1ads_x(4)=0
+         phi1ads_xx(1,1)=0
+         phi1ads_xx(1,2)=0
+         phi1ads_xx(1,3)=0
+         phi1ads_xx(1,4)=0
+         phi1ads_xx(2,2)=0
+         phi1ads_xx(2,3)=0
+         phi1ads_xx(2,4)=0
+         phi1ads_xx(3,3)=0
+         phi1ads_xx(3,4)=0
 
-        do a=1,3
-          do b=a+1,4
-            phi1ads_xx(b,a)=phi1ads_xx(a,b)
-          end do
-        end do
+         do a=1,3
+           do b=a+1,4
+             phi1ads_xx(b,a)=phi1ads_xx(a,b)
+           end do
+         end do
+        end if
 
-        do a=1,4
-          do b=1,4
-            do c=1,4
-              gads_uu_x(a,b,c)=
-     &              -gads_ll_x(1,1,c)*gads_uu(a,1)*gads_uu(b,1)
-     &              -gads_ll_x(1,2,c)*(gads_uu(a,1)*gads_uu(b,2)
-     &                               +gads_uu(a,2)*gads_uu(b,1))
-     &              -gads_ll_x(1,3,c)*(gads_uu(a,1)*gads_uu(b,3)
-     &                               +gads_uu(a,3)*gads_uu(b,1))
-     &              -gads_ll_x(1,4,c)*(gads_uu(a,1)*gads_uu(b,4)
-     &                               +gads_uu(a,4)*gads_uu(b,1))
-     &              -gads_ll_x(2,2,c)*gads_uu(a,2)*gads_uu(b,2)
-     &              -gads_ll_x(2,3,c)*(gads_uu(a,2)*gads_uu(b,3)
-     &                               +gads_uu(a,3)*gads_uu(b,2))
-     &              -gads_ll_x(2,4,c)*(gads_uu(a,2)*gads_uu(b,4)
-     &                               +gads_uu(a,4)*gads_uu(b,2))
-     &              -gads_ll_x(3,3,c)*gads_uu(a,3)*gads_uu(b,3)
-     &              -gads_ll_x(3,4,c)*(gads_uu(a,3)*gads_uu(b,4)
-     &                               +gads_uu(a,4)*gads_uu(b,3))
-     &              -gads_ll_x(4,4,c)*gads_uu(a,4)*gads_uu(b,4)
-            end do
-          end do
-        end do
+        if (calc_der) then
+         do a=1,4
+           do b=1,4
+             do c=1,4
+               gads_uu_x(a,b,c)=
+     &               -gads_ll_x(1,1,c)*gads_uu(a,1)*gads_uu(b,1)
+     &               -gads_ll_x(1,2,c)*(gads_uu(a,1)*gads_uu(b,2)
+     &                                +gads_uu(a,2)*gads_uu(b,1))
+     &               -gads_ll_x(1,3,c)*(gads_uu(a,1)*gads_uu(b,3)
+     &                                +gads_uu(a,3)*gads_uu(b,1))
+     &               -gads_ll_x(1,4,c)*(gads_uu(a,1)*gads_uu(b,4)
+     &                                +gads_uu(a,4)*gads_uu(b,1))
+     &               -gads_ll_x(2,2,c)*gads_uu(a,2)*gads_uu(b,2)
+     &               -gads_ll_x(2,3,c)*(gads_uu(a,2)*gads_uu(b,3)
+     &                                +gads_uu(a,3)*gads_uu(b,2))
+     &               -gads_ll_x(2,4,c)*(gads_uu(a,2)*gads_uu(b,4)
+     &                                +gads_uu(a,4)*gads_uu(b,2))
+     &               -gads_ll_x(3,3,c)*gads_uu(a,3)*gads_uu(b,3)
+     &               -gads_ll_x(3,4,c)*(gads_uu(a,3)*gads_uu(b,4)
+     &                                +gads_uu(a,4)*gads_uu(b,3))
+     &               -gads_ll_x(4,4,c)*gads_uu(a,4)*gads_uu(b,4)
+             end do
+           end do
+         end do
 
-        ! give values to the Christoffel symbols
-        do a=1,4
-          do b=1,4
-            do c=1,4
-              gammaads_ull(a,b,c)=0
-              do d=1,4
-                gammaads_ull(a,b,c)=gammaads_ull(a,b,c)
-     &                          +0.5d0*gads_uu(a,d)
-     &                                *(gads_ll_x(c,d,b)
-     &                                 -gads_ll_x(b,c,d)
-     &                                 +gads_ll_x(d,b,c))
-              end do
-            end do
-          end do
-        end do
+          ! give values to the Christoffel symbols
+         do a=1,4
+           do b=1,4
+             do c=1,4
+               gammaads_ull(a,b,c)=0
+               do d=1,4
+                 gammaads_ull(a,b,c)=gammaads_ull(a,b,c)
+     &                           +0.5d0*gads_uu(a,d)
+     &                                 *(gads_ll_x(c,d,b)
+     &                                  -gads_ll_x(b,c,d)
+     &                                  +gads_ll_x(d,b,c))
+               end do
+             end do
+           end do
+         end do
 
-              ! calculate boxx^c at point i,j
-              ! (boxadsx^c = -gads^ab gammaads^c_ab)
-              do c=1,4
-                boxadsx_u(c)=-( gammaads_ull(c,1,1)*gads_uu(1,1)+
-     &                       gammaads_ull(c,2,2)*gads_uu(2,2)+
-     &                       gammaads_ull(c,3,3)*gads_uu(3,3)+
-     &                       gammaads_ull(c,4,4)*gads_uu(4,4)+
-     &                    2*(gammaads_ull(c,1,2)*gads_uu(1,2)+
-     &                       gammaads_ull(c,1,3)*gads_uu(1,3)+
-     &                       gammaads_ull(c,1,4)*gads_uu(1,4)+
-     &                       gammaads_ull(c,2,3)*gads_uu(2,3)+
-     &                       gammaads_ull(c,2,4)*gads_uu(2,4)+
-     &                       gammaads_ull(c,3,4)*gads_uu(3,4)) )
-              end do
+                ! calculate boxx^c at point i,j
+               ! (boxadsx^c = -gads^ab gammaads^c_ab)
+               do c=1,4
+                 boxadsx_u(c)=-( gammaads_ull(c,1,1)*gads_uu(1,1)+
+     &                        gammaads_ull(c,2,2)*gads_uu(2,2)+
+     &                        gammaads_ull(c,3,3)*gads_uu(3,3)+
+     &                        gammaads_ull(c,4,4)*gads_uu(4,4)+
+     &                     2*(gammaads_ull(c,1,2)*gads_uu(1,2)+
+     &                        gammaads_ull(c,1,3)*gads_uu(1,3)+
+     &                        gammaads_ull(c,1,4)*gads_uu(1,4)+
+     &                        gammaads_ull(c,2,3)*gads_uu(2,3)+
+     &                        gammaads_ull(c,2,4)*gads_uu(2,4)+
+     &                        gammaads_ull(c,3,4)*gads_uu(3,4)) )
+               end do
 
-              !compute Hads_l(a) in Cartesian coordinates
-              ! (Hads_a = gads_ab boxadsx^b)
-              do a=1,4
-                Hads_l(a)=boxadsx_u(1)*gads_ll(a,1)+
-     &                    boxadsx_u(2)*gads_ll(a,2)+
-     &                    boxadsx_u(3)*gads_ll(a,3)+
-     &                    boxadsx_u(4)*gads_ll(a,4)
-              end do
+                !compute Hads_l(a) in Cartesian coordinates
+               ! (Hads_a = gads_ab boxadsx^b)
+               do a=1,4
+                 Hads_l(a)=boxadsx_u(1)*gads_ll(a,1)+
+     &                     boxadsx_u(2)*gads_ll(a,2)+
+     &                     boxadsx_u(3)*gads_ll(a,3)+
+     &                     boxadsx_u(4)*gads_ll(a,4)
+               end do
+        end if
 
+        if (calc_adv_quant) then
         ! calculate Christoffel symbol derivatives at point i,j
         !(gamma^a_bc,e = 1/2 g^ad_,e(g_bd,c  + g_cd,b  - g_bc,d)
         !              +   1/2 g^ad(g_bd,ce + g_cd,be - g_bc,de))
@@ -2031,950 +2057,10 @@ c----------------------------------------------------------------------
      &           -gads_ll(a,b)*(grad_phi1ads_sq/2)
           end do
         end do
+       end if
 
 
-!!!!!!DEBUG!!!!
-!        g0_tt_ads0 =-(4*rho0**2+L**2*(-1+rho0**2)**2)
-!     &               /L**2/(-1+rho0**2)**2
-!        g0_tx_ads0 =0
-!        g0_ty_ads0 =0
-!        g0_tz_ads0 =0
-!        g0_xx_ads0 =(8*(-1+L**2)*(x0**2-y0**2-z0**2)
-!     &              +8*rho0**2+4*L**2*(1+rho0**4))
-!     &              /(-1+rho0**2)**2/(4*rho0**2+L**2*(-1+rho0**2)**2)
-!        g0_xy_ads0 =(16 *(-1 + L**2) *x0* y0)
-!     &              /((-1 + rho0**2)**2 
-!     &               *(4 *rho0**2 +L**2 *(-1 +rho0**2)**2))
-!        g0_xz_ads0 =(16 *(-1 + L**2) *x0* z0)
-!     &              /((-1 + rho0**2)**2
-!     &               *(4 *rho0**2 +L**2 *(-1 +rho0**2)**2))
-!        g0_yy_ads0 =(4*(4*(x0**2+z0**2)+L**2*(x0**4+(1+y0**2)**2
-!     &              +2*(-1+y0**2)*z0**2+z0**4
-!     &              +2*x0**2*(-1+y0**2+z0**2))))
-!     &              /(L**2*(-1+rho0**2)**4+4*(-1+rho0**2)**2*(rho0**2))
-!        g0_yz_ads0 =(16 *(-1 + L**2) *y0* z0)
-!     &              /((-1 + rho0**2)**2
-!     &               *(4 *rho0**2 +L**2 *(-1 +rho0**2)**2))
-!        g0_zz_ads0=(4*(4*(x0**2+y0**2)+L**2*((-1+x0**2+y0**2)**2
-!     &              +2*(1+x0**2+y0**2)*z0**2+z0**4)))
-!     &              /(L**2*(-1+rho0**2)**4
-!     &              +4*(-1+rho0**2)**2*(rho0**2))
-!
-!        detg0_ads0=-g0_tt_ads0*(g0_xz_ads0**2*g0_yy_ads0
-!     &       -2*g0_xy_ads0*g0_xz_ads0*g0_yz_ads0
-!     &       +g0_xy_ads0**2*g0_zz_ads0
-!     &       +g0_xx_ads0*(g0_yz_ads0**2-g0_yy_ads0*g0_zz_ads0))
-!
-!      if ((detg0_ads0.ne.0.0d0).and.(g0_tt_ads0.ne.0.0d0)) then        
-!        g0u_tt_ads0 =1/g0_tt_ads0
-!        g0u_tx_ads0 =0
-!        g0u_ty_ads0 =0
-!        g0u_tz_ads0 =0
-!        g0u_xx_ads0 =(g0_yz_ads0**2-g0_yy_ads0*g0_zz_ads0)
-!     &               /(g0_xz_ads0**2*g0_yy_ads0
-!     &               -2*g0_xy_ads0*g0_xz_ads0*g0_yz_ads0
-!     &               +g0_xy_ads0**2*g0_zz_ads0
-!     &               +g0_xx_ads0*(g0_yz_ads0**2-g0_yy_ads0*g0_zz_ads0))
-!        g0u_xy_ads0 =(-g0_xz_ads0*g0_yz_ads0+g0_xy_ads0*g0_zz_ads0)
-!     &               /(g0_xz_ads0**2*g0_yy_ads0
-!     &               -2*g0_xy_ads0*g0_xz_ads0*g0_yz_ads0
-!     &               +g0_xy_ads0**2*g0_zz_ads0
-!     &               +g0_xx_ads0*(g0_yz_ads0**2-g0_yy_ads0*g0_zz_ads0))
-!        g0u_xz_ads0 =(g0_xz_ads0*g0_yy_ads0-g0_xy_ads0*g0_yz_ads0)
-!     &               /(g0_xz_ads0**2*g0_yy_ads0
-!     &               -2*g0_xy_ads0*g0_xz_ads0*g0_yz_ads0
-!     &               +g0_xy_ads0**2*g0_zz_ads0
-!     &               +g0_xx_ads0*(g0_yz_ads0**2-g0_yy_ads0*g0_zz_ads0))
-!        g0u_yy_ads0 =(g0_xz_ads0**2-g0_xx_ads0*g0_zz_ads0)
-!     &               /(g0_xz_ads0**2*g0_yy_ads0
-!     &               -2*g0_xy_ads0*g0_xz_ads0*g0_yz_ads0
-!     &               +g0_xy_ads0**2*g0_zz_ads0
-!     &               +g0_xx_ads0*(g0_yz_ads0**2-g0_yy_ads0*g0_zz_ads0))
-!        g0u_yz_ads0 =(-g0_xy_ads0*g0_xz_ads0+g0_xx_ads0*g0_yz_ads0)
-!     &               /(g0_xz_ads0**2*g0_yy_ads0
-!     &               -2*g0_xy_ads0*g0_xz_ads0*g0_yz_ads0
-!     &               +g0_xy_ads0**2*g0_zz_ads0
-!     &               +g0_xx_ads0*(g0_yz_ads0**2-g0_yy_ads0*g0_zz_ads0))
-!        g0u_zz_ads0 =(g0_xy_ads0**2-g0_xx_ads0*g0_yy_ads0)
-!     &               /(g0_xz_ads0**2*g0_yy_ads0
-!     &               -2*g0_xy_ads0*g0_xz_ads0*g0_yz_ads0
-!     &               +g0_xy_ads0**2*g0_zz_ads0
-!     &               +g0_xx_ads0*(g0_yz_ads0**2-g0_yy_ads0*g0_zz_ads0))
-!      else
-!       write (*,*) 'L,i,j,k,x0,y0,z0,rho0=',L,i,j,k,x0,y0,z0,rho0
-!       write (*,*) 'detg0_ads0=',detg0_ads0
-!       write (*,*) 'ERROR: the metric gads0 is singular at this point'
-!       stop
-!      end if
-!
-!        g0_tt_ads_x  =(8*x0*(1 + rho0**2))/(L**2*(-1 + rho0**2)**3)
-!        g0_tt_ads_y  =(8*y0*(1 + rho0**2))/(L**2*(-1 + rho0**2)**3)
-!        g0_tt_ads_z  =(8*z0*(1 + rho0**2))/(L**2*(-1 + rho0**2)**3)
-!        g0_tt_ads_xx =-((8*(1+3*x0**4-(y0**2+z0**2)**2
-!     &                +2*x0**2*(4+y0**2+z0**2)))
-!     &                /(L**2 *(-1 + rho0**2)**4))
-!        g0_tt_ads_xy =(-32*x0*y0*(2 + rho0**2))/
-!     &                (L**2*(-1 + rho0**2)**4)
-!        g0_tt_ads_xz =(-32*x0*z0*(2 + rho0**2))/
-!     &                (L**2*(-1 + rho0**2)**4)
-!        g0_tt_ads_yy =(8*(-1-8*y0**2+(x0**2-3*y0**2+z0**2)*rho0**2))
-!     &                /(L**2*(-1+rho0**2)**4)
-!        g0_tt_ads_yz =(-32*y0*z0*(2 + rho0**2))/
-!     &                (L**2*(-1 + rho0**2)**4)
-!        g0_tt_ads_zz =(8*(-1-8*z0**2+(x0**2-3*z0**2+y0**2)*rho0**2))
-!     &                /(L**2*(-1+rho0**2)**4)
-!
-!        g0_tx_ads_x  =0
-!        g0_tx_ads_y  =0
-!        g0_tx_ads_z  =0
-!        g0_tx_ads_xx =0
-!        g0_tx_ads_xy =0
-!        g0_tx_ads_xz =0
-!        g0_tx_ads_yy =0
-!        g0_tx_ads_yz =0
-!        g0_tx_ads_zz =0
-!
-!        g0_ty_ads_x  =0
-!        g0_ty_ads_y  =0
-!        g0_ty_ads_z  =0
-!        g0_ty_ads_xx =0
-!        g0_ty_ads_xy =0
-!        g0_ty_ads_xz =0
-!        g0_ty_ads_yy =0
-!        g0_ty_ads_yz =0
-!        g0_ty_ads_zz =0
-!
-!        g0_tz_ads_x  =0
-!        g0_tz_ads_y  =0
-!        g0_tz_ads_z  =0
-!        g0_tz_ads_xx =0
-!        g0_tz_ads_xy =0
-!        g0_tz_ads_xz =0
-!        g0_tz_ads_yy =0
-!        g0_tz_ads_yz =0
-!        g0_tz_ads_zz =0
-!
-!        g0_xx_ads_x  =(4*x0* (-32* (y0**2 + z0**2)* (-1 + 3*rho0**2)
-!     &                 -4* L**4* (-1 +rho0**2)**2
-!     &                 *(x0**4 + (-3 + y0**2+z0**2)*(-1+y0**2+z0**2)
-!     &                 +2*x0**2* (2 + y0**2 + z0**2)) 
-!     &                 +8* L**2* (1 - x0**6 - 11* y0**2 - 11* z0**2
-!     &                 -5* (-3 + y0**2 + z0**2)* (y0**2 + z0**2)**2 
-!     &                 - x0**4* (5 + 7* y0**2 + 7 *z0**2) 
-!     &                 - x0**2* (3 + 11*y0**4 - 10*z0**2+11* z0**4 
-!     &                 +2*y0**2* (-5 + 11* z0**2)))))
-!     &                 /((-1 + rho0**2)**3* (L**2* (-1 +rho0**2)**2 
-!     &                 + 4* (rho0**2))**2)
-!        g0_xx_ads_y  =(4*y0*(32* (x0**4 - 2* (y0**2 + z0**2)**2 
-!     &                - x0**2* (1 + y0**2 + z0**2)) 
-!     &                - 4* L**4* (-1 + rho0**2)**2
-!     &                * (x0**4 + (-1 + y0**2 + z0**2)**2 
-!     &                +2* x0**2* (3 + y0**2 + z0**2)) 
-!     &                - 32* L**2* ((-1+y0**2+z0**2)**2*(y0**2 + z0**2) 
-!     &                + x0**4* (3 + y0**2 + z0**2) 
-!     &                +x0**2*(1+y0**2+z0**2)*(-1+2*y0**2+2*z0**2))))
-!     &                /((-1 +rho0**2)**3
-!     &                *(L**2* (-1 +rho0**2)**2+4*(rho0**2))**2)
-!        g0_xx_ads_z  =(4*z0*(32* (x0**4 - 2* (y0**2 + z0**2)**2
-!     &                - x0**2* (1 + y0**2 + z0**2))
-!     &                - 4* L**4* (-1 + rho0**2)**2
-!     &                * (x0**4 + (-1 + y0**2 + z0**2)**2
-!     &                +2* x0**2* (3 + y0**2 + z0**2))
-!     &                - 32* L**2* ((-1+y0**2+z0**2)**2*(y0**2 + z0**2)
-!     &                + x0**4* (3 + y0**2 + z0**2)
-!     &                +x0**2*(1+y0**2+z0**2)*(-1+2*y0**2+2*z0**2))))
-!     &                /((-1 +rho0**2)**3
-!     &                *(L**2* (-1 +rho0**2)**2+4*(rho0**2))**2)
-!        g0_xx_ads_xx =8 *((12* x0**2* (1 + (-1 + L**2)* x0**2))
-!     &                    /(-1 +rho0**2)**4 
-!     &                 + (-2-2*(-1 + L**2)* x0**2*(5+2*x0**2))
-!     &                   /(-1 + rho0**2)**3 
-!     &                 + ((-1+L**2)*(1+5* x0**2))
-!     &                   /(-1 +rho0**2)**2 
-!     &                 + (1 - L**2)
-!     &                   /(-1 + rho0**2) 
-!     &                 - (64*(-1+L**2)**2*x0**4*(4+L**2*(-2+rho0**2)))
-!     &                   /(L**2*(-1+rho0**2)**2+4*(rho0**2))**3 
-!     &                 -((-1+L**2)*(-4+L**2*(2+4*x0**2-y0**2-z0**2)))
-!     &                   /(L**2*(-1 +rho0**2)**2+4*(rho0**2))
-!     &                 +(2*(-1+L**2)*x0**2
-!     &                  *(-40+2*L**2*(3*x0**2-5*(-4+y0**2+z0**2))
-!     &                  +L**4*(2*x0**4+5*(-1+y0**2+z0**2)
-!     &                  +x0**2*(-3+2*y0**2+2*z0**2))))
-!     &                  /(L**2*(-1+rho0**2)**2 + 4* (rho0**2))**2)
-!        g0_xx_ads_xy =(32*x0*y0*(L**6*(-1 +rho0**2)**4
-!     &                 *(3*x0**4+(-1+y0**2+z0**2)*(-11+3*y0**2+3*z0**2)
-!     &                 +x0**2*(26+6*y0**2+6*z0**2))
-!     &                 +32*(-3*x0**6+y0**2+z0**2
-!     &                 +x0**4*(4+3*y0**2+3*z0**2) 
-!     &                 +(y0**2+z0**2)**2*(-4+9*y0**2+9*z0**2)
-!     &                 +x0**2*(-1+15*(y0**2+z0**2)**2))
-!     &                 +4*L**4* (-1 +rho0**2)**2
-!     &                 * (-4 + x0**6 + 31* y0**2 +31*z0**2 
-!     &                 + (y0**2 + z0**2)**2*(-38 + 11* y0**2+11*z0**2)
-!     &                 +x0**4*(42 + 13*y0**2 + 13*z0**2)
-!     &                 +x0**2*(-3+23*y0**4+4*z0**2+23*z0**4
-!     &                  +y0**2*(4+46*z0**2)))
-!     &                 +8*L**2* (-5* x0**8 + 10* x0**6*(5+y0**2+z0**2)
-!     &                 +2*x0**4*(-14+30*y0**4+15*z0**2+30*z0**4
-!     &                  +15*y0**2*(1+4*z0**2)) 
-!     &                 +(-1+y0**2+z0**2)*(-1+5*y0**2+5*z0**2)
-!     &                 *(1+5*y0**4-8*z0**2+5*z0**4+2*y0**2*(-4+5*z0**2))
-!     &                 +2*x0**2*(3+35*y0**6+15*y0**4*(-3+7*z0**2)
-!     &                 +5*z0**2*(3-9*z0**2+7*z0**4) 
-!     &                 +15*y0**2*(1-6*z0**2+7*z0**4)))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xx_ads_xz =(32*x0*z0*(L**6*(-1 +rho0**2)**4
-!     &                 *(3*x0**4+(-1+y0**2+z0**2)*(-11+3*y0**2+3*z0**2) 
-!     &                 +x0**2*(26+6*y0**2+6*z0**2))
-!     &                 +32*(-3*x0**6+y0**2+z0**2
-!     &                 +x0**4*(4+3*y0**2+3*z0**2) 
-!     &                 +(y0**2+z0**2)**2*(-4+9*y0**2+9*z0**2)
-!     &                 +x0**2*(-1+15*(y0**2+z0**2)**2))
-!     &                 +4*L**4* (-1 +rho0**2)**2
-!     &                 * (-4 + x0**6 + 31* y0**2 +31*z0**2 
-!     &                 + (y0**2 + z0**2)**2*(-38 + 11* y0**2+11*z0**2)
-!     &                 +x0**4*(42 + 13*y0**2 + 13*z0**2)
-!     &                 +x0**2*(-3+23*y0**4+4*z0**2+23*z0**4
-!     &                  +y0**2*(4+46*z0**2)))
-!     &                 +8*L**2* (-5* x0**8 + 10* x0**6*(5+y0**2+z0**2) 
-!     &                 +2*x0**4*(-14+30*y0**4+15*z0**2+30*z0**4
-!     &                  +15*y0**2*(1+4*z0**2)) 
-!     &                 +(-1+y0**2+z0**2)*(-1+5*y0**2+5*z0**2)
-!     &                 *(1+5*y0**4-8*z0**2+5*z0**4+2*y0**2*(-4+5*z0**2))
-!     &                 +2*x0**2*(3+35*y0**6+15*y0**4*(-3+7*z0**2)
-!     &                 +5*z0**2*(3-9*z0**2+7*z0**4) 
-!     &                 +15*y0**2*(1-6*z0**2+7*z0**4)))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xx_ads_yy =(16*(-4*L**4*(-1+rho0**2)**2
-!     &                 *(x0**8-3*(1+5*y0**2-z0**2)
-!     &                 *(-1+y0**2+z0**2)**2*(y0**2+z0**2)
-!     &                 +x0**6*(11+8*y0**2+6*z0**2)
-!     &                 +x0**4*(-13-111*y0**2-2*y0**4
-!     &                  +(13+10*y0**2)*z0**2+12*z0**4)
-!     &                 -x0**2*(-1-46*y0**2+95*y0**4+24*y0**6
-!     &                  +2*(2+51*y0**2+19*y0**4)*z0**2
-!     &                  +(7+4*y0**2)*z0**4-10*z0**6))
-!     &                 -L**6*(-1+rho0**2)**4
-!     &                 *(x0**6-(1+5*y0**2-z0**2)*(-1+y0**2+z0**2)**2
-!     &                 +x0**4*(5-3*y0**2+3*z0**2)
-!     &                 -x0**2*(5+9*y0**4-2*z0**2
-!     &                  -3*z0**4+6*y0**2*(11+z0**2)))
-!     &                 +32*(x0**8+x0**6*(-2-11*y0**2+z0**2)
-!     &                 +2*(1+5*y0**2-z0**2)*(y0**2+z0**2)**3
-!     &                 -x0**4*(-1+15*y0**4+2*z0**2+3*z0**4
-!     &                  +2*y0**2*(-7+9*z0**2))
-!     &                 +x0**2*(7*y0**6+z0**2+2*z0**4-5*z0**6
-!     &                  +9*y0**4*(2+z0**2)+y0**2*(-3+20*z0**2-3*z0**4)))
-!     &                 +8*L**2*(x0**10+6*(1+5*y0**2-z0**2)
-!     &                  *(-1+y0**2+z0**2)**2*(y0**2+z0**2)**2
-!     &                 -2*x0**8*(8+13*y0**2+z0**2)
-!     &                 -2*x0**6*(-11+27*y0**4+15*z0**2+9*z0**4
-!     &                  +y0**2*(-69+36*z0**2))
-!     &                 +2*x0**4*(-4+2*y0**6+13*z0**2+3*z0**4-16*z0**6
-!     &                  +3*y0**4*(45-4*z0**2)
-!     &                  +y0**2*(-55+138*z0**2-30*z0**4))
-!     &                 +x0**2*(1+61*y0**8-2*z0**2-14*z0**4
-!     &                  +38*z0**6-23*z0**8+2*y0**6*(31+80*z0**2)
-!     &                  +6*y0**4*(-19+27*z0**2+19*z0**4)
-!     &                  +2*y0**2*(19-64*z0**2+69*z0**4-4*z0**6)))))
-!     &                  /((-1 + rho0**2)**4
-!     &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xx_ads_yz =(1/((-1 +rho0**2)**4))*32* y0* z0
-!     &                *(3+(8*(-1 + L)*(1 +L)*x0**2
-!     &                * (5* L**4*(-1 + rho0**2)**4+48*(rho0**2)**2 
-!     &                - 8* (-1 + 4*rho0**2) + 6*L**2*(-1 + rho0**2)**2
-!     &                * (-2 + 5*rho0**2)))
-!     &                /(L**2* (-1 + rho0**2)**2 + 4* (rho0**2))**3)
-!        g0_xx_ads_zz =(16*(-L**6*(-1 +rho0**2)**4
-!     &                *(x0**6+x0**4*(5+3*y0**2-3*z0**2)
-!     &                +(-1+y0**2-5*z0**2)*(-1+y0**2+z0**2)**2 
-!     &                +x0**2*(-5+2*y0**2+3*y0**4
-!     &                 -6*(11+y0**2)*z0**2-9*z0**4))
-!     &                +32*(x0**8+x0**6*(-2+y0**2-11*z0**2)
-!     &                 -2*(-1+y0**2-5*z0**2)*(y0**2+z0**2)**3
-!     &                 -x0**4*(-1+2*y0**2+3*y0**4
-!     &                  +2*(-7+9*y0**2)*z0**2+15*z0**4)
-!     &                 +x0**2*(y0**2+2*y0**4-5*y0**6
-!     &                 +(-3+20*y0**2-3*y0**4)*z0**2
-!     &                 +9*(2+y0**2)* z0**4 + 7* z0**6))
-!     &                -4*L**4*(-1 +rho0**2)**2
-!     &                *(x0**8+3*(-1+y0**2-5*z0**2)*(-1+y0**2+z0**2)**2
-!     &                 *(y0**2+z0**2)
-!     &                +x0**6*(11+6*y0**2+8*z0**2)
-!     &                +x0**4*(-13+12*y0**4-111*z0**2-2*z0**4
-!     &                 +y0**2*(13+10*z0**2))
-!     &                +x0**2*(1+10*y0**6+46*z0**2-95*z0**4-24*z0**6
-!     &                 -y0**4*(7+4*z0**2)
-!     &                 -2*y0**2*(2+51*z0**2+19*z0**4)))
-!     &                +8*L**2*(x0**10
-!     &                -6*(-1+y0**2-5*z0**2)*(-1+y0**2+z0**2)**2
-!     &                 *(y0**2+z0**2)**2
-!     &                -2*x0**8*(8+y0**2+13*z0**2)
-!     &                +x0**4*(-8+26*y0**2+6*y0**4-32*y0**6
-!     &                 -2*(55-138*y0**2+30*y0**4)*z0**2 
-!     &                 +6*(45-4*y0**2)*z0**4+4*z0**6)
-!     &                -2*x0**6*(-11+9*y0**4-69*z0**2+27*z0**4
-!     &                 +3*y0**2*(5+12*z0**2))
-!     &                +x0**2*(1-23*y0**8+38*z0**2-114*z0**4+62*z0**6
-!     &                 +61*z0**8+y0**6*(38-8*z0**2)
-!     &                 +2*y0**4*(-7+69*z0**2+57*z0**4)
-!     &                 +2*y0**2*(-1-64*z0**2+81*z0**4+80*z0**6)))))
-!     &                /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!
-!        g0_xy_ads_x  =-((16*(-1+L**2)*y0
-!     &                *(L**2*(1+7*x0**2-y0**2-z0**2)*(-1+rho0**2)**2
-!     &                +4*(5*x0**4+y0**2+z0**2-(y0**2+z0**2)**2
-!     &                +x0**2*(-1+4*y0**2+4*z0**2))))
-!     &                /((-1+rho0**2)**3
-!     &                *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2))
-!        g0_xy_ads_y  =(16*(-1+L**2)*x0*(-4*(x0**2-y0**2+z0**2)
-!     &                +L**2*(-1+x0**2-7*y0**2+z0**2)*(-1+rho0**2)**2
-!     &                +4*(x0**2-5*y0**2+z0**2)*(rho0**2)))
-!     &                /((-1+rho0**2)**3
-!     &                *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2)
-!        g0_xy_ads_z  =-((128*(-1+L**2)*x0*y0*z0
-!     &                *(-1+3*rho0**2+L**2*(-1+rho0**2)**2))
-!     &                /((-1+rho0**2)**3
-!     &                *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2))
-!        g0_xy_ads_xx  =(128*(-1+L**2)*x0*y0*(L**4*(-1+rho0**2)**4
-!     &                 *(7*x0**2-3*(-1+y0**2+z0**2))
-!     &                 +4*(x0**2-3*(y0**2+z0**2))
-!     &                 +4*(rho0**2)*(15*x0**4+12*(y0**2+z0**2)
-!     &                 -9*(y0**2+z0**2)**2
-!     &                 +x0**2*(-4+6*y0**2+6*z0**2))
-!     &                 +3*L**2*(-1+rho0**2)**2
-!     &                  *(-1+8*y0**2+8*z0**2+(rho0**2)
-!     &                   *(13*x0**2-7*(y0**2+z0**2)))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xy_ads_xy  =(16*(-1+L**2)*(-L**4*(-1+rho0**2)**4
-!     &                 *(7*x0**4+6*x0**2*(-1-11*y0**2+z0**2)
-!     &                  +(1+7*y0**2-z0**2)*(-1+y0**2+z0**2))
-!     &                 -8*L**2*(-1+rho0**2)**2
-!     &                 *(6*x0**6+x0**4*(-6-42*y0**2+11*z0**2)
-!     &                 +(-1+y0**2+z0**2)
-!     &                  *(6*y0**4+z0**2+5*y0**2*z0**2-z0**4)
-!     &                 -2*x0**2*(21*y0**4+2*z0**2-2*z0**4
-!     &                  +y0**2*(-6+19*z0**2)))
-!     &                 +16*(-5*x0**8+2*x0**6*(3+14*y0**2-7*z0**2)
-!     &                  -(-1+y0**2+z0**2)*(y0**2+z0**2)
-!     &                  *(5*y0**4+z0**2-z0**4+y0**2*(-1+4*z0**2))
-!     &                 +x0**4*(-1+66*y0**4+10*z0**2-12*z0**4
-!     &                  +2*y0**2*(-7+27*z0**2))
-!     &                 +2*x0**2*(14*y0**6+z0**4-z0**6
-!     &                  +y0**4*(-7+27*z0**2)
-!     &                  +3*y0**2*(1-2*z0**2+4*z0**4)))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xy_ads_xz  =(128*(-1+L**2)*y0*z0
-!     &                 *(12*x0**2-4*(y0**2+z0**2)
-!     &                 +L**4*(1+9*x0**2-y0**2-z0**2)*(-1+rho0**2)**4
-!     &                 +4*(rho0**2)*(21*x0**4+4*(y0**2+z0**2)
-!     &                 -3*(y0**2+z0**2)**2
-!     &                 +6*x0**2*(-2+3*y0**2+3*z0**2))
-!     &                 +L**2*(-1+rho0**2)**2
-!     &                  *(-1+53*x0**4+8*y0**2+8*z0**2-7*(y0**2+z0**2)**2
-!     &                   +2*x0**2*(-8+23*y0**2+23*z0**2))))
-!     &                 /((-1+rho0**2)**4 
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xy_ads_yy  =(128*(-1+L**2)*x0*y0
-!     &                 *(4*(-3*x0**2+y0**2-3*z0**2)-L**4*(-1+rho0**2)**4
-!     &                  *(-3+3*x0**2-7*y0**2+3*z0**2)
-!     &                 -3*L**2*(-1+rho0**2)**2
-!     &                  *(1+7*x0**4-13*y0**4-2*(4+3*y0**2)*z0**2
-!     &                  +7*z0**4-2*x0**2*(4+3*y0**2-7*z0**2))
-!     &                 -4*(rho0**2)*(9*x0**4+4*y0**2-15*y0**4
-!     &                  -6*(2+y0**2)*z0**2+9*z0**4
-!     &                  -6*x0**2*(2+y0**2-3*z0**2))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xy_ads_yz  =(32*(-1+L**2)*x0*z0*(-16*(x0**2-3*y0**2+z0**2)
-!     &                 -4*L**4*(-1+x0**2-9*y0**2+z0**2)*(-1+rho0**2)**4
-!     &                 -4*L**2*(-1+rho0**2)**2
-!     &                  *(1+7*x0**4-53*y0**4-8*z0**2+7*z0**4
-!     &                  +y0**2*(16-46*z0**2)
-!     &                  -2*x0**2*(4+23*y0**2-7*z0**2))
-!     &                 -16*(rho0**2)*(3*x0**4-4*z0**2
-!     &                  -2*x0**2*(2+9*y0**2-3*z0**2)
-!     &                  +3*(-7*y0**4+z0**4+y0**2*(4-6*z0**2)))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xy_ads_zz  =(128*(-1+L**2)*x0*y0*(-4*(x0**2+y0**2-3*z0**2)
-!     &                 -L**4*(-1+x0**2+y0**2-9*z0**2)*(-1+rho0**2)**4
-!     &                 -4*(rho0**2)*(3*x0**4+3*y0**4
-!     &                  +2*x0**2*(-2+3*y0**2-9*z0**2)
-!     &                  +3*z0**2*(4-7*z0**2)-2*y0**2*(2+9*z0**2))
-!     &                 -L**2*(-1+rho0**2)**2*(1+7*x0**4+7*y0**4+16*z0**2
-!     &                  -53*z0**4+2*x0**2*(-4+7*y0**2-23*z0**2)
-!     &                  -2*y0**2*(4+23*z0**2))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!
-!        g0_xz_ads_x  =-((16*(-1+L**2)*z0
-!     &                *(L**2*(1+7*x0**2-y0**2-z0**2)*(-1+rho0**2)**2
-!     &                +4*(5*x0**4+y0**2+z0**2-(y0**2+z0**2)**2
-!     &                +x0**2*(-1+4*y0**2+4*z0**2))))
-!     &                /((-1+rho0**2)**3
-!     &                *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2))
-!        g0_xz_ads_y  =-((128*(-1+L**2)*x0*y0*z0
-!     &                *(-1+3*rho0**2+L**2*(-1+rho0**2)**2))
-!     &                /((-1+rho0**2)**3
-!     &                *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2))
-!        g0_xz_ads_z  =(16*(-1+L**2)*x0*(-4*(x0**2+y0**2-z0**2)
-!     &                +L**2*(-1+x0**2+y0**2-7*z0**2)*(-1+rho0**2)**2
-!     &                +4*(x0**2+y0**2-5*z0**2)*(rho0**2)))
-!     &                /((-1+rho0**2)**3
-!     &                *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2)
-!        g0_xz_ads_xx  =(128*(-1+L**2)*x0*z0*(L**4*(-1+rho0**2)**4
-!     &                 *(7*x0**2-3*(-1+y0**2+z0**2))
-!     &                 +4*(x0**2-3*(y0**2+z0**2))
-!     &                 +4*(rho0**2)*(15*x0**4+12*(y0**2+z0**2)
-!     &                 -9*(y0**2+z0**2)**2
-!     &                 +x0**2*(-4+6*y0**2+6*z0**2))
-!     &                 +3*L**2*(-1+rho0**2)**2
-!     &                  *(-1+8*y0**2+8*z0**2+(rho0**2)
-!     &                   *(13*x0**2-7*(y0**2+z0**2)))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xz_ads_xy  =(128*(-1+L**2)*y0*z0
-!     &                 *(12*x0**2-4*(y0**2+z0**2)
-!     &                 +L**4*(1+9*x0**2-y0**2-z0**2)*(-1+rho0**2)**4
-!     &                 +4*(rho0**2)*(21*x0**4+4*(y0**2+z0**2)
-!     &                 -3*(y0**2+z0**2)**2
-!     &                 +6*x0**2*(-2+3*y0**2+3*z0**2))
-!     &                 +L**2*(-1+rho0**2)**2
-!     &                  *(-1+53*x0**4+8*y0**2+8*z0**2-7*(y0**2+z0**2)**2
-!     &                   +2*x0**2*(-8+23*y0**2+23*z0**2))))
-!     &                 /((-1+rho0**2)**4 
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xz_ads_xz  =(16*(-1+L**2)*(-L**4*(-1+rho0**2)**4
-!     &                 *(7*x0**4+6*x0**2*(-1+y0**2-11*z0**2)
-!     &                  -(-1+y0**2-7*z0**2)*(-1+y0**2+z0**2))
-!     &                 -8*L**2*(-1+rho0**2)**2
-!     &                 *(6*x0**6+x0**4*(-6+11*y0**2-42*z0**2)
-!     &                 -(-1+y0**2+z0**2)
-!     &                  *(y0**4-6*z0**4-y0**2*(1+5*z0**2))
-!     &                 +2*x0**2*(2*y0**4+6*z0**2-21*z0**4
-!     &                  -y0**2*(2+19*z0**2)))
-!     &                 +16*(-5*x0**8+x0**6*(6-14*y0**2+28*z0**2)
-!     &                  +(-1+y0**2+z0**2)*(y0**2+z0**2)
-!     &                  *(y0**4+z0**2-5*z0**4-y0**2*(1+4*z0**2))
-!     &                 +x0**4*(-1-12*y0**4-14*z0**2
-!     &                  +66*z0**4+2*y0**2*(5+27*z0**2))
-!     &                 +2*x0**2*(3*z0**2-(y0**2+z0**2)
-!     &                  *(y0**4+7*z0**2-14*z0**4-y0**2*(1+13*z0**2))))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xz_ads_yy  =(128*(-1+L**2)*x0*z0*(-4*(x0**2-3*y0**2+z0**2)
-!     &                 -L**4*(-1+x0**2-9*y0**2+z0**2)*(-1+rho0**2)**4
-!     &                 -L**2*(-1+rho0**2)**2
-!     &                  *(1+7*x0**4-53*y0**4-8*z0**2+7*z0**4
-!     &                  +y0**2*(16-46*z0**2)
-!     &                  -2*x0**2*(4+23*y0**2-7*z0**2))
-!     &                 -4*(rho0**2)*(3*x0**4-4*z0**2
-!     &                  -2*x0**2*(2+9*y0**2-3*z0**2)
-!     &                 +3*(-7*y0**4+z0**4+y0**2*(4-6*z0**2)))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xz_ads_yz  =(128*(-1+L**2)*x0*y0*(-4*(x0**2+y0**2-3*z0**2)
-!     &                 -L**4*(-1+x0**2+y0**2-9*z0**2)*(-1+rho0**2)**4
-!     &                 -4*(rho0**2)*(3*x0**4+3*y0**4
-!     &                  +2*x0**2*(-2+3*y0**2-9*z0**2)
-!     &                  +3*z0**2*(4-7*z0**2)-2*y0**2*(2+9*z0**2))
-!     &                 -L**2*(-1+rho0**2)**2*(1+7*x0**4+7*y0**4+16*z0**2
-!     &                  -53*z0**4+2*x0**2*(-4+7*y0**2-23*z0**2)
-!     &                  -2*y0**2*(4+23*z0**2))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_xz_ads_zz  =(128*(-1+L**2)*x0*z0
-!     &                 *(-L**4*(3*(-1+x0**2+y0**2)
-!     &                  -7*z0**2)*(-1+rho0**2)**4
-!     &                  +4*(-3*(x0**2+y0**2)+z0**2)
-!     &                 -4*(rho0**2)*(3*(x0**2+y0**2)
-!     &                  *(-4+3*x0**2+3*y0**2)
-!     &                 -2*(-2+3*x0**2+3*y0**2)*z0**2-15*z0**4)
-!     &                 -3*L**2*(-1+rho0**2)**2
-!     &                  *(1+7*x0**4+7*y0**4-13*z0**4
-!     &                  +2*x0**2*(-4+7*y0**2-3*z0**2)
-!     &                  -2*y0**2*(4+3*z0**2))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!
-!        g0_yy_ads_t  =0
-!        g0_yy_ads_x  =-((16*x0*(L**4*(-1+rho0**2)**2
-!     &                *(1+x0**4+6*y0**2-2*z0**2+2*x0**2*(-1+y0**2+z0**2)
-!     &                +(y0**2+z0**2)**2)
-!     &                +8*(y0**2+(rho0**2)*(2*x0**2-y0**2+2*z0**2))
-!     &                +8*L**2*(x0**6-y0**2+z0**2
-!     &                 +x0**4*(-2+2*y0**2+3*z0**2)
-!     &                 +(y0**2+z0**2)*(3*y0**2+(-2+y0**2)*z0**2+z0**4)
-!     &                +x0**2*(1+y0**2+y0**4
-!     &                 +4*(-1+y0**2)*z0**2+3*z0**4))))
-!     &                /((-1 + rho0**2)**3* (L**2* (-1 +rho0**2)**2
-!     &                + 4* (rho0**2))**2))
-!        g0_yy_ads_y  =-((16*y0*(8*(x0**2+z0**2)*(-1+3*rho0**2)
-!     &                +L**4*(-1+rho0**2)**2*(3+4*y0**2-4*z0**2
-!     &                 +((-2+x0)*x0+y0**2+z0**2)
-!     &                 *(x0*(2+x0)+y0**2+z0**2))
-!     &                +2*L**2*(-1+5*x0**6+3*y0**2+11*z0**2
-!     &                 +x0**4*(11*y0**2+15*(-1+z0**2))
-!     &                 +(y0**2+z0**2)*(y0**4+5*z0**2*(-3+z0**2)
-!     &                 +y0**2*(5+6*z0**2))
-!     &                 +x0**2*(11+7*y0**4+15*z0**2*(-2+z0**2)
-!     &                 +2*y0**2*(-5+11*z0**2)))))
-!     &                /((-1 + rho0**2)**3* (L**2* (-1 +rho0**2)**2
-!     &                + 4* (rho0**2))**2))
-!        g0_yy_ads_z  =-((16*z0*(L**4*(-1+rho0**2)**2
-!     &                *(1+x0**4+6*y0**2-2*z0**2+2*x0**2*(-1+y0**2+z0**2)
-!     &                 +(y0**2+z0**2)**2)
-!     &                +8*(y0**2+(rho0**2)*(2*x0**2-y0**2+2*z0**2))
-!     &                +8*L**2*(x0**6-y0**2+z0**2
-!     &                 +x0**4*(-2+2*y0**2+3*z0**2)
-!     &                 +(y0**2+z0**2)*(3*y0**2+(-2+y0**2)*z0**2+z0**4)
-!     &                 +x0**2*(1+y0**2+y0**4
-!     &                 +4*(-1+y0**2)*z0**2+3*z0**4))))
-!     &                /((-1 + rho0**2)**3* (L**2* (-1 +rho0**2)**2
-!     &                + 4* (rho0**2))**2))
-!
-!        g0_yy_ads_tt =0
-!        g0_yy_ads_tx =0
-!        g0_yy_ads_ty =0
-!        g0_yy_ads_tz =0
-!        g0_yy_ads_xx  =8*((12*x0**2*(1+(-1+L**2)*y0**2))
-!     &                 /(-1+rho0**2)**4
-!     &                 +(-2-2*(-1+L**2)*(1+2*x0**2)*y0**2)
-!     &                 /(-1+rho0**2)**3
-!     &                 +((-1+L**2)*y0**2)
-!     &                 /(-1+rho0**2)**2
-!     &                 -(64*(-1+L**2)**2*x0**2*y0**2
-!     &                  *(4+L**2*(-2+rho0**2)))
-!     &                 /(L**2*(-1+rho0**2)**2
-!     &                  +4*(rho0**2))**3
-!     &                 -(L**2*(-1+L**2)*y0**2)
-!     &                 /(L**2*(-1+rho0**2)**2+4*(rho0**2))
-!     &                 +(2*(-1+L**2)*y0**2
-!     &                  *(-8+L**2*(14*x0**2-2*(-4+y0**2+z0**2)
-!     &                  +L**2*(-1+2*x0**4+y0**2+z0**2
-!     &                  +x0**2*(-7+2*y0**2+2*z0**2)))))
-!     &                 /(L**2*(-1+rho0**2)**2+4*(rho0**2))**2)
-!        g0_yy_ads_xy  =(32*x0*y0*(32*(x0**2-y0**2+z0**2)
-!     &                 +L**6*(-1+rho0**2)**4
-!     &                 *(11+3*x0**4+26*y0**2-14*z0**2+3*(y0**2+z0**2)**2
-!     &                  +2*x0**2*(-7+3*y0**2+3*z0**2))
-!     &                 +32*(rho0**2)*(9*x0**4-3*y0**4-4*z0**2+9*z0**4
-!     &                  +y0**2*(4+6*z0**2)+2*x0**2*(-2+3*y0**2+9*z0**2))
-!     &                 +4*L**4*(-1+rho0**2)**2
-!     &                 *(-4+11*x0**6-3*y0**2+31*z0**2
-!     &                  +x0**4*(-38+23*y0**2+33*z0**2)
-!     &                 +(y0**2+z0**2)*(y0**4-38*z0**2+11*z0**4
-!     &                  +6*y0**2*(7+2*z0**2))
-!     &                 +x0**2*(31+13*y0**4-76*z0**2+33*z0**4
-!     &                  +y0**2*(4+46*z0**2)))
-!     &                 +8*L**2*(1+25*x0**8+6*y0**2-14*z0**2
-!     &                  +10*x0**6*(-7+7*y0**2+10*z0**2)
-!     &                  +2*x0**4*(29-45*y0**2+30*y0**4
-!     &                  +105*(-1+y0**2)*z0**2+75*z0**4)
-!     &                 -(y0**2+z0**2)*(5*y0**6-58*z0**2+70*z0**4
-!     &                  -25*z0**6-5*y0**4*(10+3*z0**2)
-!     &                  +y0**2*(28+20*z0**2-45*z0**4))
-!     &                 +2*x0**2*(-7+58*z0**2+5*(y0**6
-!     &                  +3*y0**4*(1+4*z0**2)
-!     &                  +z0**4*(-21+10*z0**2)
-!     &                  +3*y0**2*(1-6*z0**2+7*z0**4))))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_yy_ads_xz  =(1/((-1+rho0**2)**4))
-!     &                 *32*x0*z0*(3+(8*(-1+L)*(1+L)*y0**2
-!     &                 *(5*L**4*(-1+rho0**2)**4+48*(rho0**2)**2
-!     &                  -8*(-1+4*rho0**2)
-!     &                  +6*L**2*(-1+rho0**2)**2*(-2+5*rho0**2)))
-!     &                 /(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_yy_ads_yy  =8 *((12* y0**2* (1 + (-1 + L**2)* y0**2))
-!     &                    /(-1 +rho0**2)**4
-!     &                 + (-2-2*(-1 + L**2)* y0**2*(5+2*y0**2))
-!     &                   /(-1 + rho0**2)**3
-!     &                 + ((-1+L**2)*(1+5* y0**2))
-!     &                   /(-1 +rho0**2)**2
-!     &                 + (1 - L**2)
-!     &                   /(-1 + rho0**2)
-!     &                 - (64*(-1+L**2)**2*y0**4*(4+L**2*(-2+rho0**2)))
-!     &                   /(L**2*(-1+rho0**2)**2+4*(rho0**2))**3
-!     &                 +(-1+L**2)*(4+L**2*(-2+x0**2-4*y0**2+z0**2))
-!     &                   /(L**2*(-1 +rho0**2)**2+4*(rho0**2))
-!     &                 +(2*(-1+L**2)*y0**2
-!     &                  *(-40+2*L**2*(20 - 5*x0**2+3*y0**2-5*z0**2)
-!     &                  +L**4*(-5-3*y0**2+2*y0**4+x0**2*(5+2*y0**2)
-!     &                  +(5+2*y0**2)*z0**2)))
-!     &                  /(L**2*(-1+rho0**2)**2 + 4* (rho0**2))**2)
-!        g0_yy_ads_yz  =(32*y0*z0*(32*(x0**2-y0**2+z0**2)
-!     &                 +L**6*(-1+rho0**2)**4
-!     &                 *(11+3*x0**4+26*y0**2-14*z0**2+3*(y0**2+z0**2)**2
-!     &                  +2*x0**2*(-7+3*y0**2+3*z0**2))
-!     &                 +32*(rho0**2)*(9*x0**4-3*y0**4-4*z0**2+9*z0**4
-!     &                  +y0**2*(4+6*z0**2)+2*x0**2*(-2+3*y0**2+9*z0**2))
-!     &                 +4*L**4*(-1+rho0**2)**2
-!     &                 *(-4+11*x0**6-3*y0**2+31*z0**2
-!     &                  +x0**4*(-38+23*y0**2+33*z0**2)
-!     &                 +(y0**2+z0**2)*(y0**4-38*z0**2+11*z0**4
-!     &                  +6*y0**2*(7+2*z0**2))
-!     &                 +x0**2*(31+13*y0**4-76*z0**2+33*z0**4
-!     &                  +y0**2*(4+46*z0**2)))
-!     &                 +8*L**2*(1+25*x0**8+6*y0**2-14*z0**2
-!     &                  +10*x0**6*(-7+7*y0**2+10*z0**2)
-!     &                  +2*x0**4*(29-45*y0**2+30*y0**4
-!     &                  +105*(-1+y0**2)*z0**2+75*z0**4)
-!     &                 -(y0**2+z0**2)*(5*y0**6-58*z0**2+70*z0**4
-!     &                  -25*z0**6-5*y0**4*(10+3*z0**2)
-!     &                  +y0**2*(28+20*z0**2-45*z0**4))
-!     &                 +2*x0**2*(-7+58*z0**2+5*(y0**6
-!     &                  +3*y0**4*(1+4*z0**2)
-!     &                  +z0**4*(-21+10*z0**2)
-!     &                  +3*y0**2*(1-6*z0**2+7*z0**4))))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_yy_ads_zz  =(16*(8*z0**2*(-1+rho0**2)*(2+L**2*(-1+rho0**2))
-!     &                 *(L**4*(-1+rho0**2)**2*(1+x0**4+6*y0**2-2*z0**2
-!     &                  +2*x0**2*(-1+y0**2+z0**2)
-!     &                  +(y0**2+z0**2)**2)
-!     &                  +8*(y0**2+(rho0**2)*(2*x0**2-y0**2+2*z0**2))
-!     &                 +8*L**2*(x0**6-y0**2+z0**2
-!     &                  +x0**4*(-2+2*y0**2+3*z0**2)
-!     &                  +(y0**2+z0**2)*(3*y0**2+(-2+y0**2)*z0**2+z0**4)
-!     &                 +x0**2*(1+y0**2+y0**4+4*(-1+y0**2)*z0**2
-!     &                  +3*z0**4)))
-!     &                 +6*z0**2*(L**2*(-1+rho0**2)**2
-!     &                  +4*(rho0**2))*(L**4*(-1+rho0**2)**2
-!     &                  *(1+x0**4+6*y0**2-2*z0**2
-!     &                  +2*x0**2*(-1+y0**2+z0**2)+(y0**2+z0**2)**2)
-!     &                 +8*(y0**2+(rho0**2)*(2*x0**2-y0**2+2*z0**2))
-!     &                 +8*L**2*(x0**6-y0**2+z0**2
-!     &                  +x0**4*(-2+2*y0**2+3*z0**2)
-!     &                  +(y0**2+z0**2)*(3*y0**2+(-2+y0**2)*z0**2+z0**4)
-!     &                  +x0**2*(1+y0**2+y0**4+4*(-1+y0**2)*z0**2
-!     &                  +3*z0**4)))
-!     &                 -(-1+rho0**2)*(L**2*(-1+rho0**2)**2+4*(rho0**2))
-!     &                 *(L**4*(-1+rho0**2)**2
-!     &                 *(1+x0**4+6*y0**2-2*z0**2
-!     &                  +2*x0**2*(-1+y0**2+z0**2)
-!     &                  +(y0**2+z0**2)**2)
-!     &                 +8*(y0**2+(rho0**2)*(2*x0**2-y0**2+2*z0**2))
-!     &                 +8*L**2*(x0**6-y0**2+z0**2
-!     &                  +x0**4*(-2+2*y0**2+3*z0**2)
-!     &                  +(y0**2+z0**2)*(3*y0**2+(-2+y0**2)*z0**2+z0**4)
-!     &                  +x0**2*(1+y0**2+y0**4+4*(-1+y0**2)*z0**2
-!     &                  +3*z0**4)))
-!     &                 -4*z0**2*(-1+rho0**2)*(L**2*(-1+rho0**2)**2
-!     &                 +4*(rho0**2))*(4*(4*x0**2+y0**2+4*z0**2)
-!     &                  +2*L**2*(2-8*x0**2+2*y0**2-8*z0**2+2*(rho0**2)
-!     &                  *(3*x0**2+y0**2+3*z0**2)
-!     &                 +L**2*(-1+rho0**2)*(x0**4+(1+y0**2)**2
-!     &                  +2*(-1+y0**2)*z0**2+z0**4
-!     &                  +2*x0**2*(-1+y0**2+z0**2))))))
-!     &                 /((-1+rho0**2)**4
-!     &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!
-!        g0_yz_ads_t  =0
-!        g0_yz_ads_x  =-((128*(-1+L**2)*x0*y0*z0
-!     &                *(-1+3*rho0**2+L**2*(-1+rho0**2)**2))
-!     &                /((-1+rho0**2)**3
-!     &                *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2))
-!        g0_yz_ads_y  =-((16*(-1+L**2)*z0*(4*(x0**2-y0**2+z0**2)
-!     &                -L**2*(-1+x0**2-7*y0**2+z0**2)*(-1+rho0**2)**2
-!     &                -4*(x0**2-5*y0**2+z0**2)*(rho0**2)))
-!     &                /((-1+rho0**2)**3
-!     &                *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2))
-!        g0_yz_ads_z  =(16*(-1+L**2)*y0*(-4*(x0**2+y0**2-z0**2)
-!     &                +L**2*(-1+x0**2+y0**2-7*z0**2)*(-1+rho0**2)**2
-!     &                +4*(x0**2+y0**2-5*z0**2)*(rho0**2)))
-!     &                /((-1+rho0**2)**3
-!     &                *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2)
-!
-!        g0_yz_ads_tt =0
-!        g0_yz_ads_tx =0
-!        g0_yz_ads_ty =0
-!        g0_yz_ads_tz =0
-!        g0_yz_ads_xx  =(128*(-1+L**2)*y0*z0
-!     &                 *(12*x0**2-4*(y0**2+z0**2)
-!     &                 +L**4*(1+9*x0**2-y0**2-z0**2)*(-1+rho0**2)**4
-!     &                 +4*(rho0**2)*(21*x0**4+4*(y0**2+z0**2)
-!     &                 -3*(y0**2+z0**2)**2
-!     &                 +6*x0**2*(-2+3*y0**2+3*z0**2))
-!     &                 +L**2*(-1+rho0**2)**2
-!     &                  *(-1+53*x0**4+8*y0**2+8*z0**2-7*(y0**2+z0**2)**2
-!     &                   +2*x0**2*(-8+23*y0**2+23*z0**2))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_yz_ads_xy  =(128*(-1+L**2)*x0*z0*(-4*(x0**2-3*y0**2+z0**2)
-!     &                 -L**4*(-1+x0**2-9*y0**2+z0**2)*(-1+rho0**2)**4
-!     &                 -L**2*(-1+rho0**2)**2
-!     &                  *(1+7*x0**4-53*y0**4-8*z0**2+7*z0**4
-!     &                  +y0**2*(16-46*z0**2)
-!     &                  -2*x0**2*(4+23*y0**2-7*z0**2))
-!     &                 -4*(rho0**2)*(3*x0**4-4*z0**2
-!     &                  -2*x0**2*(2+9*y0**2-3*z0**2)
-!     &                 +3*(-7*y0**4+z0**4+y0**2*(4-6*z0**2)))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_yz_ads_xz  =(128*(-1+L**2)*x0*y0*(-4*(x0**2+y0**2-3*z0**2)
-!     &                 -L**4*(-1+x0**2+y0**2-9*z0**2)*(-1+rho0**2)**4
-!     &                 -4*(rho0**2)*(3*x0**4+3*y0**4
-!     &                  +2*x0**2*(-2+3*y0**2-9*z0**2)
-!     &                  +3*z0**2*(4-7*z0**2)-2*y0**2*(2+9*z0**2))
-!     &                 -L**2*(-1+rho0**2)**2*(1+7*x0**4+7*y0**4+16*z0**2
-!     &                  -53*z0**4+2*x0**2*(-4+7*y0**2-23*z0**2)
-!     &                  -2*y0**2*(4+23*z0**2))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_yz_ads_yy  =(128*(-1+L**2)*y0*z0*(4*(-3*x0**2+y0**2-3*z0**2)
-!     &                 -L**4*(-1+rho0**2)**4
-!     &                  *(-3+3*x0**2-7*y0**2+3*z0**2)
-!     &                 -3*L**2*(-1+rho0**2)**2
-!     &                  *(1+7*x0**4-13*y0**4-2*(4+3*y0**2)*z0**2
-!     &                  +7*z0**4-2*x0**2*(4+3*y0**2-7*z0**2))
-!     &                 -4*(rho0**2)*(9*x0**4+4*y0**2-15*y0**4
-!     &                  -6*(2+y0**2)*z0**2
-!     &                  +9*z0**4-6*x0**2*(2+y0**2-3*z0**2))))
-!     &                 /((-1+rho0**2)**4
-!     &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_yz_ads_yz  =(16*(-1+L**2)*(L**4*(-1+rho0**2)**4
-!     &                 *(1+x0**4-7*y0**4+6*z0**2-7*z0**4
-!     &                 -2*x0**2*(1+3*y0**2+3*z0**2)+y0**2*(6+66*z0**2))
-!     &                 +16*(x0**8-5*y0**8-z0**4+6*z0**6-5*z0**8
-!     &                  -2*x0**6*(1+y0**2+z0**2)+y0**6*(6+28*z0**2)
-!     &                  +2*y0**2*z0**2*(3-7*z0**2+14*z0**4)
-!     &                  +y0**4*(-1-14*z0**2+66*z0**4)
-!     &                  +x0**4*(1-12*y0**4+2*z0**2-12*z0**4
-!     &                  +y0**2*(2+24*z0**2))
-!     &                 -2*x0**2*(7*y0**6+3*y0**2*z0**2*(2-9*z0**2)
-!     &                  +z0**4*(-5+7*z0**2)-y0**4*(5+27*z0**2)))
-!     &                 +8*L**2*(-1+rho0**2)**2
-!     &                 *(x0**6-2*x0**4*(1+2*y0**2+2*z0**2)
-!     &                  +6*(-y0**6+z0**4-z0**6+y0**2*z0**2*(-2+7*z0**2)
-!     &                  +y0**4*(1+7*z0**2))
-!     &                 +x0**2*(1-11*y0**4+4*z0**2-11*z0**4
-!     &                  +y0**2*(4+38*z0**2)))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_yz_ads_zz  =(128*(-1+L**2)*y0*z0
-!     &                 *(-L**4*(3*(-1+x0**2+y0**2)
-!     &                  -7*z0**2)*(-1+rho0**2)**4
-!     &                  +4*(-3*(x0**2+y0**2)+z0**2)
-!     &                 -4*(rho0**2)*(3*(x0**2+y0**2)
-!     &                  *(-4+3*x0**2+3*y0**2)
-!     &                 -2*(-2+3*x0**2+3*y0**2)*z0**2-15*z0**4)
-!     &                 -3*L**2*(-1+rho0**2)**2
-!     &                  *(1+7*x0**4+7*y0**4-13*z0**4
-!     &                  +2*x0**2*(-4+7*y0**2-3*z0**2)
-!     &                  -2*y0**2*(4+3*z0**2))))
-!     &                 /((-1+rho0**2)**4
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!
-!        g0_zz_ads_t  =0
-!        g0_zz_ads_x  =-((16*x0*(16*(x0**2+y0**2)**2
-!     &                 +8*(1+x0**2+y0**2)*z0**2-8*z0**4
-!     &                 +L**4*(-1+rho0**2)**2*((-1+x0**2+y0**2)**2
-!     &                  +2*(3+x0**2+y0**2)*z0**2+z0**4)
-!     &                 +8*L**2*((-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                 +(1+x0**2+y0**2)*(-1+2*x0**2+2*y0**2)*z0**2
-!     &                 +(3+x0**2+y0**2)*z0**4)))
-!     &                 /((-1+rho0**2)**3
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2))
-!        g0_zz_ads_y  =-((16*y0*(16*(x0**2+y0**2)**2
-!     &                 +8*(1+x0**2+y0**2)*z0**2-8*z0**4
-!     &                 +L**4*(-1+rho0**2)**2*((-1+x0**2+y0**2)**2
-!     &                  +2*(3+x0**2+y0**2)*z0**2+z0**4)
-!     &                 +8*L**2*((-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                 +(1+x0**2+y0**2)*(-1+2*x0**2+2*y0**2)*z0**2
-!     &                 +(3+x0**2+y0**2)*z0**4)))
-!     &                 /((-1+rho0**2)**3
-!     &                 *(L**2*(-1+rho0**2)**2+4*(rho0**2))**2))
-!        g0_zz_ads_z  =-((16*z0*(8*(x0**2+y0**2)*(-1+3*rho0**2)
-!     &                +L**4*(-1+rho0**2)**2*(3-4*y0**2+4*z0**2
-!     &                 +((-2+x0)*x0+y0**2+z0**2)
-!     &                 *(x0*(2+x0)+y0**2+z0**2))
-!     &                +2*L**2*(-1+5*x0**6+11*y0**2+3*z0**2
-!     &                 +x0**4*(-15+15*y0**2+11*z0**2)
-!     &                 +(y0**2+z0**2)*(5*y0**2*(-3+y0**2)
-!     &                 +(5+6*y0**2)*z0**2+z0**4)
-!     &                 +x0**2*(11+15*y0**4-10*z0**2+7*z0**4
-!     &                 +y0**2*(-30+22*z0**2)))))
-!     &                /((-1 + rho0**2)**3* (L**2* (-1 +rho0**2)**2
-!     &                + 4* (rho0**2))**2))
-!
-!        g0_zz_ads_tt =0
-!        g0_zz_ads_tx =0
-!        g0_zz_ads_ty =0
-!        g0_zz_ads_tz =0
-!        g0_zz_ads_xx  =(16*(4*L**4*(-1+rho0**2)**2*(3*(1+5*x0**2-y0**2)
-!     &                   *(-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                  +(-1+24*x0**6+4*y0**2+7*y0**4-10*y0**6
-!     &                  +19*x0**4*(5+2*y0**2)
-!     &                  +2*x0**2*(-23+51*y0**2+2*y0**4))*z0**2
-!     &                  +(13+2*x0**4-13*y0**2-12*y0**4
-!     &                   +x0**2*(111-10*y0**2))*z0**4
-!     &                   -(11+8*x0**2+6*y0**2)*z0**6-z0**8)
-!     &                  +32*(2*(1+5*x0**2-y0**2)*(x0**2+y0**2)**3
-!     &                  +(7*x0**6+y0**2+2*y0**4-5*y0**6
-!     &                   +9*x0**4*(2+y0**2)
-!     &                  +x0**2*(-3+20*y0**2-3*y0**4))*z0**2
-!     &                  -(-1+15*x0**4+2*y0**2+3*y0**4
-!     &                   +2*x0**2*(-7+9*y0**2))*z0**4
-!     &                   +(-2-11*x0**2+y0**2)*z0**6+z0**8)
-!     &                  +8*L**2*(6*(1+5*x0**2-y0**2)
-!     &                  *(-1+x0**2+y0**2)**2*(x0**2+y0**2)**2
-!     &                  +(1+61*x0**8-2*y0**2-14*y0**4+38*y0**6-23*y0**8
-!     &                   +2*x0**6*(31+80*y0**2)
-!     &                   +6*x0**4*(-19+27*y0**2+19*y0**4)
-!     &                   +2*x0**2*(19-64*y0**2+69*y0**4-4*y0**6))*z0**2
-!     &                  +2*(-4+2*x0**6+13*y0**2+3*y0**4-16*y0**6
-!     &                   +3*x0**4*(45-4*y0**2)
-!     &                   +x0**2*(-55+138*y0**2-30*y0**4))*z0**4
-!     &                  -2*(-11+27*x0**4+15*y0**2+9*y0**4
-!     &                   +x0**2*(-69+36*y0**2))*z0**6
-!     &                   -2*(8+13*x0**2+y0**2)*z0**8+z0**10)
-!     &                  +L**6*(-1+rho0**2)**4*(5*x0**6
-!     &                   +9*x0**4*(-1+y0**2+z0**2)
-!     &                   -(-1+y0**2+z0**2)*((-1+y0**2)**2
-!     &                   +2*(3+y0**2)*z0**2+z0**4)
-!     &                   +3*x0**2*((-1+y0**2)**2+2*(11+y0**2)*z0**2
-!     &                   + z0**4))))
-!     &                  /((-1+rho0**2)**4
-!     &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_zz_ads_xy  =(32*x0*y0*(-64*z0**2+64*(rho0**2)
-!     &                   *(3*(x0**2+y0**2)**2+4*z0**2-3*z0**4)
-!     &                  +L**6*(-1+rho0**2)**4*(3*(-1+x0**2+y0**2)**2
-!     &                  +2*(17+3*x0**2+3*y0**2)*z0**2+3*z0**4)
-!     &                  +4*L**4*(-1+rho0**2)**2
-!     &                  *(9*(-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                  +(-25+17*x0**4+44*y0**2+17*y0**4
-!     &                   +x0**2*(44+34*y0**2))*z0**2
-!     &                  +(62+7*x0**2+7*y0**2)*z0**4-z0**6)
-!     &                  +16*L**2*(10*z0**2+(rho0**2)
-!     &                   *(9*(-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                  +2*(-17+12*y0**2+6*(x0**4+y0**4
-!     &                   +2*x0**2*(1+y0**2)))*z0**2
-!     &                   -3*(-14+x0**2+y0**2)*z0**4-6*z0**6))))
-!     &                  /((-1+rho0**2)**4
-!     &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_zz_ads_xz  =(16*x0*(8*z0*(-1+rho0**2)*(2+L**2*(-1+rho0**2))
-!     &                  *(16*(x0**2+y0**2)**2
-!     &                  +8*(1+x0**2+y0**2)*z0**2-8*z0**4
-!     &                  +L**4*(-1+rho0**2)**2*((-1+x0**2+y0**2)**2
-!     &                   +2*(3+x0**2+y0**2)*z0**2+z0**4)
-!     &                  +8*L**2*((-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                  +(1+x0**2+y0**2)*(-1+2*x0**2+2*y0**2)*z0**2
-!     &                  +(3+x0**2+y0**2)*z0**4))
-!     &                  +6*z0*(L**2*(-1+rho0**2)**2+4*(rho0**2))
-!     &                   *(16*(x0**2+y0**2)**2
-!     &                  +8*(1+x0**2+y0**2)*z0**2-8*z0**4
-!     &                  +L**4*(-1+rho0**2)**2*((-1+x0**2+y0**2)**2
-!     &                   +2*(3+x0**2+y0**2)*z0**2+z0**4)
-!     &                  +8*L**2*((-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                   +(1+x0**2+y0**2)*(-1+2*x0**2+2*y0**2)*z0**2
-!     &                   +(3+x0**2+y0**2)*z0**4))
-!     &                  -8*z0*(-1+rho0**2)*(L**2*(-1+rho0**2)**2
-!     &                   +4*(rho0**2))*(2*(1+x0**2+y0**2-2*z0**2)
-!     &                  +L**2*(4*(x0**2+y0**2)*(rho0**2)
-!     &                  +2*(-1+x0**2+y0**2+6*z0**2)
-!     &                  +L**2*(-1+rho0**2)*(-1+4*z0**2+(rho0**2)**2)))))
-!     &                  /((-1+rho0**2)**4
-!     &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_zz_ads_yy  =(16*(-L**6*(-1+rho0**2)**4*((-1+x0**2-5*y0**2)
-!     &                   *(-1+x0**2+y0**2)**2
-!     &                  +(-5+2*x0**2+3*x0**4-6*(11+x0**2)*y0**2
-!     &                   -9*y0**4)*z0**2
-!     &                  +(5+3*x0**2-3*y0**2)*z0**4+z0**6)
-!     &                  +32*(-2*(-1+x0**2-5*y0**2)*(x0**2+y0**2)**3
-!     &                  +(x0**2+2*x0**4-5*x0**6
-!     &                  +(-3+20*x0**2-3*x0**4)*y0**2+9*(2+x0**2)*y0**4
-!     &                   +7*y0**6)*z0**2
-!     &                  -(-1+2*x0**2+3*x0**4+2*(-7+9*x0**2)*y0**2
-!     &                   +15*y0**4)*z0**4
-!     &                   +(-2+x0**2-11*y0**2)*z0**6+z0**8)
-!     &                  -4*L**4*(-1+rho0**2)**2
-!     &                   *(3*(-1+x0**2-5*y0**2)*(-1+x0**2+y0**2)**2
-!     &                   *(x0**2+y0**2)
-!     &                  +(1+10*x0**6+46*y0**2-95*y0**4-24*y0**6
-!     &                   -x0**4*(7+4*y0**2)
-!     &                   -2*x0**2*(2+51*y0**2+19*y0**4))*z0**2
-!     &                  +(-13+12*x0**4-111*y0**2-2*y0**4
-!     &                   +x0**2*(13+10*y0**2))*z0**4
-!     &                  +(11+6*x0**2+8*y0**2)*z0**6+z0**8)
-!     &                  +8*L**2*(-6*(-1+x0**2-5*y0**2)
-!     &                   *(-1+x0**2+y0**2)**2*(x0**2+y0**2)**2
-!     &                   +(1-23*x0**8+38*y0**2-114*y0**4+62*y0**6
-!     &                   +61*y0**8+x0**6*(38-8*y0**2)
-!     &                   +2*x0**4*(-7+69*y0**2+57*y0**4)
-!     &                   +2*x0**2*(-1-64*y0**2+81*y0**4+80*y0**6))*z0**2
-!     &                  +2*(-4+13*x0**2+3*x0**4-16*x0**6
-!     &                   +(-55+138*x0**2-30*x0**4)*y0**2
-!     &                   +3*(45-4*x0**2)*y0**4+2*y0**6)*z0**4
-!     &                  -2*(-11+9*x0**4-69*y0**2+27*y0**4
-!     &                   +3*x0**2*(5+12*y0**2))*z0**6
-!     &                  -2*(8+x0**2+13*y0**2)*z0**8+z0**10)))
-!     &                  /((-1+rho0**2)**4
-!     &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_zz_ads_yz  =(16*y0*(8*z0*(-1+rho0**2)*(2+L**2*(-1+rho0**2))
-!     &                  *(16*(x0**2+y0**2)**2
-!     &                  +8*(1+x0**2+y0**2)*z0**2-8*z0**4
-!     &                  +L**4*(-1+rho0**2)**2*((-1+x0**2+y0**2)**2
-!     &                   +2*(3+x0**2+y0**2)*z0**2+z0**4)
-!     &                  +8*L**2*((-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                  +(1+x0**2+y0**2)*(-1+2*x0**2+2*y0**2)*z0**2
-!     &                  +(3+x0**2+y0**2)*z0**4))
-!     &                  +6*z0*(L**2*(-1+rho0**2)**2+4*(rho0**2))
-!     &                   *(16*(x0**2+y0**2)**2
-!     &                  +8*(1+x0**2+y0**2)*z0**2-8*z0**4
-!     &                  +L**4*(-1+rho0**2)**2*((-1+x0**2+y0**2)**2
-!     &                   +2*(3+x0**2+y0**2)*z0**2+z0**4)
-!     &                  +8*L**2*((-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                   +(1+x0**2+y0**2)*(-1+2*x0**2+2*y0**2)*z0**2
-!     &                   +(3+x0**2+y0**2)*z0**4))
-!     &                  -8*z0*(-1+rho0**2)*(L**2*(-1+rho0**2)**2
-!     &                   +4*(rho0**2))*(2*(1+x0**2+y0**2-2*z0**2)
-!     &                  +L**2*(4*(x0**2+y0**2)*(rho0**2)
-!     &                  +2*(-1+x0**2+y0**2+6*z0**2)
-!     &                  +L**2*(-1+rho0**2)*(-1+4*z0**2+(rho0**2)**2)))))
-!     &                  /((-1+rho0**2)**4
-!     &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
-!        g0_zz_ads_zz  =(16*(-L**6*(-1+rho0**2)**4
-!     &                   *((-3+x0**2+y0**2)*(-1+x0**2+y0**2)**2
-!     &                  -3*(-13+x0**2+y0**2)*(-1+x0**2+y0**2)*z0**2
-!     &                  -3*(11+3*x0**2+3*y0**2)*z0**4-5*z0**6)
-!     &                  +32*(x0**2+y0**2)*(-(-1+x0**2+y0**2)
-!     &                   *(x0**2+y0**2)*(-1+3*x0**2+3*y0**2)
-!     &                  +(3+15*x0**4-8*y0**2+15*y0**4
-!     &                   +x0**2*(-8+30*y0**2))*z0**2
-!     &                   +3*(-4+13*x0**2+13*y0**2)*z0**4
-!     &                   +21*z0**6)
-!     &                  -2*L**4*(-1+rho0**2)**2
-!     &                  *((-1+x0**2+y0**2)**2
-!     &                  *(1+7*x0**4-16*y0**2+7*y0**4
-!     &                   +2*x0**2*(-8+7*y0**2))
-!     &                  -2*(-1+x0**2+y0**2)
-!     &                  *(11+14*x0**4-77*y0**2+14*y0**4
-!     &                   +7*x0**2*(-11+4*y0**2))*z0**2
-!     &                  -2*(40+43*x0**4-67*y0**2+43*y0**4
-!     &                   +x0**2*(-67+86*y0**2))*z0**4
-!     &                  -6*(13+10*x0**2+10*y0**2)*z0**6-9*z0**8)
-!     &                  +8*L**2*(-2*(-1+x0**2+y0**2)**2*(x0**2+y0**2)
-!     &                  *(1+4*x0**4-7*y0**2+4*y0**4+x0**2*(-7+8*y0**2))
-!     &                  +(-1+x0**2+y0**2)
-!     &                  *(-3+31*x0**6+31*y0**2-91*y0**4+31*y0**6
-!     &                   +x0**4*(-91+93*y0**2)
-!     &                   +x0**2*(31-182*y0**2+93*y0**4))*z0**2
-!     &                   +6*(-2+24*x0**6+31*y0**2-51*y0**4+24*y0**6
-!     &                   +x0**4*(-51+72*y0**2)
-!     &                   +x0**2*(31-102*y0**2+72*y0**4))*z0**4
-!     &                  +2*(13+83*x0**4-63*y0**2+83*y0**4
-!     &                   +x0**2*(-63+166*y0**2))*z0**6
-!     &                  +4*(7+16*x0**2+16*y0**2)*z0**8+3*z0**10)))
-!     &                  /((-1+rho0**2)**4
-!     &                  *(L**2*(-1+rho0**2)**2+4*(rho0**2))**3)
+!!!!!!!!DEBUG!!!!!
 !
 !        if ((abs(gads_ll(1,1)-g0_tt_ads0).gt.10.0d0**(-10))
 !     - .or.(abs(gads_ll(1,2)-g0_tx_ads0).gt.10.0d0**(-10))

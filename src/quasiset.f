@@ -2204,6 +2204,10 @@ c----------------------------------------------------------------------
         real*8  ief_bh_r0,a_rot,M0,M0_min
         integer kerrads_background
 
+        logical calc_der,calc_adv_quant
+        data calc_der/.false./
+        data calc_adv_quant/.false./
+
         real*8 gads_ll(4,4),gads_uu(4,4)
         real*8 gads_ll_x(4,4,4),gads_uu_x(4,4,4),gads_ll_xx(4,4,4,4)
         real*8 gads_ll_sph(4,4),gads_uu_sph(4,4)
@@ -2354,7 +2358,7 @@ c----------------------------------------------------------------------
      &              +4*(-1+rho0**2)**2*(rho0**2))
 
 
-    !compute background metric and its derivatives 
+    !compute background metric
     ! NOTE: even if the background metric is not pure AdS, we still denote it by gads_ll,Hads_l,etc.
         if (kerrads_background.eq.0) then
             call ads_derivs_cartcoords(
@@ -2364,18 +2368,8 @@ c----------------------------------------------------------------------
      &                  gammaads_ull,
      &                  phi1ads,
      &                  phi1ads_x,
-     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k)
-        else if ((kerrads_background.eq.1).and.
-     &           (a_rot.gt.10.0d0**(-10)) )  then !the background metric is Kerr-AdS in Kerr-Schild coords
-            call kerrads_derivs_kerrschildcoords(
-     &                  gads_ll,gads_uu,gads_ll_x,
-     &                  gads_uu_x,gads_ll_xx,
-     &                  Hads_l,
-     &                  gammaads_ull,
-     &                  phi1ads,
-     &                  phi1ads_x,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                  ief_bh_r0,a_rot)
+     &                  calc_der,calc_adv_quant)
         else if ((kerrads_background.eq.1).and.
      &           (a_rot.lt.10.0d0**(-10)) ) then !the background metric is Schw-AdS in Kerr-Schild coords
             call schwads_derivs_kerrschildcoords(
@@ -2386,7 +2380,20 @@ c----------------------------------------------------------------------
      &                  phi1ads,
      &                  phi1ads_x,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                  ief_bh_r0)
+     &                  ief_bh_r0,
+     &                  calc_der,calc_adv_quant)
+        else if ((kerrads_background.eq.1).and.
+     &           (a_rot.gt.10.0d0**(-10)) )  then !the background metric is Kerr-AdS in Kerr-Schild coords
+            call kerrads_derivs_kerrschildcoords(
+     &                  gads_ll,gads_uu,gads_ll_x,
+     &                  gads_uu_x,gads_ll_xx,
+     &                  Hads_l,
+     &                  gammaads_ull,
+     &                  phi1ads,
+     &                  phi1ads_x,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
+     &                  ief_bh_r0,a_rot,
+     &                  calc_der,calc_adv_quant)
         end if
 
 

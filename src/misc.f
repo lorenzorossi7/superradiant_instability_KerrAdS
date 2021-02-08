@@ -3688,6 +3688,10 @@ c----------------------------------------------------------------------
         real*8  ief_bh_r0,a_rot,M0,M0_min
         integer kerrads_background
 
+        logical calc_der,calc_adv_quant
+        data calc_der/.true./
+        data calc_adv_quant/.false./
+
         real*8 chr(Nx,Ny,Nz),ex
         real*8 x(Nx),y(Ny),z(Nz),dt,L
 
@@ -3925,18 +3929,8 @@ c----------------------------------------------------------------------
      &                  gammaads_ull,
      &                  phi1ads,
      &                  phi1ads_x,
-     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k)
-        else if ((kerrads_background.eq.1).and.
-     &           (a_rot.gt.10.0d0**(-10)) )  then !the background metric is Kerr-AdS in Kerr-Schild coords
-            call kerrads_derivs_kerrschildcoords(
-     &                  gads_ll,gads_uu,gads_ll_x,
-     &                  gads_uu_x,gads_ll_xx,
-     &                  Hads_l,
-     &                  gammaads_ull,
-     &                  phi1ads,
-     &                  phi1ads_x,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                  ief_bh_r0,a_rot)
+     &                  calc_der,calc_adv_quant)
         else if ((kerrads_background.eq.1).and.
      &           (a_rot.lt.10.0d0**(-10)) ) then !the background metric is Schw-AdS in Kerr-Schild coords
             call schwads_derivs_kerrschildcoords(
@@ -3947,7 +3941,20 @@ c----------------------------------------------------------------------
      &                  phi1ads,
      &                  phi1ads_x,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                  ief_bh_r0)
+     &                  ief_bh_r0,
+     &                  calc_der,calc_adv_quant)
+        else if ((kerrads_background.eq.1).and.
+     &           (a_rot.gt.10.0d0**(-10)) )  then !the background metric is Kerr-AdS in Kerr-Schild coords
+            call kerrads_derivs_kerrschildcoords(
+     &                  gads_ll,gads_uu,gads_ll_x,
+     &                  gads_uu_x,gads_ll_xx,
+     &                  Hads_l,
+     &                  gammaads_ull,
+     &                  phi1ads,
+     &                  phi1ads_x,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
+     &                  ief_bh_r0,a_rot,
+     &                  calc_der,calc_adv_quant)
         end if
 
 

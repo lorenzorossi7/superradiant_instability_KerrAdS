@@ -13,13 +13,15 @@ c----------------------------------------------------------------------
      &                  phi1schwads,
      &                  phi1schwads_x,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                  ief_bh_r0)
+     &                  ief_bh_r0,
+     &                  calc_der,calc_adv_quant)
 
         implicit none
 
         integer Nx,Ny,Nz
         integer i,j,k
         real*8  ief_bh_r0,a_rot,M0,M0_min
+        logical calc_der,calc_adv_quant
 
         real*8 chr(Nx,Ny,Nz),ex
         real*8 x(Nx),y(Ny),z(Nz),dt,L
@@ -238,6 +240,13 @@ c----------------------------------------------------------------------
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !----------------------------------------------------------------------
+
+        if ((calc_adv_quant).and.(.not.calc_der)) then
+         write (*,*) "Error: cannot compute 
+     -    advanced tensorial quantities 
+     -    without computing metric derivatives"
+         stop
+        end if
         
         dx=(x(2)-x(1))
         dy=(y(2)-y(1))
@@ -310,7 +319,7 @@ c----------------------------------------------------------------------
      &         g0u_phiphi_schwads_sph0,
      &         detg0_schwads_sph0)
 
-
+       if (calc_der) then
         g0_tt_schwads_sph_t  =
      -   0
         g0_tt_schwads_sph_rho  =
@@ -718,6 +727,7 @@ c----------------------------------------------------------------------
      -   0
         g0_phiphi_schwads_sph_phiphi =
      -   0     
+       end if
 
 
         ! give values to the schwads metric
@@ -745,7 +755,7 @@ c----------------------------------------------------------------------
         gschwads_uu_sph(4,4)=g0u_phiphi_schwads_sph0
 
 
-
+       if (calc_der) then
         gschwads_ll_sph_x(1,1,1)   =g0_tt_schwads_sph_t
         gschwads_ll_sph_x(1,1,2)   =g0_tt_schwads_sph_rho
         gschwads_ll_sph_x(1,1,3)   =g0_tt_schwads_sph_theta
@@ -895,19 +905,21 @@ c----------------------------------------------------------------------
         gschwads_ll_sph_xx(4,4,3,3)=g0_phiphi_schwads_sph_thetatheta
         gschwads_ll_sph_xx(4,4,3,4)=g0_phiphi_schwads_sph_thetaphi
         gschwads_ll_sph_xx(4,4,4,4)=g0_phiphi_schwads_sph_phiphi
-
+       end if
 
         do a=1,3
           do b=a+1,4
             gschwads_ll_sph(b,a)=gschwads_ll_sph(a,b)
             gschwads_uu_sph(b,a)=gschwads_uu_sph(a,b)
-            do c=1,4
-              gschwads_ll_sph_x(b,a,c)=gschwads_ll_sph_x(a,b,c)
-              do d=1,4
-                gschwads_ll_sph_xx(b,a,c,d)=gschwads_ll_sph_xx(a,b,c,d)
-                gschwads_ll_sph_xx(c,d,b,a)=gschwads_ll_sph_xx(c,d,a,b)
-              end do
-            end do
+            if (calc_der) then
+             do c=1,4
+               gschwads_ll_sph_x(b,a,c)=gschwads_ll_sph_x(a,b,c)
+               do d=1,4
+                 gschwads_ll_sph_xx(b,a,c,d)=gschwads_ll_sph_xx(a,b,c,d)
+                 gschwads_ll_sph_xx(c,d,b,a)=gschwads_ll_sph_xx(c,d,a,b)
+               end do
+             end do
+            end if
           end do
         end do
 
@@ -935,6 +947,7 @@ c----------------------------------------------------------------------
         dxsph_dxcar(4,3)=-(z0/(y0**2 + z0**2))
         dxsph_dxcar(4,4)=y0/(y0**2 + z0**2)
 
+       if (calc_der) then
         d2xsph_dxcardxcar(1,1,1)=
      -   0
         d2xsph_dxcardxcar(1,1,2)=
@@ -1271,6 +1284,8 @@ c----------------------------------------------------------------------
           end do
          end do
         end do
+       end if !closes condition on calc_der
+
 
         !compute Cartesian quantities in terms of spherical ones
         do a=1,4
@@ -1282,45 +1297,47 @@ c----------------------------------------------------------------------
             gschwads_ll_xx(a,b,c,d)=0
             gschwads_ll(a,b)=gschwads_ll(a,b)+
      &         dxsph_dxcar(c,a)*dxsph_dxcar(d,b)*gschwads_ll_sph(c,d)
-            do e=1,4
-             gschwads_ll_x(a,b,c)=gschwads_ll_x(a,b,c)+
-     &     d2xsph_dxcardxcar(d,c,a)*dxsph_dxcar(e,b)
-     &     *gschwads_ll_sph(d,e)+
-     &     dxsph_dxcar(d,a)*d2xsph_dxcardxcar(e,c,b)
-     &     *gschwads_ll_sph(d,e)
-             do f=1,4
+            if (calc_der) then
+             do e= 1,4
               gschwads_ll_x(a,b,c)=gschwads_ll_x(a,b,c)+
-     &     dxsph_dxcar(d,a)*dxsph_dxcar(e,b)*dxsph_dxcar(f,c)
-     &     *gschwads_ll_sph_x(d,e,f)
-              gschwads_ll_xx(a,b,c,d)=gschwads_ll_xx(a,b,c,d)+
-     &     d3xsph_dxcardxcardxcar(e,d,c,a)*dxsph_dxcar(f,b)
-     &     *gschwads_ll_sph(e,f)+
-     &     d2xsph_dxcardxcar(e,c,a)*d2xsph_dxcardxcar(f,d,b)
-     &     *gschwads_ll_sph(e,f)+
-     &     d2xsph_dxcardxcar(e,d,a)*d2xsph_dxcardxcar(f,c,b)
-     &     *gschwads_ll_sph(e,f)+
-     &     dxsph_dxcar(e,a)*d3xsph_dxcardxcardxcar(f,d,c,b)
-     &     *gschwads_ll_sph(e,f)
-              do g=1,4
-           gschwads_ll_xx(a,b,c,d)=gschwads_ll_xx(a,b,c,d)+
-     &     d2xsph_dxcardxcar(e,c,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,d)
-     &     *gschwads_ll_sph_x(e,f,g)+
-     &     dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,c,b)*dxsph_dxcar(g,d)
-     &     *gschwads_ll_sph_x(e,f,g)+
-     &     d2xsph_dxcardxcar(e,d,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,c)
-     &     *gschwads_ll_sph_x(e,f,g)+
-     &     dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,d,b)*dxsph_dxcar(g,c)
-     &     *gschwads_ll_sph_x(e,f,g)+
-     &     dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*d2xsph_dxcardxcar(g,d,c)
-     &     *gschwads_ll_sph_x(e,f,g)
-               do h=1,4
-                gschwads_ll_xx(a,b,c,d)=gschwads_ll_xx(a,b,c,d)+
-     &     dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*
-     &     dxsph_dxcar(g,c)*dxsph_dxcar(h,d)*gschwads_ll_sph_xx(e,f,g,h)
+     &      d2xsph_dxcardxcar(d,c,a)*dxsph_dxcar(e,b)
+     &      *gschwads_ll_sph(d,e)+
+     &      dxsph_dxcar(d,a)*d2xsph_dxcardxcar(e,c,b)
+     &      *gschwads_ll_sph(d,e)
+              do f=1,4
+               gschwads_ll_x(a,b,c)=gschwads_ll_x(a,b,c)+
+     &      dxsph_dxcar(d,a)*dxsph_dxcar(e,b)*dxsph_dxcar(f,c)
+     &      *gschwads_ll_sph_x(d,e,f)
+               gschwads_ll_xx(a,b,c,d)=gschwads_ll_xx(a,b,c,d)+
+     &      d3xsph_dxcardxcardxcar(e,d,c,a)*dxsph_dxcar(f,b)
+     &      *gschwads_ll_sph(e,f)+
+     &      d2xsph_dxcardxcar(e,c,a)*d2xsph_dxcardxcar(f,d,b)
+     &      *gschwads_ll_sph(e,f)+
+     &      d2xsph_dxcardxcar(e,d,a)*d2xsph_dxcardxcar(f,c,b)
+     &      *gschwads_ll_sph(e,f)+
+     &      dxsph_dxcar(e,a)*d3xsph_dxcardxcardxcar(f,d,c,b)
+     &      *gschwads_ll_sph(e,f)
+               do g=1,4
+            gschwads_ll_xx(a,b,c,d)=gschwads_ll_xx(a,b,c,d)+
+     &      d2xsph_dxcardxcar(e,c,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,d)
+     &      *gschwads_ll_sph_x(e,f,g)+
+     &      dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,c,b)*dxsph_dxcar(g,d)
+     &      *gschwads_ll_sph_x(e,f,g)+
+     &      d2xsph_dxcardxcar(e,d,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,c)
+     &      *gschwads_ll_sph_x(e,f,g)+
+     &      dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,d,b)*dxsph_dxcar(g,c)
+     &      *gschwads_ll_sph_x(e,f,g)+
+     &      dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*d2xsph_dxcardxcar(g,d,c)
+     &      *gschwads_ll_sph_x(e,f,g)
+                do h=1,4
+                 gschwads_ll_xx(a,b,c,d)=gschwads_ll_xx(a,b,c,d)+
+     &   dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*
+     &   dxsph_dxcar(g,c)*dxsph_dxcar(h,d)*gschwads_ll_sph_xx(e,f,g,h)
+                end do
                end do
               end do
              end do
-            end do
+            end if
            end do
           end do
          end do
@@ -1345,7 +1362,7 @@ c----------------------------------------------------------------------
         gschwads_ll(4,4)=
      -   4/(-1 + x0**2)**2
 
-
+       if (calc_der) then
         gschwads_ll_x(1,1,3)=
      -   0
         gschwads_ll_x(1,1,4)=
@@ -1654,27 +1671,32 @@ c----------------------------------------------------------------------
      -    -16/(-1 + x0**2)**3 + 
      -  (8*M0)/((1 + x0**2)**2*Abs(x0)**3) - 
      -  (8*M0*x0**2)/((1 + x0**2)**2*Abs(x0)**3)
+       end if
 
 
         do a=1,3
           do b=a+1,4
             gschwads_ll(b,a)=gschwads_ll(a,b)
-            do c=1,4
-              gschwads_ll_x(b,a,c)=gschwads_ll_x(a,b,c)
-            end do
+            if (calc_der) then
+             do c=1,4
+               gschwads_ll_x(b,a,c)=gschwads_ll_x(a,b,c)
+             end do
+            end if
           end do
         end do
 
-        do a=1,4
-          do b=1,4
-            do c=1,4
-              do d=1,4
-                gschwads_ll_xx(a,b,c,d)=
-     &             gschwads_ll_xx(min(a,b),max(a,b),min(c,d),max(c,d))
-              end do
-            end do
-          end do
-        end do
+        if (calc_der) then
+         do a=1,4
+           do b=1,4
+             do c=1,4
+               do d=1,4
+                 gschwads_ll_xx(a,b,c,d)=
+     &              gschwads_ll_xx(min(a,b),max(a,b),min(c,d),max(c,d))
+               end do
+             end do
+           end do
+         end do
+        end if
 
        end if !closes condition on y=z=0
 
@@ -1700,207 +1722,213 @@ c----------------------------------------------------------------------
         !set values for the FULL bulk scalar field value of the analytic solution
 
         phi1schwads=0
-        phi1schwads_x(1)=0
-        phi1schwads_x(2)=0
-        phi1schwads_x(3)=0
-        phi1schwads_x(4)=0
-        phi1schwads_xx(1,1)=0
-        phi1schwads_xx(1,2)=0
-        phi1schwads_xx(1,3)=0
-        phi1schwads_xx(1,4)=0
-        phi1schwads_xx(2,2)=0
-        phi1schwads_xx(2,3)=0
-        phi1schwads_xx(2,4)=0
-        phi1schwads_xx(3,3)=0
-        phi1schwads_xx(3,4)=0
+        if (calc_der) then
+         phi1schwads_x(1)=0
+         phi1schwads_x(2)=0
+         phi1schwads_x(3)=0
+         phi1schwads_x(4)=0
+         phi1schwads_xx(1,1)=0
+         phi1schwads_xx(1,2)=0
+         phi1schwads_xx(1,3)=0
+         phi1schwads_xx(1,4)=0
+         phi1schwads_xx(2,2)=0
+         phi1schwads_xx(2,3)=0
+         phi1schwads_xx(2,4)=0
+         phi1schwads_xx(3,3)=0
+         phi1schwads_xx(3,4)=0
+ 
+         do a=1,3
+           do b=a+1,4
+             phi1schwads_xx(b,a)=phi1schwads_xx(a,b)
+           end do
+         end do
+        end if
 
-        do a=1,3
-          do b=a+1,4
-            phi1schwads_xx(b,a)=phi1schwads_xx(a,b)
-          end do
-        end do
+        if (calc_der) then
+         do a=1,4
+           do b=1,4
+             do c=1,4
+               gschwads_uu_x(a,b,c)=
+     &               -gschwads_ll_x(1,1,c)*gschwads_uu(a,1)
+     &                   *gschwads_uu(b,1)
+     &               -gschwads_ll_x(1,2,c)*(gschwads_uu(a,1)
+     &                   *gschwads_uu(b,2)
+     &                      +gschwads_uu(a,2)*gschwads_uu(b,1))
+     &               -gschwads_ll_x(1,3,c)*(gschwads_uu(a,1)
+     &                   *gschwads_uu(b,3)
+     &                      +gschwads_uu(a,3)*gschwads_uu(b,1))
+     &               -gschwads_ll_x(1,4,c)*(gschwads_uu(a,1)
+     &                   *gschwads_uu(b,4)
+     &                      +gschwads_uu(a,4)*gschwads_uu(b,1))
+     &               -gschwads_ll_x(2,2,c)*gschwads_uu(a,2)
+     &                   *gschwads_uu(b,2)
+     &               -gschwads_ll_x(2,3,c)*(gschwads_uu(a,2)
+     &                   *gschwads_uu(b,3)
+     &                      +gschwads_uu(a,3)*gschwads_uu(b,2))
+     &               -gschwads_ll_x(2,4,c)*(gschwads_uu(a,2)
+     &                   *gschwads_uu(b,4)
+     &                      +gschwads_uu(a,4)*gschwads_uu(b,2))
+     &               -gschwads_ll_x(3,3,c)*gschwads_uu(a,3)
+     &                   *gschwads_uu(b,3)
+     &               -gschwads_ll_x(3,4,c)*(gschwads_uu(a,3)
+     &                   *gschwads_uu(b,4)
+     &                      +gschwads_uu(a,4)*gschwads_uu(b,3))
+     &               -gschwads_ll_x(4,4,c)*gschwads_uu(a,4)
+     &                   *gschwads_uu(b,4)
+             end do
+           end do
+         end do
 
-        do a=1,4
-          do b=1,4
-            do c=1,4
-              gschwads_uu_x(a,b,c)=
-     &              -gschwads_ll_x(1,1,c)*gschwads_uu(a,1)
-     &                  *gschwads_uu(b,1)
-     &              -gschwads_ll_x(1,2,c)*(gschwads_uu(a,1)
-     &                  *gschwads_uu(b,2)
-     &                     +gschwads_uu(a,2)*gschwads_uu(b,1))
-     &              -gschwads_ll_x(1,3,c)*(gschwads_uu(a,1)
-     &                  *gschwads_uu(b,3)
-     &                     +gschwads_uu(a,3)*gschwads_uu(b,1))
-     &              -gschwads_ll_x(1,4,c)*(gschwads_uu(a,1)
-     &                  *gschwads_uu(b,4)
-     &                     +gschwads_uu(a,4)*gschwads_uu(b,1))
-     &              -gschwads_ll_x(2,2,c)*gschwads_uu(a,2)
-     &                  *gschwads_uu(b,2)
-     &              -gschwads_ll_x(2,3,c)*(gschwads_uu(a,2)
-     &                  *gschwads_uu(b,3)
-     &                     +gschwads_uu(a,3)*gschwads_uu(b,2))
-     &              -gschwads_ll_x(2,4,c)*(gschwads_uu(a,2)
-     &                  *gschwads_uu(b,4)
-     &                     +gschwads_uu(a,4)*gschwads_uu(b,2))
-     &              -gschwads_ll_x(3,3,c)*gschwads_uu(a,3)
-     &                  *gschwads_uu(b,3)
-     &              -gschwads_ll_x(3,4,c)*(gschwads_uu(a,3)
-     &                  *gschwads_uu(b,4)
-     &                     +gschwads_uu(a,4)*gschwads_uu(b,3))
-     &              -gschwads_ll_x(4,4,c)*gschwads_uu(a,4)
-     &                  *gschwads_uu(b,4)
-            end do
-          end do
-        end do
+          ! give values to the Christoffel symbols
+         do a=1,4
+           do b=1,4
+             do c=1,4
+               gammaschwads_ull(a,b,c)=0
+               do d=1,4
+                 gammaschwads_ull(a,b,c)=gammaschwads_ull(a,b,c)
+     &                           +0.5d0*gschwads_uu(a,d)
+     &                                 *(gschwads_ll_x(c,d,b)
+     &                                  -gschwads_ll_x(b,c,d)
+     &                                  +gschwads_ll_x(d,b,c))
+               end do
+             end do
+           end do
+         end do
 
-        ! give values to the Christoffel symbols
-        do a=1,4
-          do b=1,4
-            do c=1,4
-              gammaschwads_ull(a,b,c)=0
-              do d=1,4
-                gammaschwads_ull(a,b,c)=gammaschwads_ull(a,b,c)
-     &                          +0.5d0*gschwads_uu(a,d)
-     &                                *(gschwads_ll_x(c,d,b)
-     &                                 -gschwads_ll_x(b,c,d)
-     &                                 +gschwads_ll_x(d,b,c))
-              end do
-            end do
-          end do
-        end do
+                ! calculate boxx^c at point i,j
+               ! (boxschwadsx^c = -gschwads^ab gammaschwads^c_ab)
+               do c=1,4
+                 boxschwadsx_u(c)=
+     &            -( gammaschwads_ull(c,1,1)*gschwads_uu(1,1)+
+     &               gammaschwads_ull(c,2,2)*gschwads_uu(2,2)+
+     &               gammaschwads_ull(c,3,3)*gschwads_uu(3,3)+
+     &               gammaschwads_ull(c,4,4)*gschwads_uu(4,4)+
+     &             2*(gammaschwads_ull(c,1,2)*gschwads_uu(1,2)+
+     &               gammaschwads_ull(c,1,3)*gschwads_uu(1,3)+
+     &               gammaschwads_ull(c,1,4)*gschwads_uu(1,4)+
+     &               gammaschwads_ull(c,2,3)*gschwads_uu(2,3)+
+     &               gammaschwads_ull(c,2,4)*gschwads_uu(2,4)+
+     &               gammaschwads_ull(c,3,4)*gschwads_uu(3,4)) )
+               end do
 
-              ! calculate boxx^c at point i,j
-              ! (boxschwadsx^c = -gschwads^ab gammaschwads^c_ab)
-              do c=1,4
-                boxschwadsx_u(c)=
-     &           -( gammaschwads_ull(c,1,1)*gschwads_uu(1,1)+
-     &              gammaschwads_ull(c,2,2)*gschwads_uu(2,2)+
-     &              gammaschwads_ull(c,3,3)*gschwads_uu(3,3)+
-     &              gammaschwads_ull(c,4,4)*gschwads_uu(4,4)+
-     &            2*(gammaschwads_ull(c,1,2)*gschwads_uu(1,2)+
-     &              gammaschwads_ull(c,1,3)*gschwads_uu(1,3)+
-     &              gammaschwads_ull(c,1,4)*gschwads_uu(1,4)+
-     &              gammaschwads_ull(c,2,3)*gschwads_uu(2,3)+
-     &              gammaschwads_ull(c,2,4)*gschwads_uu(2,4)+
-     &              gammaschwads_ull(c,3,4)*gschwads_uu(3,4)) )
-              end do
+                !compute Hschwads_l(a) in Cartesian coordinates
+               ! (Hschwads_a = gschwads_ab boxschwadsx^b)
+               do a=1,4
+                 Hschwads_l(a)=boxschwadsx_u(1)*gschwads_ll(a,1)+
+     &                     boxschwadsx_u(2)*gschwads_ll(a,2)+
+     &                     boxschwadsx_u(3)*gschwads_ll(a,3)+
+     &                     boxschwadsx_u(4)*gschwads_ll(a,4)
+               end do
+              end if
 
-              !compute Hschwads_l(a) in Cartesian coordinates
-              ! (Hschwads_a = gschwads_ab boxschwadsx^b)
-              do a=1,4
-                Hschwads_l(a)=boxschwadsx_u(1)*gschwads_ll(a,1)+
-     &                    boxschwadsx_u(2)*gschwads_ll(a,2)+
-     &                    boxschwadsx_u(3)*gschwads_ll(a,3)+
-     &                    boxschwadsx_u(4)*gschwads_ll(a,4)
-              end do
-
+       if (calc_adv_quant) then
         !COMPUTE ADDITIONAL, UNNECESSARY QUANTITIES
-!        ! calculate Christoffel symbol derivatives at point i,j
-!        !(gamma^a_bc,e = 1/2 g^ad_,e(g_bd,c  + g_cd,b  - g_bc,d)
-!        !              +   1/2 g^ad(g_bd,ce + g_cd,be - g_bc,de))
-!        do a=1,4
-!          do b=1,4
-!            do c=1,4
-!              do e=1,4
-!                gammaschwads_ull_x(a,b,c,e)=0
-!                do d=1,4
-!                  gammaschwads_ull_x(a,b,c,e)=
-!     &             gammaschwads_ull_x(a,b,c,e)
-!     &              +0.5d0*gschwads_uu_x(a,d,e)*
-!     &                  (gschwads_ll_x(b,d,c)+
-!     &                    gschwads_ll_x(c,d,b)
-!     &                  -gschwads_ll_x(b,c,d))
-!     &              +0.5d0*gschwads_uu(a,d)*
-!     &                  (gschwads_ll_xx(b,d,c,e)+
-!     &                    gschwads_ll_xx(c,d,b,e)
-!     &                  -gschwads_ll_xx(b,c,d,e))
-!                end do
-!              end do
-!            end do
-!          end do
-!        end do
-!
-!        ! calculate riemann tensor at point i,j
-!        !(R^a_bcd =gamma^a_bd,c - gamma^a_bc,d
-!        !          +gamma^a_ce gamma^e_bd - gamma^a_de gamma^e_bc)
-!        do a=1,4
-!          do b=1,4
-!            do c=1,4
-!              do d=1,4
-!                riemannschwads_ulll(a,b,c,d)=
-!     &                gammaschwads_ull_x(a,b,d,c)
-!     &               -gammaschwads_ull_x(a,b,c,d)
-!                do e=1,4
-!                   riemannschwads_ulll(a,b,c,d)=
-!     &                riemannschwads_ulll(a,b,c,d)
-!     &               +gammaschwads_ull(a,c,e)*
-!     &                      gammaschwads_ull(e,b,d)
-!     &               -gammaschwads_ull(a,d,e)*
-!     &                      gammaschwads_ull(e,b,c)
-!                end do
-!              end do
-!            end do
-!          end do
-!        end do
-!
-!        ! calculate Ricci tensor at point i,j
-!        !(R_bd = R^a_bad)
-!        do b=1,4
-!          do d=1,4
-!            riccischwads_ll(b,d)=0
-!            do a=1,4
-!              riccischwads_ll(b,d)=riccischwads_ll(b,d)
-!     &            +riemannschwads_ulll(a,b,a,d)
-!            end do
-!          end do
-!        end do
-!
-!        ! calculate raised Ricci tensor at point i,j
-!        !(R_a^b = R_ad g^db)
-!        do a=1,4
-!          do b=1,4
-!            riccischwads_lu(a,b)=0
-!            do d=1,4
-!              riccischwads_lu(a,b)=riccischwads_lu(a,b)
-!     &         +riccischwads_ll(a,d)*gschwads_uu(d,b)
-!            end do
-!          end do
-!        end do
-!
-!        ! calculate Ricci scalar
-!        !(R = R_a^a)
-!        riccischwads=0
-!        do a=1,4
-!          riccischwads=riccischwads+riccischwads_lu(a,a)
-!        end do
-!
-!        ! calculates Einstein tensor at point i,j
-!        !(G_ab = R_ab - 1/2 R g_ab)
-!        do a=1,4
-!          do b=1,4
-!            einsteinschwads_ll(a,b)=riccischwads_ll(a,b)
-!     &       -0.5d0*riccischwads*gschwads_ll(a,b)
-!          end do
-!        end do
-!
-!        ! calculates stress-energy tensor at point i,j 
-!        !(T_ab = 2*phi1,a phi1,b - (phi1,c phi1,d) g^cd g_ab + ...)
-!        grad_phi1schwads_sq=0
-!        do a=1,4
-!          do b=1,4
-!            grad_phi1schwads_sq=grad_phi1schwads_sq
-!     &        +phi1schwads_x(a)*phi1schwads_x(b)*gschwads_uu(a,b)
-!          end do
-!        end do
-!
-!        do a=1,4
-!          do b=1,4
-!            setschwads_ll(a,b)=
-!     &            phi1schwads_x(a)*phi1schwads_x(b)
-!     &           -gschwads_ll(a,b)*(grad_phi1schwads_sq/2)
-!          end do
-!        end do
+        ! calculate Christoffel symbol derivatives at point i,j
+        !(gamma^a_bc,e = 1/2 g^ad_,e(g_bd,c  + g_cd,b  - g_bc,d)
+        !              +   1/2 g^ad(g_bd,ce + g_cd,be - g_bc,de))
+        do a=1,4
+          do b=1,4
+            do c=1,4
+              do e=1,4
+                gammaschwads_ull_x(a,b,c,e)=0
+                do d=1,4
+                  gammaschwads_ull_x(a,b,c,e)=
+     &             gammaschwads_ull_x(a,b,c,e)
+     &              +0.5d0*gschwads_uu_x(a,d,e)*
+     &                  (gschwads_ll_x(b,d,c)+
+     &                    gschwads_ll_x(c,d,b)
+     &                  -gschwads_ll_x(b,c,d))
+     &              +0.5d0*gschwads_uu(a,d)*
+     &                  (gschwads_ll_xx(b,d,c,e)+
+     &                    gschwads_ll_xx(c,d,b,e)
+     &                  -gschwads_ll_xx(b,c,d,e))
+                end do
+              end do
+            end do
+          end do
+        end do
+
+        ! calculate riemann tensor at point i,j
+        !(R^a_bcd =gamma^a_bd,c - gamma^a_bc,d
+        !          +gamma^a_ce gamma^e_bd - gamma^a_de gamma^e_bc)
+        do a=1,4
+          do b=1,4
+            do c=1,4
+              do d=1,4
+                riemannschwads_ulll(a,b,c,d)=
+     &                gammaschwads_ull_x(a,b,d,c)
+     &               -gammaschwads_ull_x(a,b,c,d)
+                do e=1,4
+                   riemannschwads_ulll(a,b,c,d)=
+     &                riemannschwads_ulll(a,b,c,d)
+     &               +gammaschwads_ull(a,c,e)*
+     &                      gammaschwads_ull(e,b,d)
+     &               -gammaschwads_ull(a,d,e)*
+     &                      gammaschwads_ull(e,b,c)
+                end do
+              end do
+            end do
+          end do
+        end do
+
+        ! calculate Ricci tensor at point i,j
+        !(R_bd = R^a_bad)
+        do b=1,4
+          do d=1,4
+            riccischwads_ll(b,d)=0
+            do a=1,4
+              riccischwads_ll(b,d)=riccischwads_ll(b,d)
+     &            +riemannschwads_ulll(a,b,a,d)
+            end do
+          end do
+        end do
+
+        ! calculate raised Ricci tensor at point i,j
+        !(R_a^b = R_ad g^db)
+        do a=1,4
+          do b=1,4
+            riccischwads_lu(a,b)=0
+            do d=1,4
+              riccischwads_lu(a,b)=riccischwads_lu(a,b)
+     &         +riccischwads_ll(a,d)*gschwads_uu(d,b)
+            end do
+          end do
+        end do
+
+        ! calculate Ricci scalar
+        !(R = R_a^a)
+        riccischwads=0
+        do a=1,4
+          riccischwads=riccischwads+riccischwads_lu(a,a)
+        end do
+
+        ! calculates Einstein tensor at point i,j
+        !(G_ab = R_ab - 1/2 R g_ab)
+        do a=1,4
+          do b=1,4
+            einsteinschwads_ll(a,b)=riccischwads_ll(a,b)
+     &       -0.5d0*riccischwads*gschwads_ll(a,b)
+          end do
+        end do
+
+        ! calculates stress-energy tensor at point i,j 
+        !(T_ab = 2*phi1,a phi1,b - (phi1,c phi1,d) g^cd g_ab + ...)
+        grad_phi1schwads_sq=0
+        do a=1,4
+          do b=1,4
+            grad_phi1schwads_sq=grad_phi1schwads_sq
+     &        +phi1schwads_x(a)*phi1schwads_x(b)*gschwads_uu(a,b)
+          end do
+        end do
+
+        do a=1,4
+          do b=1,4
+            setschwads_ll(a,b)=
+     &            phi1schwads_x(a)*phi1schwads_x(b)
+     &           -gschwads_ll(a,b)*(grad_phi1schwads_sq/2)
+          end do
+        end do
+       end if
 
 
 
