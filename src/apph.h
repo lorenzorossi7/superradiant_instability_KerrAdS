@@ -40,7 +40,11 @@ extern int found_count_AH[MAX_BHS];
 // functions
 //-----------------------------------------------------------------------------
 
-int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *c_polar2s, int use_R_ic, real *AH_min_resid, int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, int output_metricAH_sph_ascii, int output_diagnosticAH_ascii);
+int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *c_polar2s, int use_R_ic, real *AH_min_resid, 
+    int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, 
+    int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, 
+    int output_metricAH_sph_ascii, int output_diagnosticAH_ascii,
+    real *ief_bh_r0,real *a_rot0,int *kerrads_background);
 
 //-----------------------------------------------------------------------------
 // related fotran routines
@@ -76,7 +80,8 @@ void calc_exp_metric0_(real *AH_R, real *AH_xc, real *AH_theta, int *i0, int *j0
                 real *gb_yz_np1, real *gb_yz_n, real *gb_yz_nm1,
                 real *gb_zz_np1, real *gb_zz_n, real *gb_zz_nm1,
                 real *AdS_L, real *x, real *y, real *z, real *dt, real *chr, 
-                real *ex, int *do_ex, int *Nx, int *Ny, int *Nz, int *axisym);
+                real *ex, int *do_ex, int *Nx, int *Ny, int *Nz, int *axisym,
+                real *ief_bh_r0,real *a_rot0,int *kerrads_background);
 
 void smooth_ah_r_(real *AH_R,real *AH_w1,real *AH_eps, int *AH_Nchi, int *AH_Nphi);
 

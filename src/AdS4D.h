@@ -326,7 +326,7 @@ void init_ghb_background_metr_(real *gb_tt, real *gb_tx, real *gb_ty,
                    real *gb_yy, 
                    real *gb_yz,
                    real *gb_zz, real *Hb_t, real *Hb_x, real *Hb_y, 
-                   real *Hb_z, 
+                   real *Hb_z,
                    real *AdS_L, real *x, real *y, real *z, real *chr, real *ex, int *Nx, int *Ny, int *Nz,
                    int *regtype);
 

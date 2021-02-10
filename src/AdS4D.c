@@ -2934,8 +2934,10 @@ void AdS4D_t0_cnst_data(void)
 //    }  
     }   
     // initialize gbars and nm1, np1 time levels
-    if ((background || skip_constraints) && ief_bh_r0==0)
+    if ((background || skip_constraints) && (ief_bh_r0<pow(10,-10)))
     {   
+    	if (gb_xx_nm1) //"np1,n,nm1" variables only allocated on finest MG level
+        {   
     //   for (i=0; i<Nx; i++)  
     //   {    
     //      for (j=0; j<Ny; j++)    
@@ -2953,7 +2955,7 @@ void AdS4D_t0_cnst_data(void)
     //       } 
     //      }    
     //   }  
-        init_ghb_background_metr_(gb_tt,gb_tx,gb_ty,
+        	init_ghb_background_metr_(gb_tt,gb_tx,gb_ty,
                     gb_tz,
                     gb_xx,gb_xy,
                     gb_xz,
@@ -2979,23 +2981,24 @@ void AdS4D_t0_cnst_data(void)
                     //       }  
                     //      } 
                     //   }   
-        for (i=0; i<size; i++)
-        {
-            gb_tt_np1[i]=gb_tt_nm1[i]=gb_tt[i];
-            gb_tx_np1[i]=gb_tx_nm1[i]=gb_tx[i];
-            gb_ty_np1[i]=gb_ty_nm1[i]=gb_ty[i];
-            gb_tz_np1[i]=gb_tz_nm1[i]=gb_tz[i];
-            gb_xx_np1[i]=gb_xx_nm1[i]=gb_xx[i];
-            gb_xy_np1[i]=gb_xy_nm1[i]=gb_xy[i];
-            gb_xz_np1[i]=gb_xz_nm1[i]=gb_xz[i];
-            gb_yy_np1[i]=gb_yy_nm1[i]=gb_yy[i];
-            gb_yz_np1[i]=gb_yz_nm1[i]=gb_yz[i];
-            gb_zz_np1[i]=gb_zz_nm1[i]=gb_zz[i];
-            Hb_t_np1[i]=Hb_t_nm1[i]=Hb_t_n[i];
-            Hb_x_np1[i]=Hb_x_nm1[i]=Hb_x_n[i];
-            Hb_y_np1[i]=Hb_y_nm1[i]=Hb_y_n[i];
-            Hb_z_np1[i]=Hb_z_nm1[i]=Hb_z_n[i];
-            phi1_np1[i]=phi1_nm1[i]=phi1[i];
+            for (i=0; i<size; i++)
+            {
+                gb_tt_np1[i]=gb_tt_nm1[i]=gb_tt[i];
+                gb_tx_np1[i]=gb_tx_nm1[i]=gb_tx[i];
+                gb_ty_np1[i]=gb_ty_nm1[i]=gb_ty[i];
+                gb_tz_np1[i]=gb_tz_nm1[i]=gb_tz[i];
+                gb_xx_np1[i]=gb_xx_nm1[i]=gb_xx[i];
+                gb_xy_np1[i]=gb_xy_nm1[i]=gb_xy[i];
+                gb_xz_np1[i]=gb_xz_nm1[i]=gb_xz[i];
+                gb_yy_np1[i]=gb_yy_nm1[i]=gb_yy[i];
+                gb_yz_np1[i]=gb_yz_nm1[i]=gb_yz[i];
+                gb_zz_np1[i]=gb_zz_nm1[i]=gb_zz[i];
+                Hb_t_np1[i]=Hb_t_nm1[i]=Hb_t_n[i];
+                Hb_x_np1[i]=Hb_x_nm1[i]=Hb_x_n[i];
+                Hb_y_np1[i]=Hb_y_nm1[i]=Hb_y_n[i];
+                Hb_z_np1[i]=Hb_z_nm1[i]=Hb_z_n[i];
+                phi1_np1[i]=phi1_nm1[i]=phi1[i];
+            }
         }
     }
     else if (background || skip_constraints)
@@ -3019,29 +3022,10 @@ void AdS4D_t0_cnst_data(void)
         //       }    
         //      }   
         //   } 
-        	if (ief_bh_r0&&(fabs(a_rot0)<pow(10,-10)))
+        	if (ief_bh_r0>pow(10,-10))
         	{
-//Analytic Schwarzschild-AdS initial data (around pure AdS!!) in horizon penetrating coordinates defined ad hoc for Schwarzschild-AdS.
-// The expressions are more complicated than using the coordinates for Kerr-AdS below and the residual is dumped in more iterations.
-//            	init_schwads4d_bh_adhoc_coords(&ief_bh_r0,&AdS_L,gb_tt,gb_tx,gb_ty,
-//                	            gb_tz,
-//                    	        gb_xx,gb_xy,
-//                        	    gb_xz,
-//                            	gb_yy,
-//	                            gb_yz,
-//    	                        gb_zz,gb_tt_t_n,gb_tx_t_n,gb_ty_t_n,
-//        	                    gb_tz_t_n,
-//            	                gb_xx_t_n,gb_xy_t_n,
-//                	            gb_xz_t_n,
-//                    	        gb_yy_t_n,
-//                        	    gb_yz_t_n,
-//                            	gb_zz_t_n,Hb_t,Hb_x,Hb_y,
-//	                            Hb_z,
-//    	                        Hb_t_t_n,Hb_x_t_n,Hb_y_t_n,
-//        	                    Hb_z_t_n,
-//            	                phys_bdy,x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype);   
-
-//When a_rot==0 this gives Schwarzschild-AdS initial data in the Cartesian coordinates used for Kerr-AdS. Using this is preferable w.r.t. Schwarzschild data in the set of coordinates used in the function above
+ 
+//When a_rot==0 this gives Schwarzschild-AdS initial data in the Cartesian coordinates used for Kerr-AdS.
 //        		    MPI_Barrier(MPI_COMM_WORLD);
 //    if (my_rank==0) {printf("calling init_kerrads4d_bh_\n"); fflush(stdout); }
             	        init_kerrads4d_bh_(&ief_bh_r0,&a_rot0,&AdS_L,
@@ -3056,23 +3040,6 @@ void AdS4D_t0_cnst_data(void)
                             Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
                             phys_bdy,
                             x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_background);
-        	}
-        	else if (ief_bh_r0&&(fabs(a_rot0)>pow(10,-10)))
-        	{
-        		init_kerrads4d_bh_(&ief_bh_r0,&a_rot0,&AdS_L,
-                            gb_tt,gb_tx,gb_ty,gb_tz,
-                            gb_xx,gb_xy,gb_xz,
-                            gb_yy,gb_yz,gb_zz,
-                            gb_tt_t,gb_tx_t,gb_ty_t,gb_tz_t,
-                            gb_xx_t,gb_xy_t,gb_xz_t,
-                            gb_yy_t,gb_yz_t,
-                            gb_zz_t,
-                            Hb_t,Hb_x,Hb_y,Hb_z,
-                            Hb_t_t,Hb_x_t,Hb_y_t,Hb_z_t,
-                            phys_bdy,
-                            x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_background);
-//        		        			MPI_Barrier(MPI_COMM_WORLD);
-//    				if (my_rank==0) {printf("post init_kerrads4d_bh_\n"); fflush(stdout);}
         	}
 	//   for (i=0; i<Nx; i++)  
 	//   {    
@@ -15415,7 +15382,8 @@ void AdS4D_pre_tstep(int L)
 
             AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid0,
                                       output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii); // AH finder 
+                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii,
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background); // AH finder 
             if (AH[l]) { freq0[l]=AH_freq_aft[l]; found_AH[l]=1; got_an_AH=1; AH_tol[l]=AH_tol_aft[l]; found_count_AH[l]++; } // if this time found AH  
             // if previously found but failed now
             if (found_AH[l] && !AH[l]) 
@@ -15430,7 +15398,8 @@ void AdS4D_pre_tstep(int L)
 
                     if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid1,
                                       output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii)))
+                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii,
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background)))
                     { 
                         // shrink old initial-guess surface
                         if (my_rank==0 && AMRD_evo_trace>=1) printf("... still can't find one (min_resid=%lf)\n"
@@ -15439,7 +15408,8 @@ void AdS4D_pre_tstep(int L)
 
                         if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid2,
                                       output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii)))
+                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii,
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background)))
                         {   
                             // increase AH_tol to force an AH to be found, starting with shrunken initial-guess surface
                             if (AH_min_resid2<AH_min_resid1 && AH_min_resid2<AH_min_resid0) 
@@ -15456,7 +15426,8 @@ void AdS4D_pre_tstep(int L)
 
                                 if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid2,
                                       output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii)))
+                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii,
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background)))
                                 {
                                     if (my_rank==0 && AMRD_evo_trace>=1) printf("BUG: couldn't find *same* AH\n");
                                     if (AH_RESET_AFTER_FAIL) found_AH[l]=0;
@@ -15478,7 +15449,8 @@ void AdS4D_pre_tstep(int L)
 
                                 if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid1,
                                       output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii)))
+                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii,
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background)))
                                 {
                                     if (my_rank==0 && AMRD_evo_trace>=1) printf("BUG: couldn't find *same* AH\n");
                                     if (AH_RESET_AFTER_FAIL) found_AH[l]=0;
@@ -15500,7 +15472,8 @@ void AdS4D_pre_tstep(int L)
 
                                 if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid0,
                                       output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii)))
+                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii,
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background)))
                                 {
                                     if (my_rank==0 && AMRD_evo_trace>=1) printf("BUG: couldn't find *same* AH\n");
                                     if (AH_RESET_AFTER_FAIL) found_AH[l]=0;

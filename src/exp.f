@@ -64,8 +64,13 @@ c----------------------------------------------------------------------
      &                    gb_yz_np1,gb_yz_n,gb_yz_nm1,
      &                    gb_zz_np1,gb_zz_n,gb_zz_nm1,
      &                    L,x,y,z,dt,chr,ex,do_ex,
-     &                    Nx,Ny,Nz)
+     &                    Nx,Ny,Nz,
+     &                    ief_bh_r0,a_rot,kerrads_background)
         implicit none
+
+        real*8  ief_bh_r0,a_rot,M0,M0_min
+        integer kerrads_background
+
         integer Nx,Ny,Nz,is0,ie0,js0,je0,ks0,ke0,do_ex
         integer is_ex
         real*8 theta(Nx,Ny,Nz),f(Nx,Ny,Nz),chr(Nx,Ny,Nz),ex
@@ -266,7 +271,8 @@ c----------------------------------------------------------------------
      &                 riemann_ulll,ricci_ll,ricci_lu,ricci,
      &                 einstein_ll,set_ll,
      &                 phi10_x,phi10_xx,
-     &                 x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k)
+     &                 x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
+     &                 ief_bh_r0,a_rot,kerrads_background)
 
             end if
 
@@ -935,8 +941,13 @@ c-----------------------------------------------------------------------
      &                    gb_yz_np1,gb_yz_n,gb_yz_nm1,
      &                    gb_zz_np1,gb_zz_n,gb_zz_nm1,
      &                    L,x,y,z,dt,chr,ex,do_ex,
-     &                    Nx,Ny,Nz,axisym)
+     &                    Nx,Ny,Nz,axisym,
+     &                    ief_bh_r0,a_rot,kerrads_background)
         implicit none
+
+        real*8  ief_bh_r0,a_rot,M0,M0_min
+        integer kerrads_background
+
         integer axisym
         integer Nx,Ny,Nz,i0,j0,AH_Nchi,AH_Nphi,do_ex
         real*8 theta(Nx,Ny,Nz),f(Nx,Ny,Nz),AH_xc(3),da,d_ceq,d_cp,d_cp2
@@ -1184,7 +1195,8 @@ c-----------------------------------------------------------------------
      &               gb_yy_np1,gb_yy_n,gb_yy_nm1,
      &               gb_yz_np1,gb_yz_n,gb_yz_nm1,
      &               gb_zz_np1,gb_zz_n,gb_zz_nm1,
-     &               L,x,y,z,dt,chr,ex,do_ex,Nx,Ny,Nz)
+     &               L,x,y,z,dt,chr,ex,do_ex,Nx,Ny,Nz,
+     &               ief_bh_r0,a_rot,kerrads_background)
 
           ! interpolate theta from 
           ! (i,j,k),(i+1,j,k),(i,j+1,k),(i+1,j+1,k),(i,j,k+1),(i+1,j,k+1),(i,j+1,k+1),(i+1,j+1,k+1)

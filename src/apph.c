@@ -94,7 +94,9 @@ int fill_own(int Lmax, int ltrace, int *first)
 #define USE_SMOOTH_A 0 //HB//
 #define MAX_TRACE 5000
 real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat, real *c_polar, real *c_polar2, int *is_ex,
-                          int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, int output_metricAH_sph_ascii, int output_diagnosticAH_ascii)
+                        int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf,
+                        int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, int output_metricAH_sph_ascii, int output_diagnosticAH_ascii,
+                        real *ief_bh_r0,real *a_rot0, int *kerrads_background)
 {
    int i,j,np,valid,dvtrace=0,i0,j0,is_int;
    static int num_trace=0;
@@ -171,7 +173,8 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
                          gb_yy_n,gb_yy_nm1,gb_yy_np1,
                          gb_yz_n,gb_yz_nm1,gb_yz_np1,
                          gb_zz_n,gb_zz_nm1,gb_zz_np1,
-                         &AdS_L,x,y,z,&dt,chr,&AMRD_ex,&AMRD_do_ex,&Nx,&Ny,&Nz,&axisym);
+                         &AdS_L,x,y,z,&dt,chr,&AMRD_ex,&AMRD_do_ex,&Nx,&Ny,&Nz,&axisym,
+                         ief_bh_r0,a_rot0,kerrads_background);   
 
                area_owned[0]+=da[0];
                area_owned[1]+=da[1];
@@ -544,7 +547,10 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
 #define SMOOTH_R 0
 #define SMOOTH_R_AFT 1
 int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *c_polar2, int use_R_ic, real *AH_min_resid, 
-              int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, int output_metricAH_sph_ascii, int output_diagnosticAH_ascii)
+              int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, 
+              int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, 
+              int output_metricAH_sph_ascii, int output_diagnosticAH_ascii,
+              real *ief_bh_r0,real *a_rot0, int *kerrads_background)
 {
    int iter,i,j,l,np,Lmax,Lmax_AH,is_ex;
    real resid,prev_resid,min_resid,min_R,c_R;
@@ -579,7 +585,10 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
    // for found_AH==use_R_ic=0, figure out an initial guess for AH_R
    if (!use_R_ic)
    {
-      if (AH_rsteps[c_AH]==1) for (i=0; i<np; i++) AH_R[c_AH][i]=AH_r0[c_AH]; // for one radius iteration
+      if (AH_rsteps[c_AH]==1) // for one radius iteration
+      {
+        for (i=0; i<np; i++) AH_R[c_AH][i]=AH_r0[c_AH];
+      }
       else                                                                    // for several radii iterations
       {
          min_R=AH_r0[c_AH]; 
@@ -594,7 +603,9 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
             if (!fill_own(Lmax,ltrace,&first)) return 0;
             resid=fill_theta_ahmetric(AH_theta[c_AH],eps0,area,c_equat,c_polar,c_polar2,&is_ex,
                                       output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii);
+                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,
+                                      output_metricAH_sph_ascii,output_diagnosticAH_ascii,
+                                      ief_bh_r0,a_rot0,kerrads_background);
 
             if (is_ex)
             {
@@ -655,7 +666,9 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
          // compute theta values (and metric components at AH, OPTIONAL)
          resid=fill_theta_ahmetric(AH_theta[c_AH],eps0,area,c_equat,c_polar,c_polar2,&is_ex,
                                       output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,output_metricAH_sph_ascii,output_diagnosticAH_ascii);
+                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,
+                                      output_metricAH_sph_ascii,output_diagnosticAH_ascii,
+                                      ief_bh_r0,a_rot0,kerrads_background);
       
 //         if (my_rank==0)
 //         {
