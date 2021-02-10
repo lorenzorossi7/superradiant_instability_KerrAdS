@@ -16,7 +16,8 @@ c Radius parameter r0=2*M0, where M0 is the BHmass (r0 has no physical meaning, 
 c the horizon radius.).
 c We denote the horizon radius by r_h in non-compactified coordinates and rho_h in compactified coordinates.
 c----------------------------------------------------------------------
-        subroutine init_schwads4d_bh_adhoc_coords(r0,L,gb_tt,gb_tx,
+        subroutine init_schwads4d_bh_adhoc_coords(ief_bh_r0,L,
+     &                         gb_tt,gb_tx,
      &                         gb_ty,
      &                         gb_tz,
      &                         gb_xx,gb_xy,
@@ -40,7 +41,7 @@ c----------------------------------------------------------------------
         integer Nx,Ny,Nz
         integer regtype
         integer phys_bdy(6)
-        real*8 r0
+        real*8 ief_bh_r0
         real*8 dt,ex,L
         real*8 chr(Nx,Ny,Nz)
         real*8 Hb_t(Nx,Ny,Nz),Hb_x(Nx,Ny,Nz)
@@ -94,9 +95,11 @@ c----------------------------------------------------------------------
 
         r_h=-L**2
      &   /(3**(1.0d0/3.0d0))
-     &   /((9*L**2*(r0/2)+sqrt(3.0d0)*sqrt(L**6+27*L**4*(r0/2)**2))
+     &   /((9*L**2*(ief_bh_r0/2)
+     &    +sqrt(3.0d0)*sqrt(L**6+27*L**4*(ief_bh_r0/2)**2))
      &    **(1.0d0/3.0d0))
-     &   +((9*L**2*(r0/2)+sqrt(3.0d0)*sqrt(L**6+27*L**4*(r0/2)**2))
+     &   +((9*L**2*(ief_bh_r0/2)
+     &   +sqrt(3.0d0)*sqrt(L**6+27*L**4*(ief_bh_r0/2)**2))
      &    **(1.0d0/3.0d0))
      &   /(3**(2.0d0/3.0d0))
 
@@ -144,7 +147,7 @@ c----------------------------------------------------------------------
                  ! EF-like-near-horizon Schwarzschild-like-near-bdy coordinates
 
 !!!2+1 version!!!!!!!!                 
-!                 gb_tt(i,j,k)=(r0/2)*(1/rho0-rho0)
+!                 gb_tt(i,j,k)=(ief_bh_r0/2)*(1/rho0-rho0)
 !
 !                 gb_tx(i,j,k)=2*x0*(1+rho0**2)
 !     &                      *((1-rho_h)/(1-rho0))**(-n)
@@ -181,7 +184,7 @@ c----------------------------------------------------------------------
 
 !!!CHECKED WITH Mathematica!!
 
-                 gb_tt(i,j,k)=(r0/2)*(1/rho0-rho0)
+                 gb_tt(i,j,k)=(ief_bh_r0/2)*(1/rho0-rho0)
                  gb_tx(i,j,k)=2*x0*(1+rho0**2)
      &                      *((-1+rho_h)/(-1+rho0))**(-n)
      &                      /rho0/(-1+rho0**2)**2
@@ -192,81 +195,81 @@ c----------------------------------------------------------------------
      &                      *((-1+rho_h)/(-1+rho0))**(-n)
      &                      /rho0/(-1+rho0**2)**2
                  gb_xx(i,j,k)=(-((8*(-1+L**2)*(x0**2-y0**2-z0**2)
-     &                        +8*rho0**2+4*L**2*(1+rho0**4))
-     &                        /(4*rho0**2+L**2*(-1+rho0**2)**2))
-     &                        +(4*(y0**2+z0**2
-     &                         +(L**2*x0**2*rho0*(1+rho0**2)**2
-     &                         *(-1+((-1+rho_h)/(-1+rho0))**(2*n))
-     &                         *((-1+rho_h)/(-1+rho0))**(-2*n))
-     &                        /(4*rho0**3+L**2*(-1+rho0**2)**2
-     &                         *(rho0+(1.0d0/2.0d0)*r0*(-1+rho0**2)))))
-     &                         /rho0**2)
-     &                          /(-1+rho0**2)**2
+     &                   +8*rho0**2+4*L**2*(1+rho0**4))
+     &                   /(4*rho0**2+L**2*(-1+rho0**2)**2))
+     &                   +(4*(y0**2+z0**2
+     &                    +(L**2*x0**2*rho0*(1+rho0**2)**2
+     &                    *(-1+((-1+rho_h)/(-1+rho0))**(2*n))
+     &                    *((-1+rho_h)/(-1+rho0))**(-2*n))
+     &                   /(4*rho0**3+L**2*(-1+rho0**2)**2
+     &                   *(rho0+(1.0d0/2.0d0)*ief_bh_r0*(-1+rho0**2)))))
+     &                   /rho0**2)
+     &                   /(-1+rho0**2)**2
                  gb_xy(i,j,k)=(4*L**2*x0*y0*(1+rho0**2)**2
-     &                        *(-4*rho0**3+L**2*(-1+rho0**2)**2
-     &                        *(-rho0-(1.0d0/2.0d0)*r0*(-1+rho0**2)
-     &                        *((-1+rho_h)/(-1+rho0))**(2*n)))
-     &                        *((-1+rho_h)/(-1+rho0))**(-2*n))
-     &                        /(rho0**2*(-1+rho0**2)**2*(4*rho0**2
-     &                        +L**2*(-1+rho0**2)**2)*(4*rho0**3
-     &                        +L**2*(-1+rho0**2)**2
-     &                        *(rho0+(1.0d0/2.0d0)*r0*(-1+rho0**2))))
+     &                   *(-4*rho0**3+L**2*(-1+rho0**2)**2
+     &                   *(-rho0-(1.0d0/2.0d0)*ief_bh_r0*(-1+rho0**2)
+     &                   *((-1+rho_h)/(-1+rho0))**(2*n)))
+     &                   *((-1+rho_h)/(-1+rho0))**(-2*n))
+     &                   /(rho0**2*(-1+rho0**2)**2*(4*rho0**2
+     &                   +L**2*(-1+rho0**2)**2)*(4*rho0**3
+     &                   +L**2*(-1+rho0**2)**2
+     &                   *(rho0+(1.0d0/2.0d0)*ief_bh_r0*(-1+rho0**2))))
                  gb_xz(i,j,k)=(4*L**2*x0*z0*(1+rho0**2)**2
-     &                        *(-4*rho0**3+L**2*(-1+rho0**2)**2
-     &                        *(-rho0-(1.0d0/2.0d0)*r0*(-1+rho0**2)
-     &                        *((-1+rho_h)/(-1+rho0))**(2*n)))
-     &                        *((-1+rho_h)/(-1+rho0))**(-2*n))
-     &                        /(rho0**2*(-1+rho0**2)**2*(4*rho0**2
-     &                        +L**2*(-1+rho0**2)**2)*(4*rho0**3
-     &                        +L**2*(-1+rho0**2)**2
-     &                        *(rho0+(1.0d0/2.0d0)*r0*(-1+rho0**2))))
+     &                   *(-4*rho0**3+L**2*(-1+rho0**2)**2
+     &                   *(-rho0-(1.0d0/2.0d0)*ief_bh_r0*(-1+rho0**2)
+     &                   *((-1+rho_h)/(-1+rho0))**(2*n)))
+     &                   *((-1+rho_h)/(-1+rho0))**(-2*n))
+     &                   /(rho0**2*(-1+rho0**2)**2*(4*rho0**2
+     &                   +L**2*(-1+rho0**2)**2)*(4*rho0**3
+     &                   +L**2*(-1+rho0**2)**2
+     &                   *(rho0+(1.0d0/2.0d0)*ief_bh_r0*(-1+rho0**2))))
            if (y0.ne.0.0d0) then
                  gb_yy(i,j,k)=(1/((-1+rho0**2)**2))
-     &                        *((8*y0**2*(-x0**2+y0**2+z0**2)
-     &                        -8*(y0**2+2*z0**2)*rho0**2
-     &                        -4*L**2*(2*y0**4+z0**2*(-1+rho0**2)**2
-     &                        +y0**2*(1-2*x0**2+2*z0**2+rho0**4)))
-     &                        /((y0**2+z0**2)*(4*rho0**2
-     &                         +L**2*(-1+rho0**2)**2))
-     &                        +4*(z0**2/(y0**2+z0**2)
-     &                        +(x0**2*y0**2)/((y0**2+z0**2)*rho0**2)
-     &                        +(L**2*y0**2*(1+rho0**2)**2
-     &                         *(-1+((-1+rho_h)/(-1+rho0))**(2*n))
-     &                         *((-1+rho_h)/(-1+rho0))**(-2*n))
-     &                        /(4*rho0**4+L**2*rho0*(-1+rho0**2)**2
-     &                         *(rho0+(1.0d0/2.0d0)*r0*(-1+rho0**2)))))
+     &                   *((8*y0**2*(-x0**2+y0**2+z0**2)
+     &                   -8*(y0**2+2*z0**2)*rho0**2
+     &                   -4*L**2*(2*y0**4+z0**2*(-1+rho0**2)**2
+     &                   +y0**2*(1-2*x0**2+2*z0**2+rho0**4)))
+     &                   /((y0**2+z0**2)*(4*rho0**2
+     &                    +L**2*(-1+rho0**2)**2))
+     &                   +4*(z0**2/(y0**2+z0**2)
+     &                   +(x0**2*y0**2)/((y0**2+z0**2)*rho0**2)
+     &                   +(L**2*y0**2*(1+rho0**2)**2
+     &                    *(-1+((-1+rho_h)/(-1+rho0))**(2*n))
+     &                    *((-1+rho_h)/(-1+rho0))**(-2*n))
+     &                   /(4*rho0**4+L**2*rho0*(-1+rho0**2)**2
+     &                 *(rho0+(1.0d0/2.0d0)*ief_bh_r0*(-1+rho0**2)))))
           else
                  gb_yy(i,j,k)=0.0d0
           end if
                  gb_yz(i,j,k)=(4*L**2*y0*z0*(1+rho0**2)**2
-     &                        *(-4*rho0**3+L**2*(-1+rho0**2)**2
-     &                        *(-rho0-(1.0d0/2.0d0)*r0*(-1+rho0**2)
-     &                        *((-1+rho_h)/(-1+rho0))**(2*n)))
-     &                        *((-1+rho_h)/(-1+rho0))**(-2*n))
-     &                        /(rho0**2*(-1+rho0**2)**2*(4*rho0**2
-     &                        +L**2*(-1+rho0**2)**2)*(4*rho0**3
-     &                        +L**2*(-1+rho0**2)**2
-     &                        *(rho0+(1.0d0/2.0d0)*r0*(-1+rho0**2))))
+     &                   *(-4*rho0**3+L**2*(-1+rho0**2)**2
+     &                   *(-rho0-(1.0d0/2.0d0)*ief_bh_r0*(-1+rho0**2)
+     &                   *((-1+rho_h)/(-1+rho0))**(2*n)))
+     &                   *((-1+rho_h)/(-1+rho0))**(-2*n))
+     &                   /(rho0**2*(-1+rho0**2)**2*(4*rho0**2
+     &                   +L**2*(-1+rho0**2)**2)*(4*rho0**3
+     &                   +L**2*(-1+rho0**2)**2
+     &                   *(rho0+(1.0d0/2.0d0)*ief_bh_r0*(-1+rho0**2))))
            if (z0.ne.0.0d0) then
                  gb_zz(i,j,k)=(1/((-1+rho0**2)**2))
-     &                        *(
-     &                         (
-     &                         8*z0**2*(-x0**2+y0**2+z0**2)
-     &                        -8*(2*y0**2+z0**2)*rho0**2
-     &                        -4*L**2*(z0**2*(1-2*x0**2
-     &                         +2*z0**2+rho0**4)
-     &                         +y0**2*(2*z0**2+(-1+rho0**2)**2))
-     &                         )
-     &                        /((y0**2+z0**2)*(4*rho0**2
-     &                         +L**2*(-1+rho0**2)**2))
-     &                        +4*(y0**2/(y0**2+z0**2)
-     &                        +(x0**2*z0**2)/((y0**2+z0**2)*rho0**2)
-     &                        +(L**2*z0**2*(1+rho0**2)**2
-     &                         *(-1+((-1+rho_h)/(-1+rho0))**(2*n))
-     &                         *((-1+rho_h)/(-1+rho0))**(-2*n))
-     &                        /(4*rho0**4+L**2*rho0*(-1+rho0**2)**2
-     &                         *(rho0+(1.0d0/2.0d0)*r0*(-1+rho0**2))))
-     &                        )
+     &                   *(
+     &                    (
+     &                    8*z0**2*(-x0**2+y0**2+z0**2)
+     &                   -8*(2*y0**2+z0**2)*rho0**2
+     &                   -4*L**2*(z0**2*(1-2*x0**2
+     &                    +2*z0**2+rho0**4)
+     &                    +y0**2*(2*z0**2+(-1+rho0**2)**2))
+     &                    )
+     &                   /((y0**2+z0**2)*(4*rho0**2
+     &                    +L**2*(-1+rho0**2)**2))
+     &                   +4*(y0**2/(y0**2+z0**2)
+     &                   +(x0**2*z0**2)/((y0**2+z0**2)*rho0**2)
+     &                   +(L**2*z0**2*(1+rho0**2)**2
+     &                    *(-1+((-1+rho_h)/(-1+rho0))**(2*n))
+     &                    *((-1+rho_h)/(-1+rho0))**(-2*n))
+     &                   /(4*rho0**4+L**2*rho0*(-1+rho0**2)**2
+     &                    *(rho0+(1.0d0/2.0d0)*ief_bh_r0*(-1+rho0**2))))
+     &                   )
            else
                  gb_zz(i,j,k)=0.0d0
            end if
@@ -294,7 +297,7 @@ c compactified coordinates for an exact Kerr-AdS black hole solution
 c with radius parameter rbh=2*M0, where M0 is the BHmass (r0 has no physical meaning, it is NOT the horizon radius),
 c and rotation parameter a_rot.
 c----------------------------------------------------------------------
-        subroutine set_kerrads4d_ahr(rbh,a_rot,L,
+        subroutine set_kerrads4d_ahr(ief_bh_r0,a_rot,L,
      &                         AH_R,min_AH_R,max_AH_R,
      &                         AH_Nchi,AH_Nphi)
 
@@ -304,7 +307,7 @@ c----------------------------------------------------------------------
         parameter (PI=3.141592653589793d0)
 
         integer AH_Nchi,AH_Nphi
-        real*8 rbh,a_rot,M0,M0_min
+        real*8 ief_bh_r0,a_rot,M0,M0_min
         real*8 rblhor
         real*8 AH_R(AH_Nchi,AH_Nphi)
         real*8 min_AH_R,max_AH_R
@@ -324,7 +327,7 @@ c----------------------------------------------------------------------
 
 
       ! Black hole mass
-        M0=rbh/2
+        M0=ief_bh_r0/2
       ! Minimum black hole mass. For M0 below this value, there is a naked singularity
         M0_min=((2*(1 + a_rot**2/L**2) + Sqrt((1 + a_rot**2/L**2)**2 
      &   + (12*a_rot**2)/L**2))*Sqrt(-1 + Sqrt((1 + a_rot**2/L**2)**2 
@@ -433,7 +436,7 @@ c with radius parameter rbh=2*M0, where M0 is the BHmass (r0 has no physical mea
 c it is NOT the horizon radius),
 c and rotation parameter a_rot.
 c----------------------------------------------------------------------
-        subroutine init_kerrads4d_bh(rbh,a_rot,L,
+        subroutine init_kerrads4d_bh(ief_bh_r0,a_rot,L,
      &                         gb_tt,gb_tx,gb_ty,gb_tz,
      &                         gb_xx,gb_xy,gb_xz,
      &                         gb_yy,gb_yz,gb_zz,
@@ -455,7 +458,7 @@ c----------------------------------------------------------------------
         integer regtype
         integer kerrads_background
         integer phys_bdy(6)
-        real*8 rbh,a_rot,M0,M0_min
+        real*8 ief_bh_r0,a_rot,M0,M0_min
         real*8 rblhor
         real*8 yipshor(Nx,Ny,Nz),rhohor(Ny,Nx,Nz)
         real*8 dt,ex,L
@@ -528,7 +531,7 @@ c----------------------------------------------------------------------
         ! versions of the coordinates)
 
       ! Black hole mass
-        M0=rbh/2
+        M0=ief_bh_r0/2
       ! Minimum black hole mass. For M0 below this value, there is a naked singularity
         M0_min=((2*(1 + a_rot**2/L**2) + Sqrt((1 + a_rot**2/L**2)**2 
      &    + (12*a_rot**2)/L**2))*Sqrt(-1 + Sqrt((1 + a_rot**2/L**2)**2 
@@ -611,7 +614,8 @@ c----------------------------------------------------------------------
 !KerrAdS in Kerr-Schild coordinates (horizon-penetrating and non-rotating at the boundary) 
 ! from spherical coords
 
-                if (a_rot.gt.0) then
+                if ((a_rot.gt.10.0d0**(-10)).and.
+     -             (ief_bh_r0.gt.10.0d0**(-10))) then
 
                 U=Sqrt(2.)/
      -  (L*Sqrt((-(a_rot**2*L**2) + 
@@ -1030,7 +1034,7 @@ c----------------------------------------------------------------------
      -         2*a_rot**4*rho0**4*Cos(4*theta0)))**2)/
      -  (2.*a_rot**2*(-1 + rho0**2)**4*U*Xi**2)
 
-        else if (a_rot.lt.10.0d0**(-10)) then
+        else if (ief_bh_r0.gt.10.0d0**(-10)) then !Schwarzschild-AdS data
 
           h_tt_kerrads_sph0 =
      -  M0/rho0 - M0*rho0
@@ -1044,6 +1048,26 @@ c----------------------------------------------------------------------
           h_rhorho_kerrads_sph0 =
      -  (-4*M0*(-1 + rho0**2))/(rho0*(1 + rho0**2)**2)
           h_rhotheta_kerrads_sph0 =
+     -  0
+          h_rhophi_kerrads_sph0 =
+     -  0
+          h_thetatheta_kerrads_sph0 =
+     -  0
+          h_thetaphi_kerrads_sph0 =
+     -  0
+          h_phiphi_kerrads_sph0 =
+     -  0
+
+        else !pure AdS data
+          h_tt_kerrads_sph0 =
+     -  0
+          h_trho_kerrads_sph0 =
+     -  0
+          h_ttheta_kerrads_sph0 =
+     -  0
+          h_tphi_kerrads_sph0 =
+     -  0
+          h_rhorho_kerrads_sph0 =
      -  0
           h_rhophi_kerrads_sph0 =
      -  0
@@ -1125,6 +1149,7 @@ c----------------------------------------------------------------------
           h_kerrads_ll(b,a)=h_kerrads_ll(a,b)
          end do
         end do
+
        end if
 
         gb_tt(i,j,k)=h_kerrads_ll(1,1)
@@ -1139,54 +1164,55 @@ c----------------------------------------------------------------------
         gb_zz(i,j,k)=h_kerrads_ll(4,4)
 
 
-!              if (is_nan(gb_tt(i,j,k)).or.is_nan(gb_tx(i,j,k))
-!     &        .or.is_nan(gb_ty(i,j,k))
-!     &        .or.is_nan(gb_tz(i,j,k))
-!     &        .or.is_nan(gb_xx(i,j,k)).or.is_nan(gb_xy(i,j,k))
-!     &        .or.is_nan(gb_xz(i,j,k))
-!     &        .or.is_nan(gb_yy(i,j,k))
-!     &        .or.is_nan(gb_yz(i,j,k)).or.is_nan(gb_zz(i,j,k)) ) then
-!
+              if (is_nan(gb_tt(i,j,k)).or.is_nan(gb_tx(i,j,k))
+     &        .or.is_nan(gb_ty(i,j,k))
+     &        .or.is_nan(gb_tz(i,j,k))
+     &        .or.is_nan(gb_xx(i,j,k)).or.is_nan(gb_xy(i,j,k))
+     &        .or.is_nan(gb_xz(i,j,k))
+     &        .or.is_nan(gb_yy(i,j,k))
+     &        .or.is_nan(gb_yz(i,j,k)).or.is_nan(gb_zz(i,j,k)) ) then
+
 !      if ( (abs(x0-(-0.9375)).lt.10.0d0**(-10)).and.
 !     &  (abs(y0-(-0.0)).lt.10.0d0**(-10)).and.
 !     &  (abs(z0-(-0.0)).lt.10.0d0**(-10)) ) then
-!
-!       write (*,*) 'L,i,j,k,x0,y0,z0,rho0=',
-!     &      L,i,j,k,x0,y0,z0,rho0
-!       write (*,*) ' U=',U
-!       write (*,*) ' Sigma=',Sigma
-!       write (*,*) ' Deltatheta=',Deltatheta
-!       write (*,*) ' Xi=',Xi
-!       do a=1,4
-!        do b=1,4
-!         write (*,*) "a,b,h_kerrads_ll_sph(a,b)="
-!     &                ,a,b,h_kerrads_ll_sph(a,b)
-!        end do
-!       end do
-!       do a=1,4
-!        do b=1,4
-!         write (*,*) "a,b,h_kerrads_ll(a,b)="
-!     &                ,a,b,h_kerrads_ll(a,b)
-!        end do
-!       end do
-!       do a=1,4
-!        do b=1,4
-!         write (*,*) "a,b,dxsph_dxcar(a,b)="
-!     &                ,a,b,dxsph_dxcar(a,b)
-!        end do
-!       end do
-!       write (*,*) ' gb_tt=',gb_tt(i,j,k)
-!       write (*,*) ' gb_tx=',gb_tx(i,j,k)
-!       write (*,*) ' gb_ty=',gb_ty(i,j,k)
-!       write (*,*) ' gb_tz=',gb_tz(i,j,k)
-!       write (*,*) ' gb_xx=',gb_xx(i,j,k)
-!       write (*,*) ' gb_xy=',gb_xy(i,j,k)
-!       write (*,*) ' gb_xz=',gb_xz(i,j,k)
-!       write (*,*) ' gb_yy=',gb_yy(i,j,k)
-!       write (*,*) ' gb_yz=',gb_yz(i,j,k)
-!       write (*,*) ' gb_zz=',gb_zz(i,j,k)
-!       stop
-!        end if
+
+       write (*,*) 'L,i,j,k,x0,y0,z0,rho0=',
+     &      L,i,j,k,x0,y0,z0,rho0
+       write (*,*) ' U=',U
+       write (*,*) ' Sigma=',Sigma
+       write (*,*) ' Deltatheta=',Deltatheta
+       write (*,*) ' Xi=',Xi
+       do a=1,4
+        do b=1,4
+         write (*,*) "a,b,h_kerrads_ll_sph(a,b)="
+     &                ,a,b,h_kerrads_ll_sph(a,b)
+        end do
+       end do
+       do a=1,4
+        do b=1,4
+         write (*,*) "a,b,h_kerrads_ll(a,b)="
+     &                ,a,b,h_kerrads_ll(a,b)
+        end do
+       end do
+       do a=1,4
+        do b=1,4
+         write (*,*) "a,b,dxsph_dxcar(a,b)="
+     &                ,a,b,dxsph_dxcar(a,b)
+        end do
+       end do
+       write (*,*) ' gb_tt=',gb_tt(i,j,k)
+       write (*,*) ' gb_tx=',gb_tx(i,j,k)
+       write (*,*) ' gb_ty=',gb_ty(i,j,k)
+       write (*,*) ' gb_tz=',gb_tz(i,j,k)
+       write (*,*) ' gb_xx=',gb_xx(i,j,k)
+       write (*,*) ' gb_xy=',gb_xy(i,j,k)
+       write (*,*) ' gb_xz=',gb_xz(i,j,k)
+       write (*,*) ' gb_yy=',gb_yy(i,j,k)
+       write (*,*) ' gb_yz=',gb_yz(i,j,k)
+       write (*,*) ' gb_zz=',gb_zz(i,j,k)
+       stop
+        end if
+
 
               end if !closes condition on chr(i,j,k).eq.ex
              end if !closes condition on kerrads_background.eq.0

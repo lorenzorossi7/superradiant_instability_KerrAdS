@@ -2360,7 +2360,10 @@ c----------------------------------------------------------------------
 
     !compute background metric
     ! NOTE: even if the background metric is not pure AdS, we still denote it by gads_ll,Hads_l,etc.
-        if (kerrads_background.eq.0) then
+        if ((kerrads_background.eq.0).or.
+     &      ((kerrads_background.eq.1).and.
+     &        (ief_bh_r0.lt.10.0d0**(-10)).and.
+     &        (a_rot.lt.10.0d0**(-10))) ) then
             call ads_derivs_cartcoords(
      &                  gads_ll,gads_uu,gads_ll_x,
      &                  gads_uu_x,gads_ll_xx,
