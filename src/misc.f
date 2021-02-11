@@ -4937,18 +4937,18 @@ c----------------------------------------------------------------------
         end do
 
 !!!!DEBUG!!!
-        if ((abs(x0-(-1.0+5*dx)).lt.10.0d0**(-10))
-     -  .and.(abs(y0-(-1.0+12*dy)).lt.10.0d0**(-10))
-     -  .and.(abs(z0-(-1.0+10*dz)).lt.10.0d0**(-10))) then
-        write (*,*) "x0,y0,z0=",x0,y0,z0
-        write (*,*) "rho0,theta0,phi0=",rho0,theta0,phi0
-          
-        do a=1,4
-         do b=1,4
-             write (*,*) "a,b,g0_ll(a,b)="
-     -                   ,a,b,g0_ll(a,b)
-             write (*,*) "a,b,g0_uu(a,b)="
-     -                   ,a,b,g0_uu(a,b)
+!        if ((abs(x0-(-1.0+5*dx)).lt.10.0d0**(-10))
+!     -  .and.(abs(y0-(-1.0+12*dy)).lt.10.0d0**(-10))
+!     -  .and.(abs(z0-(-1.0+10*dz)).lt.10.0d0**(-10))) then
+!        write (*,*) "x0,y0,z0=",x0,y0,z0
+!        write (*,*) "rho0,theta0,phi0=",rho0,theta0,phi0
+!
+!        do a=1,4
+!         do b=1,4
+!             write (*,*) "a,b,g0_ll(a,b)="
+!     -                   ,a,b,g0_ll(a,b)
+!             write (*,*) "a,b,g0_uu(a,b)="
+!     -                   ,a,b,g0_uu(a,b)
 !          do c=1,4
 !             write (*,*) "a,b,c,g0_ll_x(a,b,c)="
 !     -                   ,a,b,c,g0_ll_x(a,b,c)
@@ -4958,27 +4958,27 @@ c----------------------------------------------------------------------
 !     -                   ,a,b,c,d,g0_ll_xx(a,b,c,d)
 !           end do
 !          end do
-         end do
-        end do
-         do b=1,4
-          do c=1,4
-            write (*,*) "b,c,
-     -       einstein_ll(b,c)+ Lambda* g0_ll(a,b)
-     -    set_ll(b,c)="
-     -       ,b,c,
-     -     einstein_ll(b,c)-3*g0_ll(b,c),
-     -        set_ll(b,c)
-          end do
-         end do
-         do b=1,4
-          do c=1,4
-            write (*,*) "b,c,ricci_ll(b,c)="
-     -       ,b,c,ricci_ll(b,c)
-          end do
-         end do
-         write (*,*) "ricci=",ricci
-          stop
-        end if
+!         end do
+!        end do
+!         do b=1,4
+!          do c=1,4
+!            write (*,*) "b,c,
+!     -       einstein_ll(b,c)+ Lambda* g0_ll(a,b)
+!     -    set_ll(b,c)="
+!     -       ,b,c,
+!     -     einstein_ll(b,c)-3*g0_ll(b,c),
+!     -        set_ll(b,c)
+!          end do
+!         end do
+!         do b=1,4
+!          do c=1,4
+!            write (*,*) "b,c,ricci_ll(b,c)="
+!     -       ,b,c,ricci_ll(b,c)
+!          end do
+!         end do
+!         write (*,*) "ricci=",ricci
+!          stop
+!        end if
 !!!!!!!!!!!!!!
 
         return
