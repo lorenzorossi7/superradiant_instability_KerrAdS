@@ -3964,6 +3964,27 @@ c----------------------------------------------------------------------
 
         !now calculate the full solution
 
+        ! set gbar values
+        gb_tt0=gb_tt_n(i,j,k)
+        gb_tx0=gb_tx_n(i,j,k)
+        gb_ty0=gb_ty_n(i,j,k)
+        gb_tz0=gb_tz_n(i,j,k)
+        gb_xx0=gb_xx_n(i,j,k)
+        gb_xy0=gb_xy_n(i,j,k)
+        gb_xz0=gb_xz_n(i,j,k)
+        gb_yy0=gb_yy_n(i,j,k)
+        gb_yz0=gb_yz_n(i,j,k)
+        gb_zz0=gb_zz_n(i,j,k)
+
+        ! set hbar values
+        Hb_t0=Hb_t_n(i,j,k)
+        Hb_x0=Hb_x_n(i,j,k)
+        Hb_y0=Hb_y_n(i,j,k)
+        Hb_z0=Hb_z_n(i,j,k)
+
+        ! set phi1 value
+        phi10=phi1_n(i,j,k)
+
         ! calculate gbar derivatives
         call df2_int(gb_tt_np1,gb_tt_n,gb_tt_nm1,gb_tt_t,
      &       gb_tt_x,gb_tt_y,
@@ -4515,7 +4536,6 @@ c----------------------------------------------------------------------
         h0_ll(4,4)=gb_zz0
 
 
-
         h0_uu(1,1)=g0_uu(1,1)-gads_uu(1,1)
         h0_uu(1,2)=g0_uu(1,2)-gads_uu(1,2)
         h0_uu(1,3)=g0_uu(1,3)-gads_uu(1,3)
@@ -4915,6 +4935,51 @@ c----------------------------------------------------------------------
      &           -g0_ll(a,b)*(grad_phi1_sq/2)
           end do
         end do
+
+!!!!DEBUG!!!
+        if ((abs(x0-(-1.0+5*dx)).lt.10.0d0**(-10))
+     -  .and.(abs(y0-(-1.0+12*dy)).lt.10.0d0**(-10))
+     -  .and.(abs(z0-(-1.0+10*dz)).lt.10.0d0**(-10))) then
+        write (*,*) "x0,y0,z0=",x0,y0,z0
+        write (*,*) "rho0,theta0,phi0=",rho0,theta0,phi0
+          
+        do a=1,4
+         do b=1,4
+             write (*,*) "a,b,g0_ll(a,b)="
+     -                   ,a,b,g0_ll(a,b)
+             write (*,*) "a,b,g0_uu(a,b)="
+     -                   ,a,b,g0_uu(a,b)
+!          do c=1,4
+!             write (*,*) "a,b,c,g0_ll_x(a,b,c)="
+!     -                   ,a,b,c,g0_ll_x(a,b,c)
+!
+!           do d=1,4
+!             write (*,*) "a,b,c,d,g0_ll_xx(a,b,c,d)="
+!     -                   ,a,b,c,d,g0_ll_xx(a,b,c,d)
+!           end do
+!          end do
+         end do
+        end do
+         do b=1,4
+          do c=1,4
+            write (*,*) "b,c,
+     -       einstein_ll(b,c)+ Lambda* g0_ll(a,b)
+     -    set_ll(b,c)="
+     -       ,b,c,
+     -     einstein_ll(b,c)-3*g0_ll(b,c),
+     -        set_ll(b,c)
+          end do
+         end do
+         do b=1,4
+          do c=1,4
+            write (*,*) "b,c,ricci_ll(b,c)="
+     -       ,b,c,ricci_ll(b,c)
+          end do
+         end do
+         write (*,*) "ricci=",ricci
+          stop
+        end if
+!!!!!!!!!!!!!!
 
         return
         end
