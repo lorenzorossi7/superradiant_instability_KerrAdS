@@ -14,9 +14,9 @@ c----------------------------------------------------------------------
      &                     Hb_t_n,Hb_x_n,Hb_y_n,
      &                     Hb_z_n,
      &                     L,phys_bdy,x,y,z,dt,chr,ex,Nx,Ny,Nz,regtype,
-     &                     rbh,a_rot,kerrads_background)
+     &                     ief_bh_r0,a_rot,kerrads_background)
         implicit none
-        real*8 rbh,a_rot
+        real*8 ief_bh_r0,a_rot
         integer kerrads_background
         integer Nx,Ny,Nz
         integer phys_bdy(6),ghost_width(6)
@@ -174,7 +174,7 @@ c----------------------------------------------------------------------
      &              einstein_ll,set_ll,
      &              phi10_x,phi10_xx,
      &              x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &              rbh,a_rot,kerrads_background)
+     &              ief_bh_r0,a_rot,kerrads_background)
 
               ! calculate boxx^c at point i,j
               ! (boxx^c = -g^ab gamma^c_ab)
@@ -234,7 +234,7 @@ c----------------------------------------------------------------------
 !        write (*,*) ' boxx_u(2),g0_ll(1,2)=',boxx_u(2),g0_ll(1,2)
 !        write (*,*) ' boxx_u(3),g0_ll(2,2)=',boxx_u(3),g0_ll(2,2)
 !        write (*,*) ' boxx_u(4),g0_ll(3,3)=',boxx_u(4),g0_ll(3,3)
-
+!
 !        write (*,*) ' gb_tt_nm1(i,j,k),gb_tt_n(i,j,k),gb_tt_np1(i,j,k)='
 !     &               ,gb_tt_nm1(i,j,k),gb_tt_n(i,j,k),gb_tt_np1(i,j,k)
 !        write (*,*) ' gb_tx_nm1(i,j,k),gb_tx_n(i,j,k),gb_tx_np1(i,j,k)='

@@ -22,9 +22,9 @@ c----------------------------------------------------------------------
      &                      Hb_z_np1,Hb_z_n,Hb_z_nm1,Hb_z_t_n,
      &                      phi1_np1,phi1_n,phi1_nm1,phi1_t_n,tfunction,
      &                      L,phys_bdy,x,y,z,dt,chr,ex,Nx,Ny,Nz,regtype,
-     &                      rbh,a_rot,kerrads_background)
+     &                      ief_bh_r0,a_rot,kerrads_background)
         implicit none
-        real*8 rbh,a_rot
+        real*8 ief_bh_r0,a_rot
         integer kerrads_background
         integer Nx,Ny,Nz
         integer phys_bdy(6),ghost_width(6)
@@ -279,7 +279,7 @@ c----------------------------------------------------------------------
      &                einstein_ll,set_ll,
      &                phi10_x,phi10_xx,
      &                x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                rbh,a_rot,kerrads_background)
+     &                ief_bh_r0,a_rot,kerrads_background)
 
 !      write (*,*) 'gb_tt_np1(i,j,k),gb_tt_n(i,j,k),gb_tt_nm1(i,j,k)='
 !     &            ,gb_tt_np1(i,j,k),gb_tt_n(i,j,k),gb_tt_nm1(i,j,k)

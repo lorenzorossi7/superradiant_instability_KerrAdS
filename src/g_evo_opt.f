@@ -29,9 +29,9 @@ c----------------------------------------------------------------------
      &                       background,kappa_cd,rho_cd,
      &                       interptype,i_shift,regtype,
      &                       diss_kmax,tfunction,
-     &                       rbh,a_rot,kerrads_background)
+     &                       ief_bh_r0,a_rot,kerrads_background)
         implicit none
-        real*8 rbh,a_rot
+        real*8 ief_bh_r0,a_rot
         integer kerrads_background
         integer Nx,Ny,Nz
         integer phys_bdy(6),ghost_width(6)
@@ -804,7 +804,7 @@ c----------------------------------------------------------------------
      &                einstein_ll,set_ll,
      &                phi10_x,phi10_xx,
      &                x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                rbh,a_rot,kerrads_background)
+     &                ief_bh_r0,a_rot,kerrads_background)
 
 
                 do a=1,4
