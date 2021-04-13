@@ -45,12 +45,12 @@ c----------------------------------------------------------------------
         real*8 gschwads_ll_xx(4,4,4,4)
         real*8 Hschwads_l(4)
         real*8 phi10_x(4),phi10_xx(4,4)
-        real*8 gschwads_ll_sph(4,4),gschwads_uu_sph(4,4)
-        real*8 gschwads_ll_sph_x(4,4,4),gschwads_uu_sph_x(4,4,4)
-        real*8 gschwads_ll_sph_xx(4,4,4,4)
-        real*8 dxsph_dxcar(4,4)
-        real*8 d2xsph_dxcardxcar(4,4,4)
-        real*8 d3xsph_dxcardxcardxcar(4,4,4,4)
+        real*8 gschwads_ll_qssph(4,4),gschwads_uu_qssph(4,4)
+        real*8 gschwads_ll_qssph_x(4,4,4),gschwads_uu_qssph_x(4,4,4)
+        real*8 gschwads_ll_qssph_xx(4,4,4,4)
+        real*8 dxqssph_dxcar(4,4)
+        real*8 d2xqssph_dxcardxcar(4,4,4)
+        real*8 d3xqssph_dxcardxcardxcar(4,4,4,4)
         real*8 gammaschwads_ull(4,4,4)
         real*8 boxschwadsx_u(4)
         real*8 phi1schwads, phi1schwads_x(4)
@@ -62,164 +62,164 @@ c----------------------------------------------------------------------
         real*8 einsteinschwads_ll(4,4),setschwads_ll(4,4)
         real*8 grad_phi1schwads_sq
 
-        real*8 g0_tt_schwads_sph_t
-        real*8 g0_tt_schwads_sph_tt
-        real*8 g0_tt_schwads_sph_trho
-        real*8 g0_tt_schwads_sph_ttheta
-        real*8 g0_tt_schwads_sph_tphi
-        real*8 g0_tt_schwads_sph_rho
-        real*8 g0_tt_schwads_sph_rhorho
-        real*8 g0_tt_schwads_sph_rhotheta
-        real*8 g0_tt_schwads_sph_theta
-        real*8 g0_tt_schwads_sph_thetatheta
-        real*8 g0_tt_schwads_sph_phi
-        real*8 g0_tt_schwads_sph_rhophi
-        real*8 g0_tt_schwads_sph_thetaphi
-        real*8 g0_tt_schwads_sph_phiphi
-        real*8 g0_trho_schwads_sph_t
-        real*8 g0_trho_schwads_sph_tt
-        real*8 g0_trho_schwads_sph_trho
-        real*8 g0_trho_schwads_sph_ttheta
-        real*8 g0_trho_schwads_sph_tphi
-        real*8 g0_trho_schwads_sph_rho
-        real*8 g0_trho_schwads_sph_rhorho
-        real*8 g0_trho_schwads_sph_rhotheta
-        real*8 g0_trho_schwads_sph_theta
-        real*8 g0_trho_schwads_sph_thetatheta
-        real*8 g0_trho_schwads_sph_phi
-        real*8 g0_trho_schwads_sph_rhophi
-        real*8 g0_trho_schwads_sph_thetaphi
-        real*8 g0_trho_schwads_sph_phiphi
-        real*8 g0_ttheta_schwads_sph_t
-        real*8 g0_ttheta_schwads_sph_tt
-        real*8 g0_ttheta_schwads_sph_trho
-        real*8 g0_ttheta_schwads_sph_ttheta
-        real*8 g0_ttheta_schwads_sph_tphi
-        real*8 g0_ttheta_schwads_sph_rho
-        real*8 g0_ttheta_schwads_sph_rhorho
-        real*8 g0_ttheta_schwads_sph_rhotheta
-        real*8 g0_ttheta_schwads_sph_theta
-        real*8 g0_ttheta_schwads_sph_thetatheta
-        real*8 g0_ttheta_schwads_sph_phi
-        real*8 g0_ttheta_schwads_sph_rhophi
-        real*8 g0_ttheta_schwads_sph_thetaphi
-        real*8 g0_ttheta_schwads_sph_phiphi
-        real*8 g0_tphi_schwads_sph_t
-        real*8 g0_tphi_schwads_sph_tt
-        real*8 g0_tphi_schwads_sph_trho
-        real*8 g0_tphi_schwads_sph_ttheta
-        real*8 g0_tphi_schwads_sph_tphi
-        real*8 g0_tphi_schwads_sph_rho
-        real*8 g0_tphi_schwads_sph_rhorho
-        real*8 g0_tphi_schwads_sph_rhotheta
-        real*8 g0_tphi_schwads_sph_theta
-        real*8 g0_tphi_schwads_sph_thetatheta
-        real*8 g0_tphi_schwads_sph_phi
-        real*8 g0_tphi_schwads_sph_rhophi
-        real*8 g0_tphi_schwads_sph_thetaphi
-        real*8 g0_tphi_schwads_sph_phiphi
-        real*8 g0_rhorho_schwads_sph_t
-        real*8 g0_rhorho_schwads_sph_tt
-        real*8 g0_rhorho_schwads_sph_trho
-        real*8 g0_rhorho_schwads_sph_ttheta
-        real*8 g0_rhorho_schwads_sph_tphi
-        real*8 g0_rhorho_schwads_sph_rho
-        real*8 g0_rhorho_schwads_sph_rhorho
-        real*8 g0_rhorho_schwads_sph_rhotheta
-        real*8 g0_rhorho_schwads_sph_theta
-        real*8 g0_rhorho_schwads_sph_thetatheta
-        real*8 g0_rhorho_schwads_sph_phi
-        real*8 g0_rhorho_schwads_sph_rhophi
-        real*8 g0_rhorho_schwads_sph_thetaphi
-        real*8 g0_rhorho_schwads_sph_phiphi
-        real*8 g0_rhotheta_schwads_sph_t
-        real*8 g0_rhotheta_schwads_sph_tt
-        real*8 g0_rhotheta_schwads_sph_trho
-        real*8 g0_rhotheta_schwads_sph_ttheta
-        real*8 g0_rhotheta_schwads_sph_tphi
-        real*8 g0_rhotheta_schwads_sph_rho
-        real*8 g0_rhotheta_schwads_sph_rhorho
-        real*8 g0_rhotheta_schwads_sph_rhotheta
-        real*8 g0_rhotheta_schwads_sph_theta
-        real*8 g0_rhotheta_schwads_sph_thetatheta
-        real*8 g0_rhotheta_schwads_sph_phi
-        real*8 g0_rhotheta_schwads_sph_rhophi
-        real*8 g0_rhotheta_schwads_sph_thetaphi
-        real*8 g0_rhotheta_schwads_sph_phiphi
-        real*8 g0_rhophi_schwads_sph_t
-        real*8 g0_rhophi_schwads_sph_tt
-        real*8 g0_rhophi_schwads_sph_trho
-        real*8 g0_rhophi_schwads_sph_ttheta
-        real*8 g0_rhophi_schwads_sph_tphi
-        real*8 g0_rhophi_schwads_sph_rho
-        real*8 g0_rhophi_schwads_sph_rhorho
-        real*8 g0_rhophi_schwads_sph_rhotheta
-        real*8 g0_rhophi_schwads_sph_theta
-        real*8 g0_rhophi_schwads_sph_thetatheta
-        real*8 g0_rhophi_schwads_sph_phi
-        real*8 g0_rhophi_schwads_sph_rhophi
-        real*8 g0_rhophi_schwads_sph_thetaphi
-        real*8 g0_rhophi_schwads_sph_phiphi
-        real*8 g0_thetatheta_schwads_sph_t
-        real*8 g0_thetatheta_schwads_sph_tt
-        real*8 g0_thetatheta_schwads_sph_trho
-        real*8 g0_thetatheta_schwads_sph_ttheta
-        real*8 g0_thetatheta_schwads_sph_tphi
-        real*8 g0_thetatheta_schwads_sph_rho
-        real*8 g0_thetatheta_schwads_sph_rhorho
-        real*8 g0_thetatheta_schwads_sph_rhotheta
-        real*8 g0_thetatheta_schwads_sph_theta
-        real*8 g0_thetatheta_schwads_sph_thetatheta
-        real*8 g0_thetatheta_schwads_sph_phi
-        real*8 g0_thetatheta_schwads_sph_rhophi
-        real*8 g0_thetatheta_schwads_sph_thetaphi
-        real*8 g0_thetatheta_schwads_sph_phiphi
-        real*8 g0_thetaphi_schwads_sph_t
-        real*8 g0_thetaphi_schwads_sph_tt
-        real*8 g0_thetaphi_schwads_sph_trho
-        real*8 g0_thetaphi_schwads_sph_ttheta
-        real*8 g0_thetaphi_schwads_sph_tphi
-        real*8 g0_thetaphi_schwads_sph_rho
-        real*8 g0_thetaphi_schwads_sph_rhorho
-        real*8 g0_thetaphi_schwads_sph_rhotheta
-        real*8 g0_thetaphi_schwads_sph_theta
-        real*8 g0_thetaphi_schwads_sph_thetatheta
-        real*8 g0_thetaphi_schwads_sph_phi
-        real*8 g0_thetaphi_schwads_sph_rhophi
-        real*8 g0_thetaphi_schwads_sph_thetaphi
-        real*8 g0_thetaphi_schwads_sph_phiphi
-        real*8 g0_phiphi_schwads_sph_t
-        real*8 g0_phiphi_schwads_sph_tt
-        real*8 g0_phiphi_schwads_sph_trho
-        real*8 g0_phiphi_schwads_sph_ttheta
-        real*8 g0_phiphi_schwads_sph_tphi
-        real*8 g0_phiphi_schwads_sph_rho
-        real*8 g0_phiphi_schwads_sph_rhorho
-        real*8 g0_phiphi_schwads_sph_rhotheta
-        real*8 g0_phiphi_schwads_sph_theta
-        real*8 g0_phiphi_schwads_sph_thetatheta
-        real*8 g0_phiphi_schwads_sph_phi
-        real*8 g0_phiphi_schwads_sph_rhophi
-        real*8 g0_phiphi_schwads_sph_thetaphi
-        real*8 g0_phiphi_schwads_sph_phiphi
+        real*8 g0_tt_schwads_qssph_t
+        real*8 g0_tt_schwads_qssph_tt
+        real*8 g0_tt_schwads_qssph_trho
+        real*8 g0_tt_schwads_qssph_ttheta
+        real*8 g0_tt_schwads_qssph_tphi
+        real*8 g0_tt_schwads_qssph_rho
+        real*8 g0_tt_schwads_qssph_rhorho
+        real*8 g0_tt_schwads_qssph_rhotheta
+        real*8 g0_tt_schwads_qssph_theta
+        real*8 g0_tt_schwads_qssph_thetatheta
+        real*8 g0_tt_schwads_qssph_phi
+        real*8 g0_tt_schwads_qssph_rhophi
+        real*8 g0_tt_schwads_qssph_thetaphi
+        real*8 g0_tt_schwads_qssph_phiphi
+        real*8 g0_trho_schwads_qssph_t
+        real*8 g0_trho_schwads_qssph_tt
+        real*8 g0_trho_schwads_qssph_trho
+        real*8 g0_trho_schwads_qssph_ttheta
+        real*8 g0_trho_schwads_qssph_tphi
+        real*8 g0_trho_schwads_qssph_rho
+        real*8 g0_trho_schwads_qssph_rhorho
+        real*8 g0_trho_schwads_qssph_rhotheta
+        real*8 g0_trho_schwads_qssph_theta
+        real*8 g0_trho_schwads_qssph_thetatheta
+        real*8 g0_trho_schwads_qssph_phi
+        real*8 g0_trho_schwads_qssph_rhophi
+        real*8 g0_trho_schwads_qssph_thetaphi
+        real*8 g0_trho_schwads_qssph_phiphi
+        real*8 g0_ttheta_schwads_qssph_t
+        real*8 g0_ttheta_schwads_qssph_tt
+        real*8 g0_ttheta_schwads_qssph_trho
+        real*8 g0_ttheta_schwads_qssph_ttheta
+        real*8 g0_ttheta_schwads_qssph_tphi
+        real*8 g0_ttheta_schwads_qssph_rho
+        real*8 g0_ttheta_schwads_qssph_rhorho
+        real*8 g0_ttheta_schwads_qssph_rhotheta
+        real*8 g0_ttheta_schwads_qssph_theta
+        real*8 g0_ttheta_schwads_qssph_thetatheta
+        real*8 g0_ttheta_schwads_qssph_phi
+        real*8 g0_ttheta_schwads_qssph_rhophi
+        real*8 g0_ttheta_schwads_qssph_thetaphi
+        real*8 g0_ttheta_schwads_qssph_phiphi
+        real*8 g0_tphi_schwads_qssph_t
+        real*8 g0_tphi_schwads_qssph_tt
+        real*8 g0_tphi_schwads_qssph_trho
+        real*8 g0_tphi_schwads_qssph_ttheta
+        real*8 g0_tphi_schwads_qssph_tphi
+        real*8 g0_tphi_schwads_qssph_rho
+        real*8 g0_tphi_schwads_qssph_rhorho
+        real*8 g0_tphi_schwads_qssph_rhotheta
+        real*8 g0_tphi_schwads_qssph_theta
+        real*8 g0_tphi_schwads_qssph_thetatheta
+        real*8 g0_tphi_schwads_qssph_phi
+        real*8 g0_tphi_schwads_qssph_rhophi
+        real*8 g0_tphi_schwads_qssph_thetaphi
+        real*8 g0_tphi_schwads_qssph_phiphi
+        real*8 g0_rhorho_schwads_qssph_t
+        real*8 g0_rhorho_schwads_qssph_tt
+        real*8 g0_rhorho_schwads_qssph_trho
+        real*8 g0_rhorho_schwads_qssph_ttheta
+        real*8 g0_rhorho_schwads_qssph_tphi
+        real*8 g0_rhorho_schwads_qssph_rho
+        real*8 g0_rhorho_schwads_qssph_rhorho
+        real*8 g0_rhorho_schwads_qssph_rhotheta
+        real*8 g0_rhorho_schwads_qssph_theta
+        real*8 g0_rhorho_schwads_qssph_thetatheta
+        real*8 g0_rhorho_schwads_qssph_phi
+        real*8 g0_rhorho_schwads_qssph_rhophi
+        real*8 g0_rhorho_schwads_qssph_thetaphi
+        real*8 g0_rhorho_schwads_qssph_phiphi
+        real*8 g0_rhotheta_schwads_qssph_t
+        real*8 g0_rhotheta_schwads_qssph_tt
+        real*8 g0_rhotheta_schwads_qssph_trho
+        real*8 g0_rhotheta_schwads_qssph_ttheta
+        real*8 g0_rhotheta_schwads_qssph_tphi
+        real*8 g0_rhotheta_schwads_qssph_rho
+        real*8 g0_rhotheta_schwads_qssph_rhorho
+        real*8 g0_rhotheta_schwads_qssph_rhotheta
+        real*8 g0_rhotheta_schwads_qssph_theta
+        real*8 g0_rhotheta_schwads_qssph_thetatheta
+        real*8 g0_rhotheta_schwads_qssph_phi
+        real*8 g0_rhotheta_schwads_qssph_rhophi
+        real*8 g0_rhotheta_schwads_qssph_thetaphi
+        real*8 g0_rhotheta_schwads_qssph_phiphi
+        real*8 g0_rhophi_schwads_qssph_t
+        real*8 g0_rhophi_schwads_qssph_tt
+        real*8 g0_rhophi_schwads_qssph_trho
+        real*8 g0_rhophi_schwads_qssph_ttheta
+        real*8 g0_rhophi_schwads_qssph_tphi
+        real*8 g0_rhophi_schwads_qssph_rho
+        real*8 g0_rhophi_schwads_qssph_rhorho
+        real*8 g0_rhophi_schwads_qssph_rhotheta
+        real*8 g0_rhophi_schwads_qssph_theta
+        real*8 g0_rhophi_schwads_qssph_thetatheta
+        real*8 g0_rhophi_schwads_qssph_phi
+        real*8 g0_rhophi_schwads_qssph_rhophi
+        real*8 g0_rhophi_schwads_qssph_thetaphi
+        real*8 g0_rhophi_schwads_qssph_phiphi
+        real*8 g0_thetatheta_schwads_qssph_t
+        real*8 g0_thetatheta_schwads_qssph_tt
+        real*8 g0_thetatheta_schwads_qssph_trho
+        real*8 g0_thetatheta_schwads_qssph_ttheta
+        real*8 g0_thetatheta_schwads_qssph_tphi
+        real*8 g0_thetatheta_schwads_qssph_rho
+        real*8 g0_thetatheta_schwads_qssph_rhorho
+        real*8 g0_thetatheta_schwads_qssph_rhotheta
+        real*8 g0_thetatheta_schwads_qssph_theta
+        real*8 g0_thetatheta_schwads_qssph_thetatheta
+        real*8 g0_thetatheta_schwads_qssph_phi
+        real*8 g0_thetatheta_schwads_qssph_rhophi
+        real*8 g0_thetatheta_schwads_qssph_thetaphi
+        real*8 g0_thetatheta_schwads_qssph_phiphi
+        real*8 g0_thetaphi_schwads_qssph_t
+        real*8 g0_thetaphi_schwads_qssph_tt
+        real*8 g0_thetaphi_schwads_qssph_trho
+        real*8 g0_thetaphi_schwads_qssph_ttheta
+        real*8 g0_thetaphi_schwads_qssph_tphi
+        real*8 g0_thetaphi_schwads_qssph_rho
+        real*8 g0_thetaphi_schwads_qssph_rhorho
+        real*8 g0_thetaphi_schwads_qssph_rhotheta
+        real*8 g0_thetaphi_schwads_qssph_theta
+        real*8 g0_thetaphi_schwads_qssph_thetatheta
+        real*8 g0_thetaphi_schwads_qssph_phi
+        real*8 g0_thetaphi_schwads_qssph_rhophi
+        real*8 g0_thetaphi_schwads_qssph_thetaphi
+        real*8 g0_thetaphi_schwads_qssph_phiphi
+        real*8 g0_phiphi_schwads_qssph_t
+        real*8 g0_phiphi_schwads_qssph_tt
+        real*8 g0_phiphi_schwads_qssph_trho
+        real*8 g0_phiphi_schwads_qssph_ttheta
+        real*8 g0_phiphi_schwads_qssph_tphi
+        real*8 g0_phiphi_schwads_qssph_rho
+        real*8 g0_phiphi_schwads_qssph_rhorho
+        real*8 g0_phiphi_schwads_qssph_rhotheta
+        real*8 g0_phiphi_schwads_qssph_theta
+        real*8 g0_phiphi_schwads_qssph_thetatheta
+        real*8 g0_phiphi_schwads_qssph_phi
+        real*8 g0_phiphi_schwads_qssph_rhophi
+        real*8 g0_phiphi_schwads_qssph_thetaphi
+        real*8 g0_phiphi_schwads_qssph_phiphi
 
-        real*8 g0_tt_schwads_sph0,g0_rhorho_schwads_sph0
-        real*8 g0_trho_schwads_sph0,g0_ttheta_schwads_sph0
-        real*8 g0_tphi_schwads_sph0
-        real*8 g0_rhotheta_schwads_sph0
-        real*8 g0_thetatheta_schwads_sph0
-        real*8 g0_phiphi_schwads_sph0
-        real*8 g0_rhophi_schwads_sph0,g0_thetaphi_schwads_sph0
+        real*8 g0_tt_schwads_qssph0,g0_rhorho_schwads_qssph0
+        real*8 g0_trho_schwads_qssph0,g0_ttheta_schwads_qssph0
+        real*8 g0_tphi_schwads_qssph0
+        real*8 g0_rhotheta_schwads_qssph0
+        real*8 g0_thetatheta_schwads_qssph0
+        real*8 g0_phiphi_schwads_qssph0
+        real*8 g0_rhophi_schwads_qssph0,g0_thetaphi_schwads_qssph0
 
-        real*8 detg0_schwads_sph0
-        real*8 g0u_tt_schwads_sph0,g0u_rhorho_schwads_sph0
-        real*8 g0u_trho_schwads_sph0,g0u_ttheta_schwads_sph0
-        real*8 g0u_tphi_schwads_sph0
-        real*8 g0u_rhotheta_schwads_sph0
-        real*8 g0u_thetatheta_schwads_sph0
-        real*8 g0u_phiphi_schwads_sph0
-        real*8 g0u_rhophi_schwads_sph0
-        real*8 g0u_thetaphi_schwads_sph0
+        real*8 detg0_schwads_qssph0
+        real*8 g0u_tt_schwads_qssph0,g0u_rhorho_schwads_qssph0
+        real*8 g0u_trho_schwads_qssph0,g0u_ttheta_schwads_qssph0
+        real*8 g0u_tphi_schwads_qssph0
+        real*8 g0u_rhotheta_schwads_qssph0
+        real*8 g0u_thetatheta_schwads_qssph0
+        real*8 g0u_phiphi_schwads_qssph0
+        real*8 g0u_rhophi_schwads_qssph0
+        real*8 g0u_thetaphi_schwads_qssph0
 
         real*8 detg0_schwads0
 
@@ -268,61 +268,67 @@ c----------------------------------------------------------------------
         M0=ief_bh_r0/2
 
 
-        g0_tt_schwads_sph0 =
+!hard-coding metric components in Kerr-Schild coordinates (horizon penetrating), non-rotating at the boundary
+!NOTE: these are NOT asymptotically spherical coordinates: although the metric components asymptote to those 
+!of pure AdS, they do not approach them with the right falloffs for the rt,rtheta,rphi components. However, 
+!applying the transformation from spherical to Cartesian coordinates to these pseudo spherical coords, we 
+!obtain asymptotically Cartesian coords.
+
+        g0_tt_schwads_qssph0 =
      -   M0/rho0 - M0*rho0 - 
      -  (4*rho0**2 + (-1 + rho0**2)**2)/
      -   ((-1 + rho0)**2*(1 + rho0)**2)
-        g0_trho_schwads_sph0 =
+        g0_trho_schwads_qssph0 =
      -    (2*M0*(1 - 2*rho0**2 + rho0**4))/
      -  (rho0*Sqrt((-1 + rho0**2)**2)*(1 + rho0**2))
-        g0_ttheta_schwads_sph0 =
+        g0_ttheta_schwads_qssph0 =
      -   0
-        g0_tphi_schwads_sph0 =
+        g0_tphi_schwads_qssph0 =
      -   0
-        g0_rhorho_schwads_sph0 =
+        g0_rhorho_schwads_qssph0 =
      -   (-4*M0*(-1 + rho0**2))/
      -   (rho0*(1 + rho0**2)**2) + 
      -  (4*(1 + rho0**2)**2)/
      -   ((-1 + rho0**2)**2*
      -     (4*rho0**2 + (-1 + rho0**2)**2))
-        g0_rhotheta_schwads_sph0 =
+        g0_rhotheta_schwads_qssph0 =
      -   0
-        g0_rhophi_schwads_sph0 =
+        g0_rhophi_schwads_qssph0 =
      -   0
-        g0_thetatheta_schwads_sph0 =
+        g0_thetatheta_schwads_qssph0 =
      -    (4*rho0**2)/(-1 + rho0**2)**2
-        g0_thetaphi_schwads_sph0 =
+        g0_thetaphi_schwads_qssph0 =
      -   0
-        g0_phiphi_schwads_sph0 =
+        g0_phiphi_schwads_qssph0 =
      -   (4*rho0**2*Sin(theta0)**2)/(-1 + rho0**2)**2
 
              ! give values to the metric inverse
-        call calc_g0uu(g0_tt_schwads_sph0,
-     &         g0_trho_schwads_sph0,
-     &         g0_ttheta_schwads_sph0,
-     &         g0_tphi_schwads_sph0,
-     &         g0_rhorho_schwads_sph0,
-     &         g0_rhotheta_schwads_sph0,
-     &         g0_rhophi_schwads_sph0,
-     &         g0_thetatheta_schwads_sph0,
-     &         g0_thetaphi_schwads_sph0,
-     &         g0_phiphi_schwads_sph0,
-     &         g0u_tt_schwads_sph0,
-     &         g0u_trho_schwads_sph0,
-     &         g0u_ttheta_schwads_sph0,
-     &         g0u_tphi_schwads_sph0,
-     &         g0u_rhorho_schwads_sph0,
-     &         g0u_rhotheta_schwads_sph0,
-     &         g0u_rhophi_schwads_sph0,
-     &         g0u_thetatheta_schwads_sph0,
-     &         g0u_thetaphi_schwads_sph0,
-     &         g0u_phiphi_schwads_sph0,
-     &         detg0_schwads_sph0)
+        call calc_g0uu(g0_tt_schwads_qssph0,
+     &         g0_trho_schwads_qssph0,
+     &         g0_ttheta_schwads_qssph0,
+     &         g0_tphi_schwads_qssph0,
+     &         g0_rhorho_schwads_qssph0,
+     &         g0_rhotheta_schwads_qssph0,
+     &         g0_rhophi_schwads_qssph0,
+     &         g0_thetatheta_schwads_qssph0,
+     &         g0_thetaphi_schwads_qssph0,
+     &         g0_phiphi_schwads_qssph0,
+     &         g0u_tt_schwads_qssph0,
+     &         g0u_trho_schwads_qssph0,
+     &         g0u_ttheta_schwads_qssph0,
+     &         g0u_tphi_schwads_qssph0,
+     &         g0u_rhorho_schwads_qssph0,
+     &         g0u_rhotheta_schwads_qssph0,
+     &         g0u_rhophi_schwads_qssph0,
+     &         g0u_thetatheta_schwads_qssph0,
+     &         g0u_thetaphi_schwads_qssph0,
+     &         g0u_phiphi_schwads_qssph0,
+     &         detg0_schwads_qssph0)
 
        if (calc_der) then
-        g0_tt_schwads_sph_t  =
+        g0_tt_schwads_qssph_t  =
      -   0
-        g0_tt_schwads_sph_rho  =
+        g0_tt_schwads_qssph_rho  =
      -   -M0 - M0/rho0**2 - 
      -  (8*rho0 + 4*rho0*(-1 + rho0**2))/
      -   ((-1 + rho0)**2*(1 + rho0)**2) + 
@@ -330,19 +336,19 @@ c----------------------------------------------------------------------
      -   ((-1 + rho0)**2*(1 + rho0)**3) + 
      -  (2*(4*rho0**2 + (-1 + rho0**2)**2))/
      -   ((-1 + rho0)**3*(1 + rho0)**2)
-        g0_tt_schwads_sph_theta  =
+        g0_tt_schwads_qssph_theta  =
      -   0
-        g0_tt_schwads_sph_phi  =
+        g0_tt_schwads_qssph_phi  =
      -   0
-        g0_tt_schwads_sph_tt =
+        g0_tt_schwads_qssph_tt =
      -   0
-        g0_tt_schwads_sph_trho =
+        g0_tt_schwads_qssph_trho =
      -   0
-        g0_tt_schwads_sph_ttheta =
+        g0_tt_schwads_qssph_ttheta =
      -   0
-        g0_tt_schwads_sph_tphi =
+        g0_tt_schwads_qssph_tphi =
      -   0
-        g0_tt_schwads_sph_rhorho =
+        g0_tt_schwads_qssph_rhorho =
      -    (2*M0)/rho0**3 - 
      -  (8 + 8*rho0**2 + 4*(-1 + rho0**2))/
      -   ((-1 + rho0)**2*(1 + rho0)**2) + 
@@ -356,20 +362,20 @@ c----------------------------------------------------------------------
      -   ((-1 + rho0)**3*(1 + rho0)**3) - 
      -  (6*(4*rho0**2 + (-1 + rho0**2)**2))/
      -   ((-1 + rho0)**4*(1 + rho0)**2)
-        g0_tt_schwads_sph_rhotheta =
+        g0_tt_schwads_qssph_rhotheta =
      -   0
-        g0_tt_schwads_sph_rhophi =
+        g0_tt_schwads_qssph_rhophi =
      -   0
-        g0_tt_schwads_sph_thetatheta =
+        g0_tt_schwads_qssph_thetatheta =
      -   0
-        g0_tt_schwads_sph_thetaphi =
+        g0_tt_schwads_qssph_thetaphi =
      -   0
-        g0_tt_schwads_sph_phiphi =
+        g0_tt_schwads_qssph_phiphi =
      -   0
 
-        g0_trho_schwads_sph_t  =
+        g0_trho_schwads_qssph_t  =
      -   0
-        g0_trho_schwads_sph_rho  =
+        g0_trho_schwads_qssph_rho  =
      -   (2*M0*(-4*rho0 + 4*rho0**3))/
      -   (rho0*Sqrt((-1 + rho0**2)**2)*(1 + rho0**2))
      -   - (4*M0*(1 - 2*rho0**2 + rho0**4))/
@@ -380,19 +386,19 @@ c----------------------------------------------------------------------
      -  (2*M0*(1 - 2*rho0**2 + rho0**4))/
      -   (rho0**2*Sqrt((-1 + rho0**2)**2)*
      -     (1 + rho0**2))
-        g0_trho_schwads_sph_theta  =
+        g0_trho_schwads_qssph_theta  =
      -   0
-        g0_trho_schwads_sph_phi  =
+        g0_trho_schwads_qssph_phi  =
      -   0
-        g0_trho_schwads_sph_tt =
+        g0_trho_schwads_qssph_tt =
      -   0
-        g0_trho_schwads_sph_trho =
+        g0_trho_schwads_qssph_trho =
      -   0
-        g0_trho_schwads_sph_ttheta =
+        g0_trho_schwads_qssph_ttheta =
      -   0
-        g0_trho_schwads_sph_tphi =
+        g0_trho_schwads_qssph_tphi =
      -   0
-        g0_trho_schwads_sph_rhorho =
+        g0_trho_schwads_qssph_rhorho =
      -   (2*M0*(-4 + 12*rho0**2))/
      -   (rho0*Sqrt((-1 + rho0**2)**2)*(1 + rho0**2))
      -   - (8*M0*(-4*rho0 + 4*rho0**3))/
@@ -418,78 +424,78 @@ c----------------------------------------------------------------------
      -   + (4*M0*(1 - 2*rho0**2 + rho0**4))/
      -   (rho0**3*Sqrt((-1 + rho0**2)**2)*
      -     (1 + rho0**2))
-        g0_trho_schwads_sph_rhotheta =
+        g0_trho_schwads_qssph_rhotheta =
      -   0
-        g0_trho_schwads_sph_rhophi =
+        g0_trho_schwads_qssph_rhophi =
      -   0
-        g0_trho_schwads_sph_thetatheta =
+        g0_trho_schwads_qssph_thetatheta =
      -   0
-        g0_trho_schwads_sph_thetaphi =
+        g0_trho_schwads_qssph_thetaphi =
      -   0
-        g0_trho_schwads_sph_phiphi =
-     -   0
-
-        g0_ttheta_schwads_sph_t  =
-     -   0
-        g0_ttheta_schwads_sph_rho  =
-     -   0
-        g0_ttheta_schwads_sph_theta  =
-     -   0
-        g0_ttheta_schwads_sph_phi  =
-     -   0
-        g0_ttheta_schwads_sph_tt =
-     -   0
-        g0_ttheta_schwads_sph_trho =
-     -   0
-        g0_ttheta_schwads_sph_ttheta =
-     -   0
-        g0_ttheta_schwads_sph_tphi =
-     -   0
-        g0_ttheta_schwads_sph_rhorho =
-     -   0
-        g0_ttheta_schwads_sph_rhotheta =
-     -   0
-        g0_ttheta_schwads_sph_rhophi =
-     -   0
-        g0_ttheta_schwads_sph_thetatheta =
-     -   0
-        g0_ttheta_schwads_sph_thetaphi =
-     -   0
-        g0_ttheta_schwads_sph_phiphi =
+        g0_trho_schwads_qssph_phiphi =
      -   0
 
-        g0_tphi_schwads_sph_t  =
+        g0_ttheta_schwads_qssph_t  =
      -   0
-        g0_tphi_schwads_sph_rho  =
+        g0_ttheta_schwads_qssph_rho  =
      -   0
-        g0_tphi_schwads_sph_theta  =
+        g0_ttheta_schwads_qssph_theta  =
      -   0
-        g0_tphi_schwads_sph_phi  =
+        g0_ttheta_schwads_qssph_phi  =
      -   0
-        g0_tphi_schwads_sph_tt =
+        g0_ttheta_schwads_qssph_tt =
      -   0
-        g0_tphi_schwads_sph_trho =
+        g0_ttheta_schwads_qssph_trho =
      -   0
-        g0_tphi_schwads_sph_ttheta =
+        g0_ttheta_schwads_qssph_ttheta =
      -   0
-        g0_tphi_schwads_sph_tphi =
+        g0_ttheta_schwads_qssph_tphi =
      -   0
-        g0_tphi_schwads_sph_rhorho =
+        g0_ttheta_schwads_qssph_rhorho =
      -   0
-        g0_tphi_schwads_sph_rhotheta =
+        g0_ttheta_schwads_qssph_rhotheta =
      -   0
-        g0_tphi_schwads_sph_rhophi =
+        g0_ttheta_schwads_qssph_rhophi =
      -   0
-        g0_tphi_schwads_sph_thetatheta =
+        g0_ttheta_schwads_qssph_thetatheta =
      -   0
-        g0_tphi_schwads_sph_thetaphi =
+        g0_ttheta_schwads_qssph_thetaphi =
      -   0
-        g0_tphi_schwads_sph_phiphi =
+        g0_ttheta_schwads_qssph_phiphi =
      -   0
 
-        g0_rhorho_schwads_sph_t  =
+        g0_tphi_schwads_qssph_t  =
      -   0
-        g0_rhorho_schwads_sph_rho  =
+        g0_tphi_schwads_qssph_rho  =
+     -   0
+        g0_tphi_schwads_qssph_theta  =
+     -   0
+        g0_tphi_schwads_qssph_phi  =
+     -   0
+        g0_tphi_schwads_qssph_tt =
+     -   0
+        g0_tphi_schwads_qssph_trho =
+     -   0
+        g0_tphi_schwads_qssph_ttheta =
+     -   0
+        g0_tphi_schwads_qssph_tphi =
+     -   0
+        g0_tphi_schwads_qssph_rhorho =
+     -   0
+        g0_tphi_schwads_qssph_rhotheta =
+     -   0
+        g0_tphi_schwads_qssph_rhophi =
+     -   0
+        g0_tphi_schwads_qssph_thetatheta =
+     -   0
+        g0_tphi_schwads_qssph_thetaphi =
+     -   0
+        g0_tphi_schwads_qssph_phiphi =
+     -   0
+
+        g0_rhorho_schwads_qssph_t  =
+     -   0
+        g0_rhorho_schwads_qssph_rho  =
      -   (16*M0*(-1 + rho0**2))/(1 + rho0**2)**3 - 
      -  (8*M0)/(1 + rho0**2)**2 + 
      -  (4*M0*(-1 + rho0**2))/
@@ -504,19 +510,19 @@ c----------------------------------------------------------------------
      -  (16*rho0*(1 + rho0**2)**2)/
      -   ((-1 + rho0**2)**3*
      -     (4*rho0**2 + (-1 + rho0**2)**2))
-        g0_rhorho_schwads_sph_theta  =
+        g0_rhorho_schwads_qssph_theta  =
      -   0
-        g0_rhorho_schwads_sph_phi  =
+        g0_rhorho_schwads_qssph_phi  =
      -   0
-        g0_rhorho_schwads_sph_tt =
+        g0_rhorho_schwads_qssph_tt =
      -   0
-        g0_rhorho_schwads_sph_trho =
+        g0_rhorho_schwads_qssph_trho =
      -   0
-        g0_rhorho_schwads_sph_ttheta =
+        g0_rhorho_schwads_qssph_ttheta =
      -   0
-        g0_rhorho_schwads_sph_tphi =
+        g0_rhorho_schwads_qssph_tphi =
      -   0
-        g0_rhorho_schwads_sph_rhorho =
+        g0_rhorho_schwads_qssph_rhorho =
      -   (-96*M0*rho0*(-1 + rho0**2))/
      -   (1 + rho0**2)**4 + 
      -  (64*M0*rho0)/(1 + rho0**2)**3 - 
@@ -556,367 +562,378 @@ c----------------------------------------------------------------------
      -  (16*(1 + rho0**2)**2)/
      -   ((-1 + rho0**2)**3*
      -     (4*rho0**2 + (-1 + rho0**2)**2))
-        g0_rhorho_schwads_sph_rhotheta =
+        g0_rhorho_schwads_qssph_rhotheta =
      -   0
-        g0_rhorho_schwads_sph_rhophi =
+        g0_rhorho_schwads_qssph_rhophi =
      -   0
-        g0_rhorho_schwads_sph_thetatheta =
+        g0_rhorho_schwads_qssph_thetatheta =
      -   0
-        g0_rhorho_schwads_sph_thetaphi =
+        g0_rhorho_schwads_qssph_thetaphi =
      -   0
-        g0_rhorho_schwads_sph_phiphi =
-     -   0
-
-        g0_rhotheta_schwads_sph_t  =
-     -   0
-        g0_rhotheta_schwads_sph_rho  =
-     -   0
-        g0_rhotheta_schwads_sph_theta  =
-     -   0
-        g0_rhotheta_schwads_sph_phi  =
-     -   0
-        g0_rhotheta_schwads_sph_tt =
-     -   0
-        g0_rhotheta_schwads_sph_trho =
-     -   0
-        g0_rhotheta_schwads_sph_ttheta =
-     -   0
-        g0_rhotheta_schwads_sph_tphi =
-     -   0
-        g0_rhotheta_schwads_sph_rhorho =
-     -   0
-        g0_rhotheta_schwads_sph_rhotheta =
-     -   0
-        g0_rhotheta_schwads_sph_rhophi =
-     -   0
-        g0_rhotheta_schwads_sph_thetatheta =
-     -   0
-        g0_rhotheta_schwads_sph_thetaphi =
-     -   0
-        g0_rhotheta_schwads_sph_phiphi =
+        g0_rhorho_schwads_qssph_phiphi =
      -   0
 
-        g0_rhophi_schwads_sph_t  =
+        g0_rhotheta_schwads_qssph_t  =
      -   0
-        g0_rhophi_schwads_sph_rho  =
+        g0_rhotheta_schwads_qssph_rho  =
      -   0
-        g0_rhophi_schwads_sph_theta  =
+        g0_rhotheta_schwads_qssph_theta  =
      -   0
-        g0_rhophi_schwads_sph_phi  =
+        g0_rhotheta_schwads_qssph_phi  =
      -   0
-        g0_rhophi_schwads_sph_tt =
+        g0_rhotheta_schwads_qssph_tt =
      -   0
-        g0_rhophi_schwads_sph_trho =
+        g0_rhotheta_schwads_qssph_trho =
      -   0
-        g0_rhophi_schwads_sph_ttheta =
+        g0_rhotheta_schwads_qssph_ttheta =
      -   0
-        g0_rhophi_schwads_sph_tphi =
+        g0_rhotheta_schwads_qssph_tphi =
      -   0
-        g0_rhophi_schwads_sph_rhorho =
+        g0_rhotheta_schwads_qssph_rhorho =
      -   0
-        g0_rhophi_schwads_sph_rhotheta =
+        g0_rhotheta_schwads_qssph_rhotheta =
      -   0
-        g0_rhophi_schwads_sph_rhophi =
+        g0_rhotheta_schwads_qssph_rhophi =
      -   0
-        g0_rhophi_schwads_sph_thetatheta =
+        g0_rhotheta_schwads_qssph_thetatheta =
      -   0
-        g0_rhophi_schwads_sph_thetaphi =
+        g0_rhotheta_schwads_qssph_thetaphi =
      -   0
-        g0_rhophi_schwads_sph_phiphi =
+        g0_rhotheta_schwads_qssph_phiphi =
      -   0
 
-        g0_thetatheta_schwads_sph_t  =
+        g0_rhophi_schwads_qssph_t  =
      -   0
-        g0_thetatheta_schwads_sph_rho  =
+        g0_rhophi_schwads_qssph_rho  =
+     -   0
+        g0_rhophi_schwads_qssph_theta  =
+     -   0
+        g0_rhophi_schwads_qssph_phi  =
+     -   0
+        g0_rhophi_schwads_qssph_tt =
+     -   0
+        g0_rhophi_schwads_qssph_trho =
+     -   0
+        g0_rhophi_schwads_qssph_ttheta =
+     -   0
+        g0_rhophi_schwads_qssph_tphi =
+     -   0
+        g0_rhophi_schwads_qssph_rhorho =
+     -   0
+        g0_rhophi_schwads_qssph_rhotheta =
+     -   0
+        g0_rhophi_schwads_qssph_rhophi =
+     -   0
+        g0_rhophi_schwads_qssph_thetatheta =
+     -   0
+        g0_rhophi_schwads_qssph_thetaphi =
+     -   0
+        g0_rhophi_schwads_qssph_phiphi =
+     -   0
+
+        g0_thetatheta_schwads_qssph_t  =
+     -   0
+        g0_thetatheta_schwads_qssph_rho  =
      -   (-16*rho0**3)/(-1 + rho0**2)**3 + 
      -  (8*rho0)/(-1 + rho0**2)**2
-        g0_thetatheta_schwads_sph_theta  =
+        g0_thetatheta_schwads_qssph_theta  =
      -   0
-        g0_thetatheta_schwads_sph_phi  =
+        g0_thetatheta_schwads_qssph_phi  =
      -   0
-        g0_thetatheta_schwads_sph_tt =
+        g0_thetatheta_schwads_qssph_tt =
      -   0
-        g0_thetatheta_schwads_sph_trho =
+        g0_thetatheta_schwads_qssph_trho =
      -   0
-        g0_thetatheta_schwads_sph_ttheta =
+        g0_thetatheta_schwads_qssph_ttheta =
      -   0
-        g0_thetatheta_schwads_sph_tphi =
+        g0_thetatheta_schwads_qssph_tphi =
      -   0
-        g0_thetatheta_schwads_sph_rhorho =
+        g0_thetatheta_schwads_qssph_rhorho =
      -   (96*rho0**4)/(-1 + rho0**2)**4 - 
      -  (80*rho0**2)/(-1 + rho0**2)**3 + 
      -  8/(-1 + rho0**2)**2
-        g0_thetatheta_schwads_sph_rhotheta =
+        g0_thetatheta_schwads_qssph_rhotheta =
      -   0
-        g0_thetatheta_schwads_sph_rhophi =
+        g0_thetatheta_schwads_qssph_rhophi =
      -   0
-        g0_thetatheta_schwads_sph_thetatheta =
+        g0_thetatheta_schwads_qssph_thetatheta =
      -   0
-        g0_thetatheta_schwads_sph_thetaphi =
+        g0_thetatheta_schwads_qssph_thetaphi =
      -   0
-        g0_thetatheta_schwads_sph_phiphi =
-     -   0
-
-        g0_thetaphi_schwads_sph_t  =
-     -   0
-        g0_thetaphi_schwads_sph_rho  =
-     -   0
-        g0_thetaphi_schwads_sph_theta  =
-     -   0
-        g0_thetaphi_schwads_sph_phi  =
-     -   0
-        g0_thetaphi_schwads_sph_tt =
-     -   0
-        g0_thetaphi_schwads_sph_trho =
-     -   0
-        g0_thetaphi_schwads_sph_ttheta =
-     -   0
-        g0_thetaphi_schwads_sph_tphi =
-     -   0
-        g0_thetaphi_schwads_sph_rhorho =
-     -   0
-        g0_thetaphi_schwads_sph_rhotheta =
-     -   0
-        g0_thetaphi_schwads_sph_rhophi =
-     -   0
-        g0_thetaphi_schwads_sph_thetatheta =
-     -   0
-        g0_thetaphi_schwads_sph_thetaphi =
-     -   0
-        g0_thetaphi_schwads_sph_phiphi =
+        g0_thetatheta_schwads_qssph_phiphi =
      -   0
 
-        g0_phiphi_schwads_sph_t  =
+        g0_thetaphi_schwads_qssph_t  =
      -   0
-        g0_phiphi_schwads_sph_rho  =
+        g0_thetaphi_schwads_qssph_rho  =
+     -   0
+        g0_thetaphi_schwads_qssph_theta  =
+     -   0
+        g0_thetaphi_schwads_qssph_phi  =
+     -   0
+        g0_thetaphi_schwads_qssph_tt =
+     -   0
+        g0_thetaphi_schwads_qssph_trho =
+     -   0
+        g0_thetaphi_schwads_qssph_ttheta =
+     -   0
+        g0_thetaphi_schwads_qssph_tphi =
+     -   0
+        g0_thetaphi_schwads_qssph_rhorho =
+     -   0
+        g0_thetaphi_schwads_qssph_rhotheta =
+     -   0
+        g0_thetaphi_schwads_qssph_rhophi =
+     -   0
+        g0_thetaphi_schwads_qssph_thetatheta =
+     -   0
+        g0_thetaphi_schwads_qssph_thetaphi =
+     -   0
+        g0_thetaphi_schwads_qssph_phiphi =
+     -   0
+
+        g0_phiphi_schwads_qssph_t  =
+     -   0
+        g0_phiphi_schwads_qssph_rho  =
      -   (-16*rho0**3*Sin(theta0)**2)/
      -   (-1 + rho0**2)**3 + 
      -  (8*rho0*Sin(theta0)**2)/(-1 + rho0**2)**2
-        g0_phiphi_schwads_sph_theta  =
+        g0_phiphi_schwads_qssph_theta  =
      -   (8*rho0**2*Cos(theta0)*Sin(theta0))/
      -      (-1 + rho0**2)**2
-        g0_phiphi_schwads_sph_phi  =
+        g0_phiphi_schwads_qssph_phi  =
      -   0
-        g0_phiphi_schwads_sph_tt =
+        g0_phiphi_schwads_qssph_tt =
      -   0
-        g0_phiphi_schwads_sph_trho =
+        g0_phiphi_schwads_qssph_trho =
      -   0
-        g0_phiphi_schwads_sph_ttheta =
+        g0_phiphi_schwads_qssph_ttheta =
      -   0
-        g0_phiphi_schwads_sph_tphi =
+        g0_phiphi_schwads_qssph_tphi =
      -   0
-        g0_phiphi_schwads_sph_rhorho =
+        g0_phiphi_schwads_qssph_rhorho =
      -   (96*rho0**4*Sin(theta0)**2)/
      -   (-1 + rho0**2)**4 - 
      -  (80*rho0**2*Sin(theta0)**2)/
      -   (-1 + rho0**2)**3 + 
      -  (8*Sin(theta0)**2)/(-1 + rho0**2)**2
-        g0_phiphi_schwads_sph_rhotheta =
+        g0_phiphi_schwads_qssph_rhotheta =
      -   (-32*rho0**3*Cos(theta0)*Sin(theta0))/
      -   (-1 + rho0**2)**3 + 
      -  (16*rho0*Cos(theta0)*Sin(theta0))/
      -   (-1 + rho0**2)**2
-        g0_phiphi_schwads_sph_rhophi =
+        g0_phiphi_schwads_qssph_rhophi =
      -   0
-        g0_phiphi_schwads_sph_thetatheta =
+        g0_phiphi_schwads_qssph_thetatheta =
      -   (8*rho0**2*Cos(theta0)**2)/
      -      (-1 + rho0**2)**2 - 
      -   (8*rho0**2*Sin(theta0)**2)/
      -      (-1 + rho0**2)**2
-        g0_phiphi_schwads_sph_thetaphi =
+        g0_phiphi_schwads_qssph_thetaphi =
      -   0
-        g0_phiphi_schwads_sph_phiphi =
+        g0_phiphi_schwads_qssph_phiphi =
      -   0     
        end if
 
 
         ! give values to the schwads metric
-        gschwads_ll_sph(1,1)=g0_tt_schwads_sph0
-        gschwads_ll_sph(1,2)=g0_trho_schwads_sph0
-        gschwads_ll_sph(1,3)=g0_ttheta_schwads_sph0
-        gschwads_ll_sph(1,4)=g0_tphi_schwads_sph0
-        gschwads_ll_sph(2,2)=g0_rhorho_schwads_sph0
-        gschwads_ll_sph(2,3)=g0_rhotheta_schwads_sph0
-        gschwads_ll_sph(2,4)=g0_rhophi_schwads_sph0
-        gschwads_ll_sph(3,3)=g0_thetatheta_schwads_sph0
-        gschwads_ll_sph(3,4)=g0_thetaphi_schwads_sph0
-        gschwads_ll_sph(4,4)=g0_phiphi_schwads_sph0
+        gschwads_ll_qssph(1,1)=g0_tt_schwads_qssph0
+        gschwads_ll_qssph(1,2)=g0_trho_schwads_qssph0
+        gschwads_ll_qssph(1,3)=g0_ttheta_schwads_qssph0
+        gschwads_ll_qssph(1,4)=g0_tphi_schwads_qssph0
+        gschwads_ll_qssph(2,2)=g0_rhorho_schwads_qssph0
+        gschwads_ll_qssph(2,3)=g0_rhotheta_schwads_qssph0
+        gschwads_ll_qssph(2,4)=g0_rhophi_schwads_qssph0
+        gschwads_ll_qssph(3,3)=g0_thetatheta_schwads_qssph0
+        gschwads_ll_qssph(3,4)=g0_thetaphi_schwads_qssph0
+        gschwads_ll_qssph(4,4)=g0_phiphi_schwads_qssph0
 
 
-        gschwads_uu_sph(1,1)=g0u_tt_schwads_sph0
-        gschwads_uu_sph(1,2)=g0u_trho_schwads_sph0
-        gschwads_uu_sph(1,3)=g0u_ttheta_schwads_sph0
-        gschwads_uu_sph(1,4)=g0u_tphi_schwads_sph0
-        gschwads_uu_sph(2,2)=g0u_rhorho_schwads_sph0
-        gschwads_uu_sph(2,3)=g0u_rhotheta_schwads_sph0
-        gschwads_uu_sph(2,4)=g0u_rhophi_schwads_sph0
-        gschwads_uu_sph(3,3)=g0u_thetatheta_schwads_sph0
-        gschwads_uu_sph(3,4)=g0u_thetaphi_schwads_sph0
-        gschwads_uu_sph(4,4)=g0u_phiphi_schwads_sph0
+        gschwads_uu_qssph(1,1)=g0u_tt_schwads_qssph0
+        gschwads_uu_qssph(1,2)=g0u_trho_schwads_qssph0
+        gschwads_uu_qssph(1,3)=g0u_ttheta_schwads_qssph0
+        gschwads_uu_qssph(1,4)=g0u_tphi_schwads_qssph0
+        gschwads_uu_qssph(2,2)=g0u_rhorho_schwads_qssph0
+        gschwads_uu_qssph(2,3)=g0u_rhotheta_schwads_qssph0
+        gschwads_uu_qssph(2,4)=g0u_rhophi_schwads_qssph0
+        gschwads_uu_qssph(3,3)=g0u_thetatheta_schwads_qssph0
+        gschwads_uu_qssph(3,4)=g0u_thetaphi_schwads_qssph0
+        gschwads_uu_qssph(4,4)=g0u_phiphi_schwads_qssph0
 
 
        if (calc_der) then
-        gschwads_ll_sph_x(1,1,1)   =g0_tt_schwads_sph_t
-        gschwads_ll_sph_x(1,1,2)   =g0_tt_schwads_sph_rho
-        gschwads_ll_sph_x(1,1,3)   =g0_tt_schwads_sph_theta
-        gschwads_ll_sph_x(1,1,4)   =g0_tt_schwads_sph_phi
-        gschwads_ll_sph_xx(1,1,1,1)=g0_tt_schwads_sph_tt
-        gschwads_ll_sph_xx(1,1,1,2)=g0_tt_schwads_sph_trho
-        gschwads_ll_sph_xx(1,1,1,3)=g0_tt_schwads_sph_ttheta
-        gschwads_ll_sph_xx(1,1,1,4)=g0_tt_schwads_sph_tphi
-        gschwads_ll_sph_xx(1,1,2,2)=g0_tt_schwads_sph_rhorho
-        gschwads_ll_sph_xx(1,1,2,3)=g0_tt_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(1,1,2,4)=g0_tt_schwads_sph_rhophi
-        gschwads_ll_sph_xx(1,1,3,3)=g0_tt_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(1,1,3,4)=g0_tt_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(1,1,4,4)=g0_tt_schwads_sph_phiphi
+        gschwads_ll_qssph_x(1,1,1)   =g0_tt_schwads_qssph_t
+        gschwads_ll_qssph_x(1,1,2)   =g0_tt_schwads_qssph_rho
+        gschwads_ll_qssph_x(1,1,3)   =g0_tt_schwads_qssph_theta
+        gschwads_ll_qssph_x(1,1,4)   =g0_tt_schwads_qssph_phi
+        gschwads_ll_qssph_xx(1,1,1,1)=g0_tt_schwads_qssph_tt
+        gschwads_ll_qssph_xx(1,1,1,2)=g0_tt_schwads_qssph_trho
+        gschwads_ll_qssph_xx(1,1,1,3)=g0_tt_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(1,1,1,4)=g0_tt_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(1,1,2,2)=g0_tt_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(1,1,2,3)=g0_tt_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(1,1,2,4)=g0_tt_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(1,1,3,3)=g0_tt_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(1,1,3,4)=g0_tt_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(1,1,4,4)=g0_tt_schwads_qssph_phiphi
 
-        gschwads_ll_sph_x(1,2,1)   =g0_trho_schwads_sph_t
-        gschwads_ll_sph_x(1,2,2)   =g0_trho_schwads_sph_rho
-        gschwads_ll_sph_x(1,2,3)   =g0_trho_schwads_sph_theta
-        gschwads_ll_sph_x(1,2,4)   =g0_trho_schwads_sph_phi
-        gschwads_ll_sph_xx(1,2,1,1)=g0_trho_schwads_sph_tt
-        gschwads_ll_sph_xx(1,2,1,2)=g0_trho_schwads_sph_trho
-        gschwads_ll_sph_xx(1,2,1,3)=g0_trho_schwads_sph_ttheta
-        gschwads_ll_sph_xx(1,2,1,4)=g0_trho_schwads_sph_tphi
-        gschwads_ll_sph_xx(1,2,2,2)=g0_trho_schwads_sph_rhorho
-        gschwads_ll_sph_xx(1,2,2,3)=g0_trho_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(1,2,2,4)=g0_trho_schwads_sph_rhophi
-        gschwads_ll_sph_xx(1,2,3,3)=g0_trho_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(1,2,3,4)=g0_trho_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(1,2,4,4)=g0_trho_schwads_sph_phiphi
+        gschwads_ll_qssph_x(1,2,1)   =g0_trho_schwads_qssph_t
+        gschwads_ll_qssph_x(1,2,2)   =g0_trho_schwads_qssph_rho
+        gschwads_ll_qssph_x(1,2,3)   =g0_trho_schwads_qssph_theta
+        gschwads_ll_qssph_x(1,2,4)   =g0_trho_schwads_qssph_phi
+        gschwads_ll_qssph_xx(1,2,1,1)=g0_trho_schwads_qssph_tt
+        gschwads_ll_qssph_xx(1,2,1,2)=g0_trho_schwads_qssph_trho
+        gschwads_ll_qssph_xx(1,2,1,3)=g0_trho_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(1,2,1,4)=g0_trho_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(1,2,2,2)=g0_trho_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(1,2,2,3)=g0_trho_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(1,2,2,4)=g0_trho_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(1,2,3,3)=g0_trho_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(1,2,3,4)=g0_trho_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(1,2,4,4)=g0_trho_schwads_qssph_phiphi
 
-        gschwads_ll_sph_x(1,3,1)   =g0_ttheta_schwads_sph_t
-        gschwads_ll_sph_x(1,3,2)   =g0_ttheta_schwads_sph_rho
-        gschwads_ll_sph_x(1,3,3)   =g0_ttheta_schwads_sph_theta
-        gschwads_ll_sph_x(1,3,4)   =g0_ttheta_schwads_sph_phi
-        gschwads_ll_sph_xx(1,3,1,1)=g0_ttheta_schwads_sph_tt
-        gschwads_ll_sph_xx(1,3,1,2)=g0_ttheta_schwads_sph_trho
-        gschwads_ll_sph_xx(1,3,1,3)=g0_ttheta_schwads_sph_ttheta
-        gschwads_ll_sph_xx(1,3,1,4)=g0_ttheta_schwads_sph_tphi
-        gschwads_ll_sph_xx(1,3,2,2)=g0_ttheta_schwads_sph_rhorho
-        gschwads_ll_sph_xx(1,3,2,3)=g0_ttheta_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(1,3,2,4)=g0_ttheta_schwads_sph_rhophi
-        gschwads_ll_sph_xx(1,3,3,3)=g0_ttheta_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(1,3,3,4)=g0_ttheta_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(1,3,4,4)=g0_ttheta_schwads_sph_phiphi
+        gschwads_ll_qssph_x(1,3,1)   =g0_ttheta_schwads_qssph_t
+        gschwads_ll_qssph_x(1,3,2)   =g0_ttheta_schwads_qssph_rho
+        gschwads_ll_qssph_x(1,3,3)   =g0_ttheta_schwads_qssph_theta
+        gschwads_ll_qssph_x(1,3,4)   =g0_ttheta_schwads_qssph_phi
+        gschwads_ll_qssph_xx(1,3,1,1)=g0_ttheta_schwads_qssph_tt
+        gschwads_ll_qssph_xx(1,3,1,2)=g0_ttheta_schwads_qssph_trho
+        gschwads_ll_qssph_xx(1,3,1,3)=g0_ttheta_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(1,3,1,4)=g0_ttheta_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(1,3,2,2)=g0_ttheta_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(1,3,2,3)=g0_ttheta_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(1,3,2,4)=g0_ttheta_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(1,3,3,3)=g0_ttheta_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(1,3,3,4)=g0_ttheta_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(1,3,4,4)=g0_ttheta_schwads_qssph_phiphi
 
-        gschwads_ll_sph_x(1,4,1)   =g0_tphi_schwads_sph_t
-        gschwads_ll_sph_x(1,4,2)   =g0_tphi_schwads_sph_rho
-        gschwads_ll_sph_x(1,4,3)   =g0_tphi_schwads_sph_theta
-        gschwads_ll_sph_x(1,4,4)   =g0_tphi_schwads_sph_phi
-        gschwads_ll_sph_xx(1,4,1,1)=g0_tphi_schwads_sph_tt
-        gschwads_ll_sph_xx(1,4,1,2)=g0_tphi_schwads_sph_trho
-        gschwads_ll_sph_xx(1,4,1,3)=g0_tphi_schwads_sph_ttheta
-        gschwads_ll_sph_xx(1,4,1,4)=g0_tphi_schwads_sph_tphi
-        gschwads_ll_sph_xx(1,4,2,2)=g0_tphi_schwads_sph_rhorho
-        gschwads_ll_sph_xx(1,4,2,3)=g0_tphi_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(1,4,2,4)=g0_tphi_schwads_sph_rhophi
-        gschwads_ll_sph_xx(1,4,3,3)=g0_tphi_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(1,4,3,4)=g0_tphi_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(1,4,4,4)=g0_tphi_schwads_sph_phiphi
+        gschwads_ll_qssph_x(1,4,1)   =g0_tphi_schwads_qssph_t
+        gschwads_ll_qssph_x(1,4,2)   =g0_tphi_schwads_qssph_rho
+        gschwads_ll_qssph_x(1,4,3)   =g0_tphi_schwads_qssph_theta
+        gschwads_ll_qssph_x(1,4,4)   =g0_tphi_schwads_qssph_phi
+        gschwads_ll_qssph_xx(1,4,1,1)=g0_tphi_schwads_qssph_tt
+        gschwads_ll_qssph_xx(1,4,1,2)=g0_tphi_schwads_qssph_trho
+        gschwads_ll_qssph_xx(1,4,1,3)=g0_tphi_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(1,4,1,4)=g0_tphi_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(1,4,2,2)=g0_tphi_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(1,4,2,3)=g0_tphi_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(1,4,2,4)=g0_tphi_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(1,4,3,3)=g0_tphi_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(1,4,3,4)=g0_tphi_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(1,4,4,4)=g0_tphi_schwads_qssph_phiphi
 
-        gschwads_ll_sph_x(2,2,1)   =g0_rhorho_schwads_sph_t
-        gschwads_ll_sph_x(2,2,2)   =g0_rhorho_schwads_sph_rho
-        gschwads_ll_sph_x(2,2,3)   =g0_rhorho_schwads_sph_theta
-        gschwads_ll_sph_x(2,2,4)   =g0_rhorho_schwads_sph_phi
-        gschwads_ll_sph_xx(2,2,1,1)=g0_rhorho_schwads_sph_tt
-        gschwads_ll_sph_xx(2,2,1,2)=g0_rhorho_schwads_sph_trho
-        gschwads_ll_sph_xx(2,2,1,3)=g0_rhorho_schwads_sph_ttheta
-        gschwads_ll_sph_xx(2,2,1,4)=g0_rhorho_schwads_sph_tphi
-        gschwads_ll_sph_xx(2,2,2,2)=g0_rhorho_schwads_sph_rhorho
-        gschwads_ll_sph_xx(2,2,2,3)=g0_rhorho_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(2,2,2,4)=g0_rhorho_schwads_sph_rhophi
-        gschwads_ll_sph_xx(2,2,3,3)=g0_rhorho_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(2,2,3,4)=g0_rhorho_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(2,2,4,4)=g0_rhorho_schwads_sph_phiphi
+        gschwads_ll_qssph_x(2,2,1)   =g0_rhorho_schwads_qssph_t
+        gschwads_ll_qssph_x(2,2,2)   =g0_rhorho_schwads_qssph_rho
+        gschwads_ll_qssph_x(2,2,3)   =g0_rhorho_schwads_qssph_theta
+        gschwads_ll_qssph_x(2,2,4)   =g0_rhorho_schwads_qssph_phi
+        gschwads_ll_qssph_xx(2,2,1,1)=g0_rhorho_schwads_qssph_tt
+        gschwads_ll_qssph_xx(2,2,1,2)=g0_rhorho_schwads_qssph_trho
+        gschwads_ll_qssph_xx(2,2,1,3)=g0_rhorho_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(2,2,1,4)=g0_rhorho_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(2,2,2,2)=g0_rhorho_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(2,2,2,3)=g0_rhorho_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(2,2,2,4)=g0_rhorho_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(2,2,3,3)=g0_rhorho_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(2,2,3,4)=g0_rhorho_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(2,2,4,4)=g0_rhorho_schwads_qssph_phiphi
 
-        gschwads_ll_sph_x(2,3,1)   =g0_rhotheta_schwads_sph_t
-        gschwads_ll_sph_x(2,3,2)   =g0_rhotheta_schwads_sph_rho
-        gschwads_ll_sph_x(2,3,3)   =g0_rhotheta_schwads_sph_theta
-        gschwads_ll_sph_x(2,3,4)   =g0_rhotheta_schwads_sph_phi
-        gschwads_ll_sph_xx(2,3,1,1)=g0_rhotheta_schwads_sph_tt
-        gschwads_ll_sph_xx(2,3,1,2)=g0_rhotheta_schwads_sph_trho
-        gschwads_ll_sph_xx(2,3,1,3)=g0_rhotheta_schwads_sph_ttheta
-        gschwads_ll_sph_xx(2,3,1,4)=g0_rhotheta_schwads_sph_tphi
-        gschwads_ll_sph_xx(2,3,2,2)=g0_rhotheta_schwads_sph_rhorho
-        gschwads_ll_sph_xx(2,3,2,3)=g0_rhotheta_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(2,3,2,4)=g0_rhotheta_schwads_sph_rhophi
-        gschwads_ll_sph_xx(2,3,3,3)=g0_rhotheta_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(2,3,3,4)=g0_rhotheta_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(2,3,4,4)=g0_rhotheta_schwads_sph_phiphi
+        gschwads_ll_qssph_x(2,3,1)   =g0_rhotheta_schwads_qssph_t
+        gschwads_ll_qssph_x(2,3,2)   =g0_rhotheta_schwads_qssph_rho
+        gschwads_ll_qssph_x(2,3,3)   =g0_rhotheta_schwads_qssph_theta
+        gschwads_ll_qssph_x(2,3,4)   =g0_rhotheta_schwads_qssph_phi
+        gschwads_ll_qssph_xx(2,3,1,1)=g0_rhotheta_schwads_qssph_tt
+        gschwads_ll_qssph_xx(2,3,1,2)=g0_rhotheta_schwads_qssph_trho
+        gschwads_ll_qssph_xx(2,3,1,3)=g0_rhotheta_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(2,3,1,4)=g0_rhotheta_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(2,3,2,2)=g0_rhotheta_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(2,3,2,3)=g0_rhotheta_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(2,3,2,4)=g0_rhotheta_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(2,3,3,3)= 
+     &              g0_rhotheta_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(2,3,3,4)= 
+     &              g0_rhotheta_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(2,3,4,4)=g0_rhotheta_schwads_qssph_phiphi
 
-        gschwads_ll_sph_x(2,4,1)   =g0_rhophi_schwads_sph_t
-        gschwads_ll_sph_x(2,4,2)   =g0_rhophi_schwads_sph_rho
-        gschwads_ll_sph_x(2,4,3)   =g0_rhophi_schwads_sph_theta
-        gschwads_ll_sph_x(2,4,4)   =g0_rhophi_schwads_sph_phi
-        gschwads_ll_sph_xx(2,4,1,1)=g0_rhophi_schwads_sph_tt
-        gschwads_ll_sph_xx(2,4,1,2)=g0_rhophi_schwads_sph_trho
-        gschwads_ll_sph_xx(2,4,1,3)=g0_rhophi_schwads_sph_ttheta
-        gschwads_ll_sph_xx(2,4,1,4)=g0_rhophi_schwads_sph_tphi
-        gschwads_ll_sph_xx(2,4,2,2)=g0_rhophi_schwads_sph_rhorho
-        gschwads_ll_sph_xx(2,4,2,3)=g0_rhophi_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(2,4,2,4)=g0_rhophi_schwads_sph_rhophi
-        gschwads_ll_sph_xx(2,4,3,3)=g0_rhophi_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(2,4,3,4)=g0_rhophi_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(2,4,4,4)=g0_rhophi_schwads_sph_phiphi
+        gschwads_ll_qssph_x(2,4,1)   =g0_rhophi_schwads_qssph_t
+        gschwads_ll_qssph_x(2,4,2)   =g0_rhophi_schwads_qssph_rho
+        gschwads_ll_qssph_x(2,4,3)   =g0_rhophi_schwads_qssph_theta
+        gschwads_ll_qssph_x(2,4,4)   =g0_rhophi_schwads_qssph_phi
+        gschwads_ll_qssph_xx(2,4,1,1)=g0_rhophi_schwads_qssph_tt
+        gschwads_ll_qssph_xx(2,4,1,2)=g0_rhophi_schwads_qssph_trho
+        gschwads_ll_qssph_xx(2,4,1,3)=g0_rhophi_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(2,4,1,4)=g0_rhophi_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(2,4,2,2)=g0_rhophi_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(2,4,2,3)=g0_rhophi_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(2,4,2,4)=g0_rhophi_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(2,4,3,3)=g0_rhophi_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(2,4,3,4)=g0_rhophi_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(2,4,4,4)=g0_rhophi_schwads_qssph_phiphi
 
-        gschwads_ll_sph_x(3,3,1)   =g0_thetatheta_schwads_sph_t
-        gschwads_ll_sph_x(3,3,2)   =g0_thetatheta_schwads_sph_rho
-        gschwads_ll_sph_x(3,3,3)   =g0_thetatheta_schwads_sph_theta
-        gschwads_ll_sph_x(3,3,4)   =g0_thetatheta_schwads_sph_phi
-        gschwads_ll_sph_xx(3,3,1,1)=g0_thetatheta_schwads_sph_tt
-        gschwads_ll_sph_xx(3,3,1,2)=g0_thetatheta_schwads_sph_trho
-        gschwads_ll_sph_xx(3,3,1,3)=g0_thetatheta_schwads_sph_ttheta
-        gschwads_ll_sph_xx(3,3,1,4)=g0_thetatheta_schwads_sph_tphi
-        gschwads_ll_sph_xx(3,3,2,2)=g0_thetatheta_schwads_sph_rhorho
-        gschwads_ll_sph_xx(3,3,2,3)=g0_thetatheta_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(3,3,2,4)=g0_thetatheta_schwads_sph_rhophi
-        gschwads_ll_sph_xx(3,3,3,3)=g0_thetatheta_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(3,3,3,4)=g0_thetatheta_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(3,3,4,4)=g0_thetatheta_schwads_sph_phiphi
+        gschwads_ll_qssph_x(3,3,1)   =g0_thetatheta_schwads_qssph_t
+        gschwads_ll_qssph_x(3,3,2)   =g0_thetatheta_schwads_qssph_rho
+        gschwads_ll_qssph_x(3,3,3)   =g0_thetatheta_schwads_qssph_theta
+        gschwads_ll_qssph_x(3,3,4)   =g0_thetatheta_schwads_qssph_phi
+        gschwads_ll_qssph_xx(3,3,1,1)=g0_thetatheta_schwads_qssph_tt
+        gschwads_ll_qssph_xx(3,3,1,2)=g0_thetatheta_schwads_qssph_trho
+        gschwads_ll_qssph_xx(3,3,1,3)=g0_thetatheta_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(3,3,1,4)=g0_thetatheta_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(3,3,2,2)=g0_thetatheta_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(3,3,2,3)= 
+     &              g0_thetatheta_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(3,3,2,4)=g0_thetatheta_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(3,3,3,3)= 
+     &              g0_thetatheta_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(3,3,3,4)= 
+     &              g0_thetatheta_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(3,3,4,4)=g0_thetatheta_schwads_qssph_phiphi
 
-        gschwads_ll_sph_x(3,4,1)   =g0_thetaphi_schwads_sph_t
-        gschwads_ll_sph_x(3,4,2)   =g0_thetaphi_schwads_sph_rho
-        gschwads_ll_sph_x(3,4,3)   =g0_thetaphi_schwads_sph_theta
-        gschwads_ll_sph_x(3,4,4)   =g0_thetaphi_schwads_sph_phi
-        gschwads_ll_sph_xx(3,4,1,1)=g0_thetaphi_schwads_sph_tt
-        gschwads_ll_sph_xx(3,4,1,2)=g0_thetaphi_schwads_sph_trho
-        gschwads_ll_sph_xx(3,4,1,3)=g0_thetaphi_schwads_sph_ttheta
-        gschwads_ll_sph_xx(3,4,1,4)=g0_thetaphi_schwads_sph_tphi
-        gschwads_ll_sph_xx(3,4,2,2)=g0_thetaphi_schwads_sph_rhorho
-        gschwads_ll_sph_xx(3,4,2,3)=g0_thetaphi_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(3,4,2,4)=g0_thetaphi_schwads_sph_rhophi
-        gschwads_ll_sph_xx(3,4,3,3)=g0_thetaphi_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(3,4,3,4)=g0_thetaphi_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(3,4,4,4)=g0_thetaphi_schwads_sph_phiphi
+        gschwads_ll_qssph_x(3,4,1)   =g0_thetaphi_schwads_qssph_t
+        gschwads_ll_qssph_x(3,4,2)   =g0_thetaphi_schwads_qssph_rho
+        gschwads_ll_qssph_x(3,4,3)   =g0_thetaphi_schwads_qssph_theta
+        gschwads_ll_qssph_x(3,4,4)   =g0_thetaphi_schwads_qssph_phi
+        gschwads_ll_qssph_xx(3,4,1,1)=g0_thetaphi_schwads_qssph_tt
+        gschwads_ll_qssph_xx(3,4,1,2)=g0_thetaphi_schwads_qssph_trho
+        gschwads_ll_qssph_xx(3,4,1,3)=g0_thetaphi_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(3,4,1,4)=g0_thetaphi_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(3,4,2,2)=g0_thetaphi_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(3,4,2,3)=g0_thetaphi_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(3,4,2,4)=g0_thetaphi_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(3,4,3,3)= 
+     &              g0_thetaphi_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(3,4,3,4)= 
+     &              g0_thetaphi_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(3,4,4,4)=g0_thetaphi_schwads_qssph_phiphi
 
-        gschwads_ll_sph_x(4,4,1)   =g0_phiphi_schwads_sph_t
-        gschwads_ll_sph_x(4,4,2)   =g0_phiphi_schwads_sph_rho
-        gschwads_ll_sph_x(4,4,3)   =g0_phiphi_schwads_sph_theta
-        gschwads_ll_sph_x(4,4,4)   =g0_phiphi_schwads_sph_phi
-        gschwads_ll_sph_xx(4,4,1,1)=g0_phiphi_schwads_sph_tt
-        gschwads_ll_sph_xx(4,4,1,2)=g0_phiphi_schwads_sph_trho
-        gschwads_ll_sph_xx(4,4,1,3)=g0_phiphi_schwads_sph_ttheta
-        gschwads_ll_sph_xx(4,4,1,4)=g0_phiphi_schwads_sph_tphi
-        gschwads_ll_sph_xx(4,4,2,2)=g0_phiphi_schwads_sph_rhorho
-        gschwads_ll_sph_xx(4,4,2,3)=g0_phiphi_schwads_sph_rhotheta
-        gschwads_ll_sph_xx(4,4,2,4)=g0_phiphi_schwads_sph_rhophi
-        gschwads_ll_sph_xx(4,4,3,3)=g0_phiphi_schwads_sph_thetatheta
-        gschwads_ll_sph_xx(4,4,3,4)=g0_phiphi_schwads_sph_thetaphi
-        gschwads_ll_sph_xx(4,4,4,4)=g0_phiphi_schwads_sph_phiphi
+        gschwads_ll_qssph_x(4,4,1)   =g0_phiphi_schwads_qssph_t
+        gschwads_ll_qssph_x(4,4,2)   =g0_phiphi_schwads_qssph_rho
+        gschwads_ll_qssph_x(4,4,3)   =g0_phiphi_schwads_qssph_theta
+        gschwads_ll_qssph_x(4,4,4)   =g0_phiphi_schwads_qssph_phi
+        gschwads_ll_qssph_xx(4,4,1,1)=g0_phiphi_schwads_qssph_tt
+        gschwads_ll_qssph_xx(4,4,1,2)=g0_phiphi_schwads_qssph_trho
+        gschwads_ll_qssph_xx(4,4,1,3)=g0_phiphi_schwads_qssph_ttheta
+        gschwads_ll_qssph_xx(4,4,1,4)=g0_phiphi_schwads_qssph_tphi
+        gschwads_ll_qssph_xx(4,4,2,2)=g0_phiphi_schwads_qssph_rhorho
+        gschwads_ll_qssph_xx(4,4,2,3)=g0_phiphi_schwads_qssph_rhotheta
+        gschwads_ll_qssph_xx(4,4,2,4)=g0_phiphi_schwads_qssph_rhophi
+        gschwads_ll_qssph_xx(4,4,3,3)= 
+     &              g0_phiphi_schwads_qssph_thetatheta
+        gschwads_ll_qssph_xx(4,4,3,4)= 
+     &              g0_phiphi_schwads_qssph_thetaphi
+        gschwads_ll_qssph_xx(4,4,4,4)=g0_phiphi_schwads_qssph_phiphi
        end if
 
         do a=1,3
           do b=a+1,4
-            gschwads_ll_sph(b,a)=gschwads_ll_sph(a,b)
-            gschwads_uu_sph(b,a)=gschwads_uu_sph(a,b)
+            gschwads_ll_qssph(b,a)=gschwads_ll_qssph(a,b)
+            gschwads_uu_qssph(b,a)=gschwads_uu_qssph(a,b)
             if (calc_der) then
              do c=1,4
-               gschwads_ll_sph_x(b,a,c)=gschwads_ll_sph_x(a,b,c)
+               gschwads_ll_qssph_x(b,a,c)=gschwads_ll_qssph_x(a,b,c)
                do d=1,4
-                 gschwads_ll_sph_xx(b,a,c,d)=gschwads_ll_sph_xx(a,b,c,d)
-                 gschwads_ll_sph_xx(c,d,b,a)=gschwads_ll_sph_xx(c,d,a,b)
+                 gschwads_ll_qssph_xx(b,a,c,d)= 
+     &              gschwads_ll_qssph_xx(a,b,c,d)
+                 gschwads_ll_qssph_xx(c,d,b,a)= 
+     &              gschwads_ll_qssph_xx(c,d,a,b)
                end do
              end do
             end if
@@ -924,314 +941,314 @@ c----------------------------------------------------------------------
         end do
 
         !define transformation matrix between spherical to Cartesian coordinates, 
-        !e.g. dxsph_dxcar(2,3)=drho/dtheta, d2xsph_dxcardxcar(2,3,4)=d^2rho/(dtheta dphi), 
-        ! d3xsph_dxcardxcardxcar(2,3,4,2)=d^2rho/(dtheta dphi drho)
+        !e.g. dxqssph_dxcar(2,3)=drho/dtheta, d2xqssph_dxcardxcar(2,3,4)=d^2rho/(dtheta dphi), 
+        ! d3xqssph_dxcardxcardxcar(2,3,4,2)=d^2rho/(dtheta dphi drho)
 
-        dxsph_dxcar(1,1)=1
-        dxsph_dxcar(1,2)=0
-        dxsph_dxcar(1,3)=0
-        dxsph_dxcar(1,4)=0
+        dxqssph_dxcar(1,1)=1
+        dxqssph_dxcar(1,2)=0
+        dxqssph_dxcar(1,3)=0
+        dxqssph_dxcar(1,4)=0
 
-        dxsph_dxcar(2,1)=0
-        dxsph_dxcar(2,2)=x0/rho0
-        dxsph_dxcar(2,3)=y0/rho0
-        dxsph_dxcar(2,4)=z0/rho0
+        dxqssph_dxcar(2,1)=0
+        dxqssph_dxcar(2,2)=x0/rho0
+        dxqssph_dxcar(2,3)=y0/rho0
+        dxqssph_dxcar(2,4)=z0/rho0
 
-        dxsph_dxcar(3,1)=0
-        dxsph_dxcar(3,2)=-(Sqrt(rho0**2 - x0**2)/rho0**2)
-        dxsph_dxcar(3,3)=(x0*y0)/(rho0**2*Sqrt(rho0**2 - x0**2))
-        dxsph_dxcar(3,4)=(x0*z0)/(rho0**2*Sqrt(rho0**2 - x0**2))
+        dxqssph_dxcar(3,1)=0
+        dxqssph_dxcar(3,2)=-(Sqrt(rho0**2 - x0**2)/rho0**2)
+        dxqssph_dxcar(3,3)=(x0*y0)/(rho0**2*Sqrt(rho0**2 - x0**2))
+        dxqssph_dxcar(3,4)=(x0*z0)/(rho0**2*Sqrt(rho0**2 - x0**2))
 
-        dxsph_dxcar(4,1)=0
-        dxsph_dxcar(4,2)=0
-        dxsph_dxcar(4,3)=-(z0/(y0**2 + z0**2))
-        dxsph_dxcar(4,4)=y0/(y0**2 + z0**2)
+        dxqssph_dxcar(4,1)=0
+        dxqssph_dxcar(4,2)=0
+        dxqssph_dxcar(4,3)=-(z0/(y0**2 + z0**2))
+        dxqssph_dxcar(4,4)=y0/(y0**2 + z0**2)
 
        if (calc_der) then
-        d2xsph_dxcardxcar(1,1,1)=
+        d2xqssph_dxcardxcar(1,1,1)=
      -   0
-        d2xsph_dxcardxcar(1,1,2)=
+        d2xqssph_dxcardxcar(1,1,2)=
      -   0
-        d2xsph_dxcardxcar(1,1,3)=
+        d2xqssph_dxcardxcar(1,1,3)=
      -   0
-        d2xsph_dxcardxcar(1,1,4)=
+        d2xqssph_dxcardxcar(1,1,4)=
      -   0
-        d2xsph_dxcardxcar(1,2,2)=
+        d2xqssph_dxcardxcar(1,2,2)=
      -   0
-        d2xsph_dxcardxcar(1,2,3)=
+        d2xqssph_dxcardxcar(1,2,3)=
      -   0
-        d2xsph_dxcardxcar(1,2,4)=
+        d2xqssph_dxcardxcar(1,2,4)=
      -   0
-        d2xsph_dxcardxcar(1,3,3)=
+        d2xqssph_dxcardxcar(1,3,3)=
      -   0
-        d2xsph_dxcardxcar(1,3,4)=
+        d2xqssph_dxcardxcar(1,3,4)=
      -   0
-        d2xsph_dxcardxcar(1,4,4)=
+        d2xqssph_dxcardxcar(1,4,4)=
      -   0
 
-        d2xsph_dxcardxcar(2,1,1)=
+        d2xqssph_dxcardxcar(2,1,1)=
      -   0
-        d2xsph_dxcardxcar(2,1,2)=
+        d2xqssph_dxcardxcar(2,1,2)=
      -   0
-        d2xsph_dxcardxcar(2,1,3)=
+        d2xqssph_dxcardxcar(2,1,3)=
      -   0
-        d2xsph_dxcardxcar(2,1,4)=
+        d2xqssph_dxcardxcar(2,1,4)=
      -   0
-        d2xsph_dxcardxcar(2,2,2)=
+        d2xqssph_dxcardxcar(2,2,2)=
      -   (rho0**2 - x0**2)/rho0**3
-        d2xsph_dxcardxcar(2,2,3)=
+        d2xqssph_dxcardxcar(2,2,3)=
      -   -((x0*y0)/rho0**3)
-        d2xsph_dxcardxcar(2,2,4)=
+        d2xqssph_dxcardxcar(2,2,4)=
      -   -((x0*z0)/rho0**3)
-        d2xsph_dxcardxcar(2,3,3)=
+        d2xqssph_dxcardxcar(2,3,3)=
      -   (rho0**2 - y0**2)/rho0**3
-        d2xsph_dxcardxcar(2,3,4)=
+        d2xqssph_dxcardxcar(2,3,4)=
      -   -((y0*z0)/rho0**3)
-        d2xsph_dxcardxcar(2,4,4)=
+        d2xqssph_dxcardxcar(2,4,4)=
      -   (rho0**2 - z0**2)/rho0**3
 
-        d2xsph_dxcardxcar(3,1,1)=
+        d2xqssph_dxcardxcar(3,1,1)=
      -   0
-        d2xsph_dxcardxcar(3,1,2)=
+        d2xqssph_dxcardxcar(3,1,2)=
      -   0
-        d2xsph_dxcardxcar(3,1,3)=
+        d2xqssph_dxcardxcar(3,1,3)=
      -   0
-        d2xsph_dxcardxcar(3,1,4)=
+        d2xqssph_dxcardxcar(3,1,4)=
      -   0
-        d2xsph_dxcardxcar(3,2,2)=
+        d2xqssph_dxcardxcar(3,2,2)=
      -   (2*x0*Sqrt(rho0**2 - x0**2))/rho0**4
-        d2xsph_dxcardxcar(3,2,3)=
+        d2xqssph_dxcardxcar(3,2,3)=
      -   ((rho0**2 - 2*x0**2)*y0)/
      -  (rho0**4*Sqrt(rho0**2 - x0**2))
-        d2xsph_dxcardxcar(3,2,4)=
+        d2xqssph_dxcardxcar(3,2,4)=
      -   ((rho0**2 - 2*x0**2)*z0)/
      -  (rho0**4*Sqrt(rho0**2 - x0**2))
-        d2xsph_dxcardxcar(3,3,3)=
+        d2xqssph_dxcardxcar(3,3,3)=
      -   (x0*(rho0**4 + 2*x0**2*y0**2 - 
      -      rho0**2*(x0**2 + 3*y0**2)))/
      -  (rho0**4*(rho0**2 - x0**2)**1.5)
-        d2xsph_dxcardxcar(3,3,4)=
+        d2xqssph_dxcardxcar(3,3,4)=
      -   ((-3*rho0**2*x0 + 2*x0**3)*y0*z0)/
      -  (rho0**4*(rho0**2 - x0**2)**1.5)
-        d2xsph_dxcardxcar(3,4,4)=
+        d2xqssph_dxcardxcar(3,4,4)=
      -   (x0*(rho0**4 + 2*x0**2*z0**2 - 
      -      rho0**2*(x0**2 + 3*z0**2)))/
      -  (rho0**4*(rho0**2 - x0**2)**1.5)
 
-        d2xsph_dxcardxcar(4,1,1)=
+        d2xqssph_dxcardxcar(4,1,1)=
      -   0
-        d2xsph_dxcardxcar(4,1,2)=
+        d2xqssph_dxcardxcar(4,1,2)=
      -   0
-        d2xsph_dxcardxcar(4,1,3)=
+        d2xqssph_dxcardxcar(4,1,3)=
      -   0
-        d2xsph_dxcardxcar(4,1,4)=
+        d2xqssph_dxcardxcar(4,1,4)=
      -   0
-        d2xsph_dxcardxcar(4,2,2)=
+        d2xqssph_dxcardxcar(4,2,2)=
      -   0
-        d2xsph_dxcardxcar(4,2,3)=
+        d2xqssph_dxcardxcar(4,2,3)=
      -   0
-        d2xsph_dxcardxcar(4,2,4)=
+        d2xqssph_dxcardxcar(4,2,4)=
      -   0
-        d2xsph_dxcardxcar(4,3,3)=
+        d2xqssph_dxcardxcar(4,3,3)=
      -   (2*y0*z0)/(y0**2 + z0**2)**2
-        d2xsph_dxcardxcar(4,3,4)=
+        d2xqssph_dxcardxcar(4,3,4)=
      -   (-y0**2 + z0**2)/(y0**2 + z0**2)**2
-        d2xsph_dxcardxcar(4,4,4)=
+        d2xqssph_dxcardxcar(4,4,4)=
      -   (-2*y0*z0)/(y0**2 + z0**2)**2
 
-        d3xsph_dxcardxcardxcar(1,1,1,1)=
+        d3xqssph_dxcardxcardxcar(1,1,1,1)=
      -   0
-        d3xsph_dxcardxcardxcar(1,1,1,2)=
+        d3xqssph_dxcardxcardxcar(1,1,1,2)=
      -   0
-        d3xsph_dxcardxcardxcar(1,1,1,3)=
+        d3xqssph_dxcardxcardxcar(1,1,1,3)=
      -   0
-        d3xsph_dxcardxcardxcar(1,1,1,4)=
+        d3xqssph_dxcardxcardxcar(1,1,1,4)=
      -   0
-        d3xsph_dxcardxcardxcar(1,1,2,2)=
+        d3xqssph_dxcardxcardxcar(1,1,2,2)=
      -   0
-        d3xsph_dxcardxcardxcar(1,1,2,3)=
+        d3xqssph_dxcardxcardxcar(1,1,2,3)=
      -   0
-        d3xsph_dxcardxcardxcar(1,1,2,4)=
+        d3xqssph_dxcardxcardxcar(1,1,2,4)=
      -   0
-        d3xsph_dxcardxcardxcar(1,1,3,3)=
+        d3xqssph_dxcardxcardxcar(1,1,3,3)=
      -   0
-        d3xsph_dxcardxcardxcar(1,1,3,4)=
+        d3xqssph_dxcardxcardxcar(1,1,3,4)=
      -   0
-        d3xsph_dxcardxcardxcar(1,1,4,4)=
+        d3xqssph_dxcardxcardxcar(1,1,4,4)=
      -   0
-        d3xsph_dxcardxcardxcar(1,2,2,2)=
+        d3xqssph_dxcardxcardxcar(1,2,2,2)=
      -   0
-        d3xsph_dxcardxcardxcar(1,2,2,3)=
+        d3xqssph_dxcardxcardxcar(1,2,2,3)=
      -   0
-        d3xsph_dxcardxcardxcar(1,2,2,4)=
+        d3xqssph_dxcardxcardxcar(1,2,2,4)=
      -   0
-        d3xsph_dxcardxcardxcar(1,2,3,3)=
+        d3xqssph_dxcardxcardxcar(1,2,3,3)=
      -   0
-        d3xsph_dxcardxcardxcar(1,2,3,4)=
+        d3xqssph_dxcardxcardxcar(1,2,3,4)=
      -   0
-        d3xsph_dxcardxcardxcar(1,2,4,4)=
+        d3xqssph_dxcardxcardxcar(1,2,4,4)=
      -   0
-        d3xsph_dxcardxcardxcar(1,3,3,3)=
+        d3xqssph_dxcardxcardxcar(1,3,3,3)=
      -   0
-        d3xsph_dxcardxcardxcar(1,3,3,4)=
+        d3xqssph_dxcardxcardxcar(1,3,3,4)=
      -   0
-        d3xsph_dxcardxcardxcar(1,3,4,4)=
+        d3xqssph_dxcardxcardxcar(1,3,4,4)=
      -   0
-        d3xsph_dxcardxcardxcar(1,4,4,4)=
+        d3xqssph_dxcardxcardxcar(1,4,4,4)=
      -   0
 
 
 
-        d3xsph_dxcardxcardxcar(2,1,1,1)=
+        d3xqssph_dxcardxcardxcar(2,1,1,1)=
      -   0
-        d3xsph_dxcardxcardxcar(2,1,1,2)=
+        d3xqssph_dxcardxcardxcar(2,1,1,2)=
      -   0
-        d3xsph_dxcardxcardxcar(2,1,1,3)=
+        d3xqssph_dxcardxcardxcar(2,1,1,3)=
      -   0
-        d3xsph_dxcardxcardxcar(2,1,1,4)=
+        d3xqssph_dxcardxcardxcar(2,1,1,4)=
      -   0
-        d3xsph_dxcardxcardxcar(2,1,2,2)=
+        d3xqssph_dxcardxcardxcar(2,1,2,2)=
      -   0
-        d3xsph_dxcardxcardxcar(2,1,2,3)=
+        d3xqssph_dxcardxcardxcar(2,1,2,3)=
      -   0
-        d3xsph_dxcardxcardxcar(2,1,2,4)=
+        d3xqssph_dxcardxcardxcar(2,1,2,4)=
      -   0
-        d3xsph_dxcardxcardxcar(2,1,3,3)=
+        d3xqssph_dxcardxcardxcar(2,1,3,3)=
      -   0
-        d3xsph_dxcardxcardxcar(2,1,3,4)=
+        d3xqssph_dxcardxcardxcar(2,1,3,4)=
      -   0
-        d3xsph_dxcardxcardxcar(2,1,4,4)=
+        d3xqssph_dxcardxcardxcar(2,1,4,4)=
      -   0
-        d3xsph_dxcardxcardxcar(2,2,2,2)=
+        d3xqssph_dxcardxcardxcar(2,2,2,2)=
      -   (3*x0*(-rho0 + x0)*(rho0 + x0))/rho0**5
-        d3xsph_dxcardxcardxcar(2,2,2,3)=
+        d3xqssph_dxcardxcardxcar(2,2,2,3)=
      -   -(((rho0**2 - 3*x0**2)*y0)/rho0**5)
-        d3xsph_dxcardxcardxcar(2,2,2,4)=
+        d3xqssph_dxcardxcardxcar(2,2,2,4)=
      -   -(((rho0**2 - 3*x0**2)*z0)/rho0**5)
-        d3xsph_dxcardxcardxcar(2,2,3,3)=
+        d3xqssph_dxcardxcardxcar(2,2,3,3)=
      -   -((x0*(rho0**2 - 3*y0**2))/rho0**5)
-        d3xsph_dxcardxcardxcar(2,2,3,4)=
+        d3xqssph_dxcardxcardxcar(2,2,3,4)=
      -   (3*x0*y0*z0)/rho0**5
-        d3xsph_dxcardxcardxcar(2,2,4,4)=
+        d3xqssph_dxcardxcardxcar(2,2,4,4)=
      -   -((x0*(rho0**2 - 3*z0**2))/rho0**5)
-        d3xsph_dxcardxcardxcar(2,3,3,3)=
+        d3xqssph_dxcardxcardxcar(2,3,3,3)=
      -   (3*y0*(-rho0 + y0)*(rho0 + y0))/rho0**5
-        d3xsph_dxcardxcardxcar(2,3,3,4)=
+        d3xqssph_dxcardxcardxcar(2,3,3,4)=
      -   -(((rho0**2 - 3*y0**2)*z0)/rho0**5)
-        d3xsph_dxcardxcardxcar(2,3,4,4)=
+        d3xqssph_dxcardxcardxcar(2,3,4,4)=
      -   -((y0*(rho0**2 - 3*z0**2))/rho0**5)
-        d3xsph_dxcardxcardxcar(2,4,4,4)=
+        d3xqssph_dxcardxcardxcar(2,4,4,4)=
      -   (3*z0*(-rho0 + z0)*(rho0 + z0))/rho0**5
 
-        d3xsph_dxcardxcardxcar(3,1,1,1)=
+        d3xqssph_dxcardxcardxcar(3,1,1,1)=
      -   0
-        d3xsph_dxcardxcardxcar(3,1,1,2)=
+        d3xqssph_dxcardxcardxcar(3,1,1,2)=
      -   0
-        d3xsph_dxcardxcardxcar(3,1,1,3)=
+        d3xqssph_dxcardxcardxcar(3,1,1,3)=
      -   0
-        d3xsph_dxcardxcardxcar(3,1,1,4)=
+        d3xqssph_dxcardxcardxcar(3,1,1,4)=
      -   0
-        d3xsph_dxcardxcardxcar(3,1,2,2)=
+        d3xqssph_dxcardxcardxcar(3,1,2,2)=
      -   0
-        d3xsph_dxcardxcardxcar(3,1,2,3)=
+        d3xqssph_dxcardxcardxcar(3,1,2,3)=
      -   0
-        d3xsph_dxcardxcardxcar(3,1,2,4)=
+        d3xqssph_dxcardxcardxcar(3,1,2,4)=
      -   0
-        d3xsph_dxcardxcardxcar(3,1,3,3)=
+        d3xqssph_dxcardxcardxcar(3,1,3,3)=
      -   0
-        d3xsph_dxcardxcardxcar(3,1,3,4)=
+        d3xqssph_dxcardxcardxcar(3,1,3,4)=
      -   0
-        d3xsph_dxcardxcardxcar(3,1,4,4)=
+        d3xqssph_dxcardxcardxcar(3,1,4,4)=
      -   0
-        d3xsph_dxcardxcardxcar(3,2,2,2)=
+        d3xqssph_dxcardxcardxcar(3,2,2,2)=
      -   (2*(rho0**2 - 4*x0**2)*
      -   Sqrt(rho0**2 - x0**2))/rho0**6
-        d3xsph_dxcardxcardxcar(3,2,2,3)=
+        d3xqssph_dxcardxcardxcar(3,2,2,3)=
      -   (-6*rho0**2*x0*y0 + 8*x0**3*y0)/
      -  (rho0**6*Sqrt(rho0**2 - x0**2))
-        d3xsph_dxcardxcardxcar(3,2,2,4)=
+        d3xqssph_dxcardxcardxcar(3,2,2,4)=
      -   (-6*rho0**2*x0*z0 + 8*x0**3*z0)/
      -  (rho0**6*Sqrt(rho0**2 - x0**2))
-        d3xsph_dxcardxcardxcar(3,2,3,3)=
+        d3xqssph_dxcardxcardxcar(3,2,3,3)=
      -   (rho0**6 - 8*x0**4*y0**2 - 
      -    3*rho0**4*(x0**2 + y0**2) + 
      -    2*rho0**2*x0**2*(x0**2 + 6*y0**2))/
      -  (rho0**6*(rho0**2 - x0**2)**1.5)
-        d3xsph_dxcardxcardxcar(3,2,3,4)=
+        d3xqssph_dxcardxcardxcar(3,2,3,4)=
      -   ((-3*rho0**4 + 12*rho0**2*x0**2 - 8*x0**4)*y0*
      -    z0)/(rho0**6*(rho0**2 - x0**2)**1.5)
-        d3xsph_dxcardxcardxcar(3,2,4,4)=
+        d3xqssph_dxcardxcardxcar(3,2,4,4)=
      -   (rho0**6 - 8*x0**4*z0**2 - 
      -    3*rho0**4*(x0**2 + z0**2) + 
      -    2*rho0**2*x0**2*(x0**2 + 6*z0**2))/
      -  (rho0**6*(rho0**2 - x0**2)**1.5)
-        d3xsph_dxcardxcardxcar(3,3,3,3)=
+        d3xqssph_dxcardxcardxcar(3,3,3,3)=
      -   (x0*y0*(-9*rho0**6 + 8*x0**4*y0**2 + 
      -      15*rho0**4*(x0**2 + y0**2) - 
      -      2*rho0**2*x0**2*(3*x0**2 + 10*y0**2)))/
      -  (rho0**6*(rho0**2 - x0**2)**2.5)
-        d3xsph_dxcardxcardxcar(3,3,3,4)=
+        d3xqssph_dxcardxcardxcar(3,3,3,4)=
      -   (x0*(-3*rho0**6 + 8*x0**4*y0**2 + 
      -      5*rho0**4*(x0**2 + 3*y0**2) - 
      -      2*rho0**2*x0**2*(x0**2 + 10*y0**2))*z0)/
      -  (rho0**6*(rho0**2 - x0**2)**2.5)
-        d3xsph_dxcardxcardxcar(3,3,4,4)=
+        d3xqssph_dxcardxcardxcar(3,3,4,4)=
      -   (x0*y0*(-3*rho0**6 + 8*x0**4*z0**2 + 
      -      5*rho0**4*(x0**2 + 3*z0**2) - 
      -      2*rho0**2*x0**2*(x0**2 + 10*z0**2)))/
      -  (rho0**6*(rho0**2 - x0**2)**2.5)
-        d3xsph_dxcardxcardxcar(3,4,4,4)=
+        d3xqssph_dxcardxcardxcar(3,4,4,4)=
      -   (x0*z0*(-9*rho0**6 + 8*x0**4*z0**2 + 
      -      15*rho0**4*(x0**2 + z0**2) - 
      -      2*rho0**2*x0**2*(3*x0**2 + 10*z0**2)))/
      -  (rho0**6*(rho0**2 - x0**2)**2.5)
 
-        d3xsph_dxcardxcardxcar(4,1,1,1)=
+        d3xqssph_dxcardxcardxcar(4,1,1,1)=
      -   0
-        d3xsph_dxcardxcardxcar(4,1,1,2)=
+        d3xqssph_dxcardxcardxcar(4,1,1,2)=
      -   0
-        d3xsph_dxcardxcardxcar(4,1,1,3)=
+        d3xqssph_dxcardxcardxcar(4,1,1,3)=
      -   0
-        d3xsph_dxcardxcardxcar(4,1,1,4)=
+        d3xqssph_dxcardxcardxcar(4,1,1,4)=
      -   0
-        d3xsph_dxcardxcardxcar(4,1,2,2)=
+        d3xqssph_dxcardxcardxcar(4,1,2,2)=
      -   0
-        d3xsph_dxcardxcardxcar(4,1,2,3)=
+        d3xqssph_dxcardxcardxcar(4,1,2,3)=
      -   0
-        d3xsph_dxcardxcardxcar(4,1,2,4)=
+        d3xqssph_dxcardxcardxcar(4,1,2,4)=
      -   0
-        d3xsph_dxcardxcardxcar(4,1,3,3)=
+        d3xqssph_dxcardxcardxcar(4,1,3,3)=
      -   0
-        d3xsph_dxcardxcardxcar(4,1,3,4)=
+        d3xqssph_dxcardxcardxcar(4,1,3,4)=
      -   0
-        d3xsph_dxcardxcardxcar(4,1,4,4)=
+        d3xqssph_dxcardxcardxcar(4,1,4,4)=
      -   0
-        d3xsph_dxcardxcardxcar(4,2,2,2)=
+        d3xqssph_dxcardxcardxcar(4,2,2,2)=
      -   0
-        d3xsph_dxcardxcardxcar(4,2,2,3)=
+        d3xqssph_dxcardxcardxcar(4,2,2,3)=
      -   0
-        d3xsph_dxcardxcardxcar(4,2,2,4)=
+        d3xqssph_dxcardxcardxcar(4,2,2,4)=
      -   0
-        d3xsph_dxcardxcardxcar(4,2,3,3)=
+        d3xqssph_dxcardxcardxcar(4,2,3,3)=
      -   0
-        d3xsph_dxcardxcardxcar(4,2,3,4)=
+        d3xqssph_dxcardxcardxcar(4,2,3,4)=
      -   0
-        d3xsph_dxcardxcardxcar(4,2,4,4)=
+        d3xqssph_dxcardxcardxcar(4,2,4,4)=
      -   0
-        d3xsph_dxcardxcardxcar(4,3,3,3)=
+        d3xqssph_dxcardxcardxcar(4,3,3,3)=
      -   (2*z0*(-3*y0**2 + z0**2))/(y0**2 + z0**2)**3
-        d3xsph_dxcardxcardxcar(4,3,3,4)=
+        d3xqssph_dxcardxcardxcar(4,3,3,4)=
      -   (2*y0*(y0**2 - 3*z0**2))/(y0**2 + z0**2)**3
-        d3xsph_dxcardxcardxcar(4,3,4,4)=
+        d3xqssph_dxcardxcardxcar(4,3,4,4)=
      -   (-2*(-3*y0**2*z0 + z0**3))/(y0**2 + z0**2)**3
-        d3xsph_dxcardxcardxcar(4,4,4,4)=
+        d3xqssph_dxcardxcardxcar(4,4,4,4)=
      -   (-2*y0*(y0**2 - 3*z0**2))/(y0**2 + z0**2)**3
 
 
         do a=1,4
          do b=1,3
           do c=b+1,4
-           d2xsph_dxcardxcar(a,c,b)=d2xsph_dxcardxcar(a,b,c)
+           d2xqssph_dxcardxcar(a,c,b)=d2xqssph_dxcardxcar(a,b,c)
           end do
          end do
         end do
@@ -1242,43 +1259,43 @@ c----------------------------------------------------------------------
           do c=1,4
            do d=1,4
             if ((max(b,c,d).eq.d).and.(max(b,c).eq.c)) then
-             d3xsph_dxcardxcardxcar(a,b,d,c)=
-     &        d3xsph_dxcardxcardxcar(a,b,c,d)
-             d3xsph_dxcardxcardxcar(a,c,b,d)=
-     &        d3xsph_dxcardxcardxcar(a,b,c,d)
-             d3xsph_dxcardxcardxcar(a,d,c,b)=
-     &        d3xsph_dxcardxcardxcar(a,b,c,d)
+             d3xqssph_dxcardxcardxcar(a,b,d,c)=
+     &        d3xqssph_dxcardxcardxcar(a,b,c,d)
+             d3xqssph_dxcardxcardxcar(a,c,b,d)=
+     &        d3xqssph_dxcardxcardxcar(a,b,c,d)
+             d3xqssph_dxcardxcardxcar(a,d,c,b)=
+     &        d3xqssph_dxcardxcardxcar(a,b,c,d)
             else if ((max(b,c,d).eq.d).and.(max(b,c).eq.b)) then
-             d3xsph_dxcardxcardxcar(a,b,d,c)=
-     &        d3xsph_dxcardxcardxcar(a,c,b,d)
-             d3xsph_dxcardxcardxcar(a,d,c,b)=
-     &        d3xsph_dxcardxcardxcar(a,c,b,d)
+             d3xqssph_dxcardxcardxcar(a,b,d,c)=
+     &        d3xqssph_dxcardxcardxcar(a,c,b,d)
+             d3xqssph_dxcardxcardxcar(a,d,c,b)=
+     &        d3xqssph_dxcardxcardxcar(a,c,b,d)
 
             else if ((max(b,c,d).eq.c).and.(max(b,d).eq.d)) then
-             d3xsph_dxcardxcardxcar(a,c,b,d)=
-     &        d3xsph_dxcardxcardxcar(a,b,d,c)
-             d3xsph_dxcardxcardxcar(a,d,c,b)=
-     &        d3xsph_dxcardxcardxcar(a,b,d,c)
+             d3xqssph_dxcardxcardxcar(a,c,b,d)=
+     &        d3xqssph_dxcardxcardxcar(a,b,d,c)
+             d3xqssph_dxcardxcardxcar(a,d,c,b)=
+     &        d3xqssph_dxcardxcardxcar(a,b,d,c)
             else if ((max(b,c,d).eq.c).and.(max(b,d).eq.b)) then
-             d3xsph_dxcardxcardxcar(a,b,d,c)=
-     &        d3xsph_dxcardxcardxcar(a,d,b,c)
-             d3xsph_dxcardxcardxcar(a,c,b,d)=
-     &        d3xsph_dxcardxcardxcar(a,d,b,c)
-             d3xsph_dxcardxcardxcar(a,d,c,b)=
-     &        d3xsph_dxcardxcardxcar(a,d,b,c)
+             d3xqssph_dxcardxcardxcar(a,b,d,c)=
+     &        d3xqssph_dxcardxcardxcar(a,d,b,c)
+             d3xqssph_dxcardxcardxcar(a,c,b,d)=
+     &        d3xqssph_dxcardxcardxcar(a,d,b,c)
+             d3xqssph_dxcardxcardxcar(a,d,c,b)=
+     &        d3xqssph_dxcardxcardxcar(a,d,b,c)
 
             else if ((max(b,c,d).eq.b).and.(max(c,d).eq.d)) then
-             d3xsph_dxcardxcardxcar(a,b,d,c)=
-     &        d3xsph_dxcardxcardxcar(a,c,d,b)
-             d3xsph_dxcardxcardxcar(a,c,b,d)=
-     &        d3xsph_dxcardxcardxcar(a,c,d,b)
-             d3xsph_dxcardxcardxcar(a,d,c,b)=
-     &        d3xsph_dxcardxcardxcar(a,c,d,b)
+             d3xqssph_dxcardxcardxcar(a,b,d,c)=
+     &        d3xqssph_dxcardxcardxcar(a,c,d,b)
+             d3xqssph_dxcardxcardxcar(a,c,b,d)=
+     &        d3xqssph_dxcardxcardxcar(a,c,d,b)
+             d3xqssph_dxcardxcardxcar(a,d,c,b)=
+     &        d3xqssph_dxcardxcardxcar(a,c,d,b)
             else if ((max(b,c,d).eq.b).and.(max(c,d).eq.c)) then
-             d3xsph_dxcardxcardxcar(a,b,d,c)=
-     &        d3xsph_dxcardxcardxcar(a,d,c,b)
-             d3xsph_dxcardxcardxcar(a,c,b,d)=
-     &        d3xsph_dxcardxcardxcar(a,d,c,b)
+             d3xqssph_dxcardxcardxcar(a,b,d,c)=
+     &        d3xqssph_dxcardxcardxcar(a,d,c,b)
+             d3xqssph_dxcardxcardxcar(a,c,b,d)=
+     &        d3xqssph_dxcardxcardxcar(a,d,c,b)
             end if
            end do
           end do
@@ -1296,43 +1313,50 @@ c----------------------------------------------------------------------
            do d=1,4
             gschwads_ll_xx(a,b,c,d)=0
             gschwads_ll(a,b)=gschwads_ll(a,b)+
-     &         dxsph_dxcar(c,a)*dxsph_dxcar(d,b)*gschwads_ll_sph(c,d)
+     &         dxqssph_dxcar(c,a)*dxqssph_dxcar(d,b) 
+     &              *gschwads_ll_qssph(c,d)
             if (calc_der) then
              do e= 1,4
               gschwads_ll_x(a,b,c)=gschwads_ll_x(a,b,c)+
-     &      d2xsph_dxcardxcar(d,c,a)*dxsph_dxcar(e,b)
-     &      *gschwads_ll_sph(d,e)+
-     &      dxsph_dxcar(d,a)*d2xsph_dxcardxcar(e,c,b)
-     &      *gschwads_ll_sph(d,e)
+     &      d2xqssph_dxcardxcar(d,c,a)*dxqssph_dxcar(e,b)
+     &      *gschwads_ll_qssph(d,e)+
+     &      dxqssph_dxcar(d,a)*d2xqssph_dxcardxcar(e,c,b)
+     &      *gschwads_ll_qssph(d,e)
               do f=1,4
                gschwads_ll_x(a,b,c)=gschwads_ll_x(a,b,c)+
-     &      dxsph_dxcar(d,a)*dxsph_dxcar(e,b)*dxsph_dxcar(f,c)
-     &      *gschwads_ll_sph_x(d,e,f)
+     &      dxqssph_dxcar(d,a)*dxqssph_dxcar(e,b)*dxqssph_dxcar(f,c)
+     &      *gschwads_ll_qssph_x(d,e,f)
                gschwads_ll_xx(a,b,c,d)=gschwads_ll_xx(a,b,c,d)+
-     &      d3xsph_dxcardxcardxcar(e,d,c,a)*dxsph_dxcar(f,b)
-     &      *gschwads_ll_sph(e,f)+
-     &      d2xsph_dxcardxcar(e,c,a)*d2xsph_dxcardxcar(f,d,b)
-     &      *gschwads_ll_sph(e,f)+
-     &      d2xsph_dxcardxcar(e,d,a)*d2xsph_dxcardxcar(f,c,b)
-     &      *gschwads_ll_sph(e,f)+
-     &      dxsph_dxcar(e,a)*d3xsph_dxcardxcardxcar(f,d,c,b)
-     &      *gschwads_ll_sph(e,f)
+     &      d3xqssph_dxcardxcardxcar(e,d,c,a)*dxqssph_dxcar(f,b)
+     &      *gschwads_ll_qssph(e,f)+
+     &      d2xqssph_dxcardxcar(e,c,a)*d2xqssph_dxcardxcar(f,d,b)
+     &      *gschwads_ll_qssph(e,f)+
+     &      d2xqssph_dxcardxcar(e,d,a)*d2xqssph_dxcardxcar(f,c,b)
+     &      *gschwads_ll_qssph(e,f)+
+     &      dxqssph_dxcar(e,a)*d3xqssph_dxcardxcardxcar(f,d,c,b)
+     &      *gschwads_ll_qssph(e,f)
                do g=1,4
             gschwads_ll_xx(a,b,c,d)=gschwads_ll_xx(a,b,c,d)+
-     &      d2xsph_dxcardxcar(e,c,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,d)
-     &      *gschwads_ll_sph_x(e,f,g)+
-     &      dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,c,b)*dxsph_dxcar(g,d)
-     &      *gschwads_ll_sph_x(e,f,g)+
-     &      d2xsph_dxcardxcar(e,d,a)*dxsph_dxcar(f,b)*dxsph_dxcar(g,c)
-     &      *gschwads_ll_sph_x(e,f,g)+
-     &      dxsph_dxcar(e,a)*d2xsph_dxcardxcar(f,d,b)*dxsph_dxcar(g,c)
-     &      *gschwads_ll_sph_x(e,f,g)+
-     &      dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*d2xsph_dxcardxcar(g,d,c)
-     &      *gschwads_ll_sph_x(e,f,g)
+     &      d2xqssph_dxcardxcar(e,c,a)*dxqssph_dxcar(f,b) 
+     &              *dxqssph_dxcar(g,d)
+     &      *gschwads_ll_qssph_x(e,f,g)+
+     &      dxqssph_dxcar(e,a)*d2xqssph_dxcardxcar(f,c,b) 
+     &              *dxqssph_dxcar(g,d)
+     &      *gschwads_ll_qssph_x(e,f,g)+
+     &      d2xqssph_dxcardxcar(e,d,a)*dxqssph_dxcar(f,b) 
+     &              *dxqssph_dxcar(g,c)
+     &      *gschwads_ll_qssph_x(e,f,g)+
+     &      dxqssph_dxcar(e,a)*d2xqssph_dxcardxcar(f,d,b) 
+     &              *dxqssph_dxcar(g,c)
+     &      *gschwads_ll_qssph_x(e,f,g)+
+     &      dxqssph_dxcar(e,a)*dxqssph_dxcar(f,b) 
+     &              *d2xqssph_dxcardxcar(g,d,c)
+     &      *gschwads_ll_qssph_x(e,f,g)
                 do h=1,4
                  gschwads_ll_xx(a,b,c,d)=gschwads_ll_xx(a,b,c,d)+
-     &   dxsph_dxcar(e,a)*dxsph_dxcar(f,b)*
-     &   dxsph_dxcar(g,c)*dxsph_dxcar(h,d)*gschwads_ll_sph_xx(e,f,g,h)
+     &   dxqssph_dxcar(e,a)*dxqssph_dxcar(f,b)*
+     &   dxqssph_dxcar(g,c)*dxqssph_dxcar(h,d) 
+     &              *gschwads_ll_qssph_xx(e,f,g,h)
                 end do
                end do
               end do
@@ -1343,7 +1367,7 @@ c----------------------------------------------------------------------
          end do
         end do
 
-       !some of the dxsph_dxcar diverge at y=z=0 so we need to consider this case separately
+       !some of the dxqssph_dxcar diverge at y=z=0 so we need to consider this case separately
        ! we only need to consider the quantities with a y or z index
        if ((abs(y0).lt.10.0d0**(-10)).and.
      &     (abs(z0).lt.10.0d0**(-10))) then
@@ -1969,8 +1993,8 @@ c----------------------------------------------------------------------
 !          do c=1,4
 !             write (*,*) "a,b,c,gschwads_ll_x(a,b,c)="
 !     -                   ,a,b,c,gschwads_ll_x(a,b,c)
-!             write (*,*) "a,b,c,gschwads_ll_sph_x(a,b,c)="
-!     -                   ,a,b,c,gschwads_ll_sph_x(a,b,c)
+!             write (*,*) "a,b,c,gschwads_ll_qssph_x(a,b,c)="
+!     -                   ,a,b,c,gschwads_ll_qssph_x(a,b,c)
 !
 !           do d=1,4
 !             write (*,*) "a,b,c,d,gschwads_ll_xx(a,b,c,d)="
@@ -2047,8 +2071,8 @@ c----------------------------------------------------------------------
 !          do c=1,4
 !             write (*,*) "a,b,c,gschwads_ll_x(a,b,c)="
 !     -                   ,a,b,c,gschwads_ll_x(a,b,c)
-!             write (*,*) "a,b,c,gschwads_ll_sph_x(a,b,c)="
-!     -                   ,a,b,c,gschwads_ll_sph_x(a,b,c)
+!             write (*,*) "a,b,c,gschwads_ll_qssph_x(a,b,c)="
+!     -                   ,a,b,c,gschwads_ll_qssph_x(a,b,c)
 !
 !           do d=1,4
 !             write (*,*) "a,b,c,d,gschwads_ll_xx(a,b,c,d)="

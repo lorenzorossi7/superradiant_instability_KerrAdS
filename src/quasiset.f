@@ -2007,7 +2007,7 @@ c in Cartesian coordinates t,x,y,z for x/y/z in [-1,1]
 c
 c routine for computing the asymptotic quasilocal stress-energy of AdS4D
 c using a 1-rho expansion about rho=1 at points near the boundary. 
-c The tensor components are given in spherical polar coordinates.
+c The tensor components are given in quasi-spherical polar coordinates.
 c The calculation is done as follows:
 c 1. computing the deviations from pure AdS (these are not the evolution variables gb's if we evolve
 c around a background metric that is not AdS)
@@ -2210,9 +2210,9 @@ c----------------------------------------------------------------------
 
         real*8 gads_ll(4,4),gads_uu(4,4)
         real*8 gads_ll_x(4,4,4),gads_uu_x(4,4,4),gads_ll_xx(4,4,4,4)
-        real*8 gads_ll_sph(4,4),gads_uu_sph(4,4)
-        real*8 gads_ll_sph_x(4,4,4),gads_uu_sph_x(4,4,4)
-        real*8 gads_ll_sph_xx(4,4,4,4)
+        real*8 gads_ll_qssph(4,4),gads_uu_qssph(4,4)
+        real*8 gads_ll_qssph_x(4,4,4),gads_uu_qssph_x(4,4,4)
+        real*8 gads_ll_qssph_xx(4,4,4,4)
         real*8 gammaads_ull(4,4,4)
         real*8 boxadsx_u(4)
         real*8 Hads_l(4)
@@ -2222,40 +2222,40 @@ c----------------------------------------------------------------------
         real*8 ricciads_ll(4,4),ricciads_lu(4,4),ricciads
         real*8 einsteinads_ll(4,4),setads_ll(4,4)
 
-        real*8 dxcar_dxsph(4,4)
+        real*8 dxcar_dxqssph(4,4)
         real*8 hcar_n(4,4),g0car_n(4,4)
-        real*8 hsph_n(4,4),gbsph_n(4,4),g0sph_n(4,4)
-        real*8 gamma0sph_ll(4,4),gamma0sph_uu(4,4)
-        real*8 gamma0sphbdy_ll(3,3),gamma0sphbdy_uu(3,3)
+        real*8 hqssph_n(4,4),gbqssph_n(4,4),g0qssph_n(4,4)
+        real*8 gamma0qssph_ll(4,4),gamma0qssph_uu(4,4)
+        real*8 gamma0qssphbdy_ll(3,3),gamma0qssphbdy_uu(3,3)
         real*8 detgamma3
-        real*8 detgamma0sphbdy
+        real*8 detgamma0qssphbdy
 
         logical no_derivatives
         data no_derivatives/.false./
  
         real*8 df_drho
-        real*8 gbsph_tt_n(Nx,Ny,Nz),gbsph_trho_n(Nx,Ny,Nz)
-        real*8 gbsph_tchi_n(Nx,Ny,Nz),gbsph_txi_n(Nx,Ny,Nz)
-        real*8 gbsph_rhorho_n(Nx,Ny,Nz),gbsph_rhochi_n(Nx,Ny,Nz)
-        real*8 gbsph_rhoxi_n(Nx,Ny,Nz)
-        real*8 gbsph_chichi_n(Nx,Ny,Nz),gbsph_chixi_n(Nx,Ny,Nz)
-        real*8 gbsph_xixi_n(Nx,Ny,Nz)
-        real*8 dgbsph_tt_drho_n,dgbsph_trho_drho_n
-        real*8 dgbsph_tchi_drho_n,dgbsph_txi_drho_n
-        real*8 dgbsph_rhorho_drho_n
-        real*8 dgbsph_rhochi_drho_n
-        real*8 dgbsph_rhoxi_drho_n
-        real*8 dgbsph_chichi_drho_n
-        real*8 dgbsph_chixi_drho_n
-        real*8 dgbsph_xixi_drho_n
+        real*8 gbqssph_tt_n(Nx,Ny,Nz),gbqssph_trho_n(Nx,Ny,Nz)
+        real*8 gbqssph_tchi_n(Nx,Ny,Nz),gbqssph_txi_n(Nx,Ny,Nz)
+        real*8 gbqssph_rhorho_n(Nx,Ny,Nz),gbqssph_rhochi_n(Nx,Ny,Nz)
+        real*8 gbqssph_rhoxi_n(Nx,Ny,Nz)
+        real*8 gbqssph_chichi_n(Nx,Ny,Nz),gbqssph_chixi_n(Nx,Ny,Nz)
+        real*8 gbqssph_xixi_n(Nx,Ny,Nz)
+        real*8 dgbqssph_tt_drho_n,dgbqssph_trho_drho_n
+        real*8 dgbqssph_tchi_drho_n,dgbqssph_txi_drho_n
+        real*8 dgbqssph_rhorho_drho_n
+        real*8 dgbqssph_rhochi_drho_n
+        real*8 dgbqssph_rhoxi_drho_n
+        real*8 dgbqssph_chichi_drho_n
+        real*8 dgbqssph_chixi_drho_n
+        real*8 dgbqssph_xixi_drho_n
 
-        real*8 gbsph_tt_n_x,gbsph_tt_n_y
+        real*8 gbqssph_tt_n_x,gbqssph_tt_n_y
         real*8 gb_tt_n_x,gb_tt_n_y
         real*8 gb_xx_n_x,gb_xx_n_y
 
-        real*8 dergb_tt_x_n,dergbsph_tt_x_n
-        real*8 dergb_tt_y_n,dergbsph_tt_y_n
-        real*8 dergb_tt_z_n,dergbsph_tt_z_n
+        real*8 dergb_tt_x_n,dergbqssph_tt_x_n
+        real*8 dergb_tt_y_n,dergbqssph_tt_y_n
+        real*8 dergb_tt_z_n,dergbqssph_tt_z_n
         real*8 dergb_xx_x_n
         real*8 dergb_xx_y_n
         real*8 dergb_xx_z_n
@@ -2283,8 +2283,8 @@ c----------------------------------------------------------------------
              else
                 xi0=(1/(2*PI))*atan2(z0,y0)
              end if
-!calculate regularized metric components in spherical coordinates in terms of regularized metric components in Cartesian coordinates
-! we use the following coordinate transformation (notice that the angles are rescaled w.r.t. the usual spherical coordinates): x=rho*cos(PI*chi),y=rho*sin(PI*chi)*cos(2*PI*xi),z=rho*sin(PI*chi)*sin(2*PI*xi)
+!calculate regularized metric components in quasi-spherical coordinates in terms of regularized metric components in Cartesian coordinates
+! we use the following coordinate transformation (notice that the angles are rescaled w.r.t. the usual quasi-spherical coordinates): x=rho*cos(PI*chi),y=rho*sin(PI*chi)*cos(2*PI*xi),z=rho*sin(PI*chi)*sin(2*PI*xi)
 
           if ( (chr(i,j,k).ne.ex)
      &          .and.(
@@ -2313,22 +2313,22 @@ c----------------------------------------------------------------------
              dzdchi=PI*rho0*cos(PI*chi0)*sin(2*PI*xi0)
              dzdxi=2*PI*rho0*sin(PI*chi0)*cos(2*PI*xi0)
 
-             dxcar_dxsph(1,1)=dtdt
-             dxcar_dxsph(1,2)=dtdrho
-             dxcar_dxsph(1,3)=dtdchi
-             dxcar_dxsph(1,4)=dtdxi
-             dxcar_dxsph(2,1)=dxdt
-             dxcar_dxsph(2,2)=dxdrho
-             dxcar_dxsph(2,3)=dxdchi
-             dxcar_dxsph(2,4)=dxdxi
-             dxcar_dxsph(3,1)=dydt
-             dxcar_dxsph(3,2)=dydrho
-             dxcar_dxsph(3,3)=dydchi
-             dxcar_dxsph(3,4)=dydxi
-             dxcar_dxsph(4,1)=dzdt
-             dxcar_dxsph(4,2)=dzdrho
-             dxcar_dxsph(4,3)=dzdchi
-             dxcar_dxsph(4,4)=dzdxi
+             dxcar_dxqssph(1,1)=dtdt
+             dxcar_dxqssph(1,2)=dtdrho
+             dxcar_dxqssph(1,3)=dtdchi
+             dxcar_dxqssph(1,4)=dtdxi
+             dxcar_dxqssph(2,1)=dxdt
+             dxcar_dxqssph(2,2)=dxdrho
+             dxcar_dxqssph(2,3)=dxdchi
+             dxcar_dxqssph(2,4)=dxdxi
+             dxcar_dxqssph(3,1)=dydt
+             dxcar_dxqssph(3,2)=dydrho
+             dxcar_dxqssph(3,3)=dydchi
+             dxcar_dxqssph(3,4)=dydxi
+             dxcar_dxqssph(4,1)=dzdt
+             dxcar_dxqssph(4,2)=dzdrho
+             dxcar_dxqssph(4,3)=dzdchi
+             dxcar_dxqssph(4,4)=dzdxi
 
         !metric components of pure AdS in Cartesian coordinates
         g0_tt_ads0 =-(4*rho0**2+L**2*(-1+rho0**2)**2)
@@ -2442,42 +2442,42 @@ c----------------------------------------------------------------------
 !        end do
 
 
-       !deviation from pure AdS in (rescaled) spherical coordinates
+       !deviation from pure AdS in (rescaled) quasi-spherical coordinates
         do a=1,4
           do b=1,4
-           hsph_n(a,b)=0.0d0
+           hqssph_n(a,b)=0.0d0
            do c=1,4
             do d=1,4
-             hsph_n(a,b)=hsph_n(a,b)
-     &             +dxcar_dxsph(c,a)*dxcar_dxsph(d,b)*hcar_n(c,d)
+             hqssph_n(a,b)=hqssph_n(a,b)
+     &             +dxcar_dxqssph(c,a)*dxcar_dxqssph(d,b)*hcar_n(c,d)
             end do
            end do
           end do
         end do
 
 
-        !regularised metric components in (rescaled) spherical coordinates for perturbation of pure AdS
-         gbsph_n(1,1)=hsph_n(1,1)
-         gbsph_n(1,2)=hsph_n(1,2)/(1-rho0**2)
-         gbsph_n(1,3)=hsph_n(1,3)
-         gbsph_n(1,4)=hsph_n(1,4)
-         gbsph_n(2,2)=hsph_n(2,2)
-         gbsph_n(2,3)=hsph_n(2,3)/(1-rho0**2)
-         gbsph_n(2,4)=hsph_n(2,4)/(1-rho0**2)
-         gbsph_n(3,3)=hsph_n(3,3)
-         gbsph_n(3,4)=hsph_n(3,4)
-         gbsph_n(4,4)=hsph_n(4,4)
+        !regularised metric components in (rescaled) quasi-spherical coordinates for perturbation of pure AdS
+         gbqssph_n(1,1)=hqssph_n(1,1)
+         gbqssph_n(1,2)=hqssph_n(1,2)
+         gbqssph_n(1,3)=hqssph_n(1,3)
+         gbqssph_n(1,4)=hqssph_n(1,4)
+         gbqssph_n(2,2)=hqssph_n(2,2)
+         gbqssph_n(2,3)=hqssph_n(2,3)
+         gbqssph_n(2,4)=hqssph_n(2,4)
+         gbqssph_n(3,3)=hqssph_n(3,3)
+         gbqssph_n(3,4)=hqssph_n(3,4)
+         gbqssph_n(4,4)=hqssph_n(4,4)
 
-         gbsph_tt_n(i,j,k)    =gbsph_n(1,1)
-         gbsph_trho_n(i,j,k)  =gbsph_n(1,2)
-         gbsph_tchi_n(i,j,k)  =gbsph_n(1,3)
-         gbsph_txi_n(i,j,k)   =gbsph_n(1,4)
-         gbsph_rhorho_n(i,j,k)=gbsph_n(2,2)
-         gbsph_rhochi_n(i,j,k)=gbsph_n(2,3)
-         gbsph_rhoxi_n(i,j,k) =gbsph_n(2,4)
-         gbsph_chichi_n(i,j,k)=gbsph_n(3,3)
-         gbsph_chixi_n(i,j,k) =gbsph_n(3,4)
-         gbsph_xixi_n(i,j,k)  =gbsph_n(4,4)
+         gbqssph_tt_n(i,j,k)    =gbqssph_n(1,1)
+         gbqssph_trho_n(i,j,k)  =gbqssph_n(1,2)
+         gbqssph_tchi_n(i,j,k)  =gbqssph_n(1,3)
+         gbqssph_txi_n(i,j,k)   =gbqssph_n(1,4)
+         gbqssph_rhorho_n(i,j,k)=gbqssph_n(2,2)
+         gbqssph_rhochi_n(i,j,k)=gbqssph_n(2,3)
+         gbqssph_rhoxi_n(i,j,k) =gbqssph_n(2,4)
+         gbqssph_chichi_n(i,j,k)=gbqssph_n(3,3)
+         gbqssph_chixi_n(i,j,k) =gbqssph_n(3,4)
+         gbqssph_xixi_n(i,j,k)  =gbqssph_n(4,4)
 
 ! calculate the AdS-subtracted bulk gravity quasilocal stress-energy tensor,
 ! identified with the bdy CFT stress-energy tensor one-point function
@@ -2499,66 +2499,70 @@ c----------------------------------------------------------------------
             if (no_derivatives) then
 !             if ((y0.ne.0.0d0).or.(z0.ne.0.0d0)) then
 !
-               quasiset_tt_ll(i,j,k)=(12*(gbsph_n(3,3)/q)
-     &                         + 8*PI**2*(gbsph_n(2,2)/q)
-     &                         +  (3*(gbsph_n(4,4)/q)/(sin(PI*chi0))**2)
-     &                         )/(64*PI**3)
+               quasiset_tt_ll(i,j,k)= 
+     &              (12*(gbqssph_n(3,3)/q)
+     &       + 8*PI**2*(gbqssph_n(2,2)/q)
+     &       +  (3*(gbqssph_n(4,4)/q)/(sin(PI*chi0))**2)
+     &       )/(64*PI**3)
 
 
-               quasiset_tchi_ll(i,j,k)  = (3*(gbsph_n(1,3)/q))/(16*PI)
+               quasiset_tchi_ll(i,j,k)  = 
+     &              (3*(gbqssph_n(1,3)/q))/(16*PI)
 
 
-               quasiset_txi_ll(i,j,k)   = (3*(gbsph_n(1,4)/q))/(16*PI)
+               quasiset_txi_ll(i,j,k)   = 
+     &               (3*(gbqssph_n(1,4)/q))/(16*PI)
 
                quasiset_chichi_ll(i,j,k)=(3.0d0/16.0d0)*PI
-     &                                   *(gbsph_n(1,1)/q)
+     &                                   *(gbqssph_n(1,1)/q)
      &                                  -(1.0d0/8.0d0)*PI
-     &                                   *(gbsph_n(2,2)/q)
-     &                           -(3*(gbsph_n(4,4)/q)/(sin(PI*chi0))**2)
+     &                                   *(gbqssph_n(2,2)/q)
+     &                    -(3*(gbqssph_n(4,4)/q)/(sin(PI*chi0))**2)
      &                                   /(64*PI)
 
 
-               quasiset_chixi_ll(i,j,k) =(3*(gbsph_n(3,4)/q))/(16*PI)
+               quasiset_chixi_ll(i,j,k) = 
+     &              (3*(gbqssph_n(3,4)/q))/(16*PI)
 
 
                quasiset_xixi_ll(i,j,k)  =((sin(PI*chi0))**2*(-3
-     &                                   *(gbsph_n(3,3)/q)
-     &                                  +PI**2*(3*(gbsph_n(1,1)/q)
-     &                                  -2*(gbsph_n(2,2)/q)))
+     &                                   *(gbqssph_n(3,3)/q)
+     &                                  +PI**2*(3*(gbqssph_n(1,1)/q)
+     &                                  -2*(gbqssph_n(2,2)/q)))
      &                                  )/(4*PI)
 
       !trace of quasi local stress-tensor in terms of regularised metric components (this should be the same as the one above, within numerical error)
                quasiset_tracell(i,j,k)=
      &           (3/(32*PI**3))
-     &           *(4*PI**2*(gbsph_n(1,1)/q)
-     &             -4*(gbsph_n(3,3)/q)
-     &             -4*PI**2*(gbsph_n(2,2)/q)
-     &             -(gbsph_n(4,4)/q)/((sin(PI*chi0))**2) )
+     &           *(4*PI**2*(gbqssph_n(1,1)/q)
+     &             -4*(gbqssph_n(3,3)/q)
+     &             -4*PI**2*(gbqssph_n(2,2)/q)
+     &             -(gbqssph_n(4,4)/q)/((sin(PI*chi0))**2) )
 
       !multiply by the square root of the determinant on the boundary sphere, 2*PI^2 * sin(PI*chi0), 
       ! and integrate in chi0 from 0 to 1 and xi0 from 0 to 1 to obtain the total mass in AdS
                quasiset_massdensityll(i,j,k)=
      &                          (
-     &                           12*(gbsph_n(3,3)/q)
-     &                          +8*PI**2*(gbsph_n(2,2)/q)
-     &                          +3*(gbsph_n(4,4)/q)
+     &                           12*(gbqssph_n(3,3)/q)
+     &                          +8*PI**2*(gbqssph_n(2,2)/q)
+     &                          +3*(gbqssph_n(4,4)/q)
      &                           /((sin(PI*chi0))**2)
      &                          )
      &                          /(64*PI**3)
                quasiset_angmomdensityxll(i,j,k)=
-     &                          -3*(gbsph_n(1,4)/q)
+     &                          -3*(gbqssph_n(1,4)/q)
      &                         /(32*PI**2)
                quasiset_angmomdensityyll(i,j,k)=
      &                         3*(
-     &                          2*sin(2*PI*xi0)*(gbsph_n(1,3)/q)
-     &                         +cos(2*PI*xi0)*(gbsph_n(1,4)/q)
+     &                          2*sin(2*PI*xi0)*(gbqssph_n(1,3)/q)
+     &                         +cos(2*PI*xi0)*(gbqssph_n(1,4)/q)
      &                         )
      &                         /(32*PI**2)
                quasiset_angmomdensityzll(i,j,k)=
      &                         3*(
-     &                          -2*cos(2*PI*xi0)*(gbsph_n(1,3)/q)
+     &                          -2*cos(2*PI*xi0)*(gbqssph_n(1,3)/q)
      &                         +(cos(PI*chi0)/sin(PI*chi0))*
-     &                           sin(2*PI*xi0)*(gbsph_n(1,4)/q)
+     &                           sin(2*PI*xi0)*(gbqssph_n(1,4)/q)
      &                         )
      &                         /(32*PI**2)
 
@@ -2567,16 +2571,16 @@ c----------------------------------------------------------------------
 
           else  !excised points or points with y0=z0=0
 
-              gbsph_tt_n(i,j,k)    =0
-              gbsph_trho_n(i,j,k)  =0
-              gbsph_tchi_n(i,j,k)  =0
-              gbsph_txi_n(i,j,k)   =0
-              gbsph_rhorho_n(i,j,k)=0
-              gbsph_rhochi_n(i,j,k)=0
-              gbsph_rhoxi_n(i,j,k) =0
-              gbsph_chichi_n(i,j,k)=0
-              gbsph_chixi_n(i,j,k) =0
-              gbsph_xixi_n(i,j,k)  =0
+              gbqssph_tt_n(i,j,k)    =0
+              gbqssph_trho_n(i,j,k)  =0
+              gbqssph_tchi_n(i,j,k)  =0
+              gbqssph_txi_n(i,j,k)   =0
+              gbqssph_rhorho_n(i,j,k)=0
+              gbqssph_rhochi_n(i,j,k)=0
+              gbqssph_rhoxi_n(i,j,k) =0
+              gbqssph_chichi_n(i,j,k)=0
+              gbqssph_chixi_n(i,j,k) =0
+              gbqssph_xixi_n(i,j,k)  =0
 
 
               quasiset_tt_ll(i,j,k)=0
@@ -2641,66 +2645,66 @@ c----------------------------------------------------------------------
      &                (abs(z0).ge.10.0d0**(-10))
      &               )
      &         ) then
-              dgbsph_tt_drho_n    =
-     &             df_drho(gbsph_tt_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
-              dgbsph_trho_drho_n  =
-     &             df_drho(gbsph_trho_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
-              dgbsph_tchi_drho_n  =
-     &             df_drho(gbsph_tchi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
-              dgbsph_txi_drho_n   =
-     &             df_drho(gbsph_txi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
-              dgbsph_rhorho_drho_n=
-     &             df_drho(gbsph_rhorho_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
-              dgbsph_rhochi_drho_n=
-     &             df_drho(gbsph_rhochi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
-              dgbsph_rhoxi_drho_n =
-     &             df_drho(gbsph_rhoxi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
-              dgbsph_chichi_drho_n=
-     &             df_drho(gbsph_chichi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
-              dgbsph_chixi_drho_n =
-     &             df_drho(gbsph_chixi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
-              dgbsph_xixi_drho_n  =
-     &             df_drho(gbsph_xixi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_tt_drho_n    =
+     &             df_drho(gbqssph_tt_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_trho_drho_n  =
+     &             df_drho(gbqssph_trho_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_tchi_drho_n  =
+     &             df_drho(gbqssph_tchi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_txi_drho_n   =
+     &             df_drho(gbqssph_txi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_rhorho_drho_n=
+     &             df_drho(gbqssph_rhorho_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_rhochi_drho_n=
+     &             df_drho(gbqssph_rhochi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_rhoxi_drho_n =
+     &             df_drho(gbqssph_rhoxi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_chichi_drho_n=
+     &             df_drho(gbqssph_chichi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_chixi_drho_n =
+     &             df_drho(gbqssph_chixi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
+              dgbqssph_xixi_drho_n  =
+     &             df_drho(gbqssph_xixi_n,x,y,z,i,j,k,chr,ex,Nx,Ny,Nz)
 
                quasiset_tt_ll(i,j,k)=
-     &                         (12*(-dgbsph_chichi_drho_n)
-     &                         + 8*PI**2*(-dgbsph_rhorho_drho_n)
-     &                         +  (3*(-dgbsph_xixi_drho_n)
+     &                         (12*(-dgbqssph_chichi_drho_n)
+     &                         + 8*PI**2*(-dgbqssph_rhorho_drho_n)
+     &                         +  (3*(-dgbqssph_xixi_drho_n)
      &                               /(sin(PI*chi0))**2)
      &                         )/(64*PI**3)
 
 
                quasiset_tchi_ll(i,j,k)  =
-     &                        (3*(-dgbsph_tchi_drho_n))
+     &                        (3*(-dgbqssph_tchi_drho_n))
      &                                       /(16*PI)
 
 
                quasiset_txi_ll(i,j,k)   =
-     &                        (3*(-dgbsph_txi_drho_n))
+     &                        (3*(-dgbqssph_txi_drho_n))
      &                                       /(16*PI)
 
 
                quasiset_chichi_ll(i,j,k)=
      &                                   (3.0d0/16.0d0)*PI
-     &                                   *(-dgbsph_tt_drho_n)
+     &                                   *(-dgbqssph_tt_drho_n)
      &                                  -(1.0d0/8.0d0)*PI
-     &                                   *(-dgbsph_rhorho_drho_n)
-     &                           -(3*(-dgbsph_xixi_drho_n)
+     &                                   *(-dgbqssph_rhorho_drho_n)
+     &                           -(3*(-dgbqssph_xixi_drho_n)
      &                               /(sin(PI*chi0))**2)
      &                                   /(64*PI)
 
 
                quasiset_chixi_ll(i,j,k) =
-     &                                   (3*(-dgbsph_chixi_drho_n))
+     &                                   (3*(-dgbqssph_chixi_drho_n))
      &                                      /(16*PI)
 
 
 
                quasiset_xixi_ll(i,j,k)=
      &                                  ((sin(PI*chi0))**2*(-3
-     &                                   *(-dgbsph_chichi_drho_n)
-     &                                  +PI**2*(3*(-dgbsph_tt_drho_n)
-     &                                  -2*(-dgbsph_rhorho_drho_n)))
+     &                                   *(-dgbqssph_chichi_drho_n)
+     &                                  +PI**2*(3*(-dgbqssph_tt_drho_n)
+     &                                  -2*(-dgbqssph_rhorho_drho_n)))
      &                                  )/(4*PI)
 
 
@@ -2709,37 +2713,37 @@ c----------------------------------------------------------------------
 !
              quasiset_tracell(i,j,k)=
      &        (3/(32*PI**3))
-     &           *(4*PI**2*(-dgbsph_tt_drho_n)
-     &             -4*(-dgbsph_chichi_drho_n)
-     &             -4*PI**2*(-dgbsph_rhorho_drho_n)
-     &             -(-dgbsph_xixi_drho_n)/((sin(PI*chi0))**2) )
+     &           *(4*PI**2*(-dgbqssph_tt_drho_n)
+     &             -4*(-dgbqssph_chichi_drho_n)
+     &             -4*PI**2*(-dgbqssph_rhorho_drho_n)
+     &             -(-dgbqssph_xixi_drho_n)/((sin(PI*chi0))**2) )
 
       !multiply by the square root of the determinant on the boundary sphere, 2*PI^2 * sin(PI*chi0), 
       ! and integrate in chi0 from 0 to 1 and xi0 from 0 to 1 to obtain the total mass in AdS
                quasiset_massdensityll(i,j,k)=
      &                        (
-     &                         12*(-dgbsph_chichi_drho_n)
+     &                         12*(-dgbqssph_chichi_drho_n)
      &                        +8*PI**2
-     &                            *(-dgbsph_rhorho_drho_n)
-     &                        +3*(-dgbsph_xixi_drho_n)
+     &                            *(-dgbqssph_rhorho_drho_n)
+     &                        +3*(-dgbqssph_xixi_drho_n)
      &                         /((sin(PI*chi0))**2)
      &                        )
      &                        /(64*PI**3)
 
               quasiset_angmomdensityxll(i,j,k)=
-     &                        -3*(-dgbsph_txi_drho_n)
+     &                        -3*(-dgbqssph_txi_drho_n)
      &                       /(32*PI**2)
               quasiset_angmomdensityyll(i,j,k)=
      &                        3*(
-     &                         2*sin(2*PI*xi0)*(-dgbsph_tchi_drho_n)
-     &                        +cos(2*PI*xi0)*(-dgbsph_txi_drho_n)
+     &                         2*sin(2*PI*xi0)*(-dgbqssph_tchi_drho_n)
+     &                        +cos(2*PI*xi0)*(-dgbqssph_txi_drho_n)
      &                        )
      &                        /(32*PI**2)
               quasiset_angmomdensityzll(i,j,k)=
      &                        3*(
-     &                         -2*cos(2*PI*xi0)*(-dgbsph_tchi_drho_n)
+     &                         -2*cos(2*PI*xi0)*(-dgbqssph_tchi_drho_n)
      &                        +(cos(PI*chi0)/sin(PI*chi0))*
-     &                          sin(2*PI*xi0)*(-dgbsph_txi_drho_n)
+     &                          sin(2*PI*xi0)*(-dgbqssph_txi_drho_n)
      &                        )
      &                        /(32*PI**2)
 
@@ -2775,7 +2779,7 @@ c in Cartesian coordinates t,x,y,z for x/y/z in [-1,1]
 c
 c routine for computing the asymptotic quasilocal stress-energy of AdS4D_polar  
 c using a 1-rho expansion about rho=1 AT the boundary through extrapolation.
-c The tensor components are given in spherical polar coordinates.
+c The tensor components are given in quasi-spherical polar coordinates.
 c-------------------------------------------------------------------------------------
 
         subroutine extrap_quasiset_freepts(
@@ -2872,12 +2876,12 @@ c-------------------------------------------------------------------------------
         real*8 quasiset_angmomdensityz_p4
 
 
-        real*8 gamma0sphbdy_uu_tt
-        real*8 gamma0sphbdy_uu_tchi
-        real*8 gamma0sphbdy_uu_txi
-        real*8 gamma0sphbdy_uu_chichi
-        real*8 gamma0sphbdy_uu_chixi
-        real*8 gamma0sphbdy_uu_xixi
+        real*8 gamma0qssphbdy_uu_tt
+        real*8 gamma0qssphbdy_uu_tchi
+        real*8 gamma0qssphbdy_uu_txi
+        real*8 gamma0qssphbdy_uu_chichi
+        real*8 gamma0qssphbdy_uu_chixi
+        real*8 gamma0qssphbdy_uu_xixi
 
         real*8 quasiset_tt(numbdypoints),quasiset_tchi(numbdypoints)
         real*8 quasiset_txi(numbdypoints),quasiset_chichi(numbdypoints)
@@ -2989,12 +2993,12 @@ c-------------------------------------------------------------------------------
                   end if
 
                   !inverse of conformal metric on AdS boundary (needed for trace) at extrapolated point
-                  gamma0sphbdy_uu_tt=-1
-                  gamma0sphbdy_uu_tchi=0
-                  gamma0sphbdy_uu_txi=0
-                  gamma0sphbdy_uu_chichi=1/(PI**2)
-                  gamma0sphbdy_uu_chixi=0
-                  gamma0sphbdy_uu_xixi=1/((sin(PI*chiex))**2)/4/PI**2
+                  gamma0qssphbdy_uu_tt=-1
+                  gamma0qssphbdy_uu_tchi=0
+                  gamma0qssphbdy_uu_txi=0
+                  gamma0qssphbdy_uu_chichi=1/(PI**2)
+                  gamma0qssphbdy_uu_chixi=0
+                  gamma0qssphbdy_uu_xixi=1/((sin(PI*chiex))**2)/4/PI**2
 
              if (bdy_extrappt_order.eq.1) then
               if ((abs(maxxyzp1-abs(xp1)).lt.10.0d0**(-10))) then
@@ -3062,12 +3066,12 @@ c-------------------------------------------------------------------------------
      &                  ,quasiset_trace_p2,xp1,xp2,xex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 firstord_extrap(quasiset_massdensity_p1
@@ -3147,12 +3151,12 @@ c-------------------------------------------------------------------------------
      &                  ,quasiset_trace_p2,yp1,yp2,yex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 firstord_extrap(quasiset_massdensity_p1
@@ -3230,12 +3234,12 @@ c-------------------------------------------------------------------------------
      &                  ,quasiset_trace_p2,zp1,zp2,zex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 firstord_extrap(quasiset_massdensity_p1
@@ -3381,12 +3385,12 @@ c-------------------------------------------------------------------------------
      &                   xp1,xp2,xp3,xex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 secondord_extrap(
@@ -3535,12 +3539,12 @@ c-------------------------------------------------------------------------------
      &                   yp1,yp2,yp3,yex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 secondord_extrap(
@@ -3684,12 +3688,12 @@ c-------------------------------------------------------------------------------
      &                   zp1,zp2,zp3,zex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 secondord_extrap(
@@ -3888,12 +3892,12 @@ c-------------------------------------------------------------------------------
      &                   xp1,xp2,xp3,xp4,xex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 thirdord_extrap(
@@ -4089,12 +4093,12 @@ c-------------------------------------------------------------------------------
      &                   yp1,yp2,yp3,yp4,yex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 thirdord_extrap(
@@ -4287,12 +4291,12 @@ c-------------------------------------------------------------------------------
      &                   zp1,zp2,zp3,zp4,zex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 thirdord_extrap(
@@ -4351,7 +4355,7 @@ c in Cartesian coordinates t,x,y,z for x/y/z in [-1,1]
 c
 c routine for computing the asymptotic quasilocal stress-energy of AdS4D_polar  
 c using a 1-rho expansion about rho=1 AT the boundary through extrapolation.
-c The tensor components are given in spherical polar coordinates.i
+c The tensor components are given in quasi-spherical polar coordinates.i
 c Extrapolation at fixed points for all resolutions
 c-------------------------------------------------------------------------------------
 
@@ -4447,12 +4451,12 @@ c-------------------------------------------------------------------------------
         real*8 quasiset_angmomdensityz_p4
 
 
-        real*8 gamma0sphbdy_uu_tt
-        real*8 gamma0sphbdy_uu_tchi
-        real*8 gamma0sphbdy_uu_txi
-        real*8 gamma0sphbdy_uu_chichi
-        real*8 gamma0sphbdy_uu_chixi
-        real*8 gamma0sphbdy_uu_xixi
+        real*8 gamma0qssphbdy_uu_tt
+        real*8 gamma0qssphbdy_uu_tchi
+        real*8 gamma0qssphbdy_uu_txi
+        real*8 gamma0qssphbdy_uu_chichi
+        real*8 gamma0qssphbdy_uu_chixi
+        real*8 gamma0qssphbdy_uu_xixi
 
         real*8 quasiset_tt(numbdypoints),quasiset_tchi(numbdypoints)
         real*8 quasiset_txi(numbdypoints),quasiset_chichi(numbdypoints)
@@ -4569,12 +4573,12 @@ c-------------------------------------------------------------------------------
                  end if
 
                  !inverse of conformal metric on AdS boundary (needed for trace) at extrapolated point
-                 gamma0sphbdy_uu_tt=-1
-                 gamma0sphbdy_uu_tchi=0
-                 gamma0sphbdy_uu_txi=0
-                 gamma0sphbdy_uu_chichi=1/(PI**2)
-                 gamma0sphbdy_uu_chixi=0
-                 gamma0sphbdy_uu_xixi=1/((sin(PI*chiex))**2)/4/PI**2
+                 gamma0qssphbdy_uu_tt=-1
+                 gamma0qssphbdy_uu_tchi=0
+                 gamma0qssphbdy_uu_txi=0
+                 gamma0qssphbdy_uu_chichi=1/(PI**2)
+                 gamma0qssphbdy_uu_chixi=0
+                 gamma0qssphbdy_uu_xixi=1/((sin(PI*chiex))**2)/4/PI**2
 
            if (bdy_extrappt_order.eq.1) then
              if ((abs(maxxyzp1-abs(xp1)).lt.10.0d0**(-10))) then
@@ -4657,12 +4661,12 @@ c-------------------------------------------------------------------------------
      &                  ,quasiset_trace_p2,xp1,xp2,xex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 firstord_extrap(quasiset_massdensity_p1
@@ -4758,12 +4762,12 @@ c-------------------------------------------------------------------------------
      &                  ,quasiset_trace_p2,yp1,yp2,yex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 firstord_extrap(quasiset_massdensity_p1
@@ -4856,12 +4860,12 @@ c-------------------------------------------------------------------------------
      &                  ,quasiset_trace_p2,zp1,zp2,zex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 firstord_extrap(quasiset_massdensity_p1
@@ -5029,12 +5033,12 @@ c-------------------------------------------------------------------------------
      &                   xp1,xp2,xp3,xex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 secondord_extrap(
@@ -5206,12 +5210,12 @@ c-------------------------------------------------------------------------------
      &                   yp1,yp2,yp3,yex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 secondord_extrap(
@@ -5380,12 +5384,12 @@ c-------------------------------------------------------------------------------
      &                   zp1,zp2,zp3,zex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 secondord_extrap(
@@ -5618,12 +5622,12 @@ c-------------------------------------------------------------------------------
      &                   xp1,xp2,xp3,xp4,xex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 thirdord_extrap(
@@ -5854,12 +5858,12 @@ c-------------------------------------------------------------------------------
      &                   yp1,yp2,yp3,yp4,yex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 thirdord_extrap(
@@ -6088,12 +6092,12 @@ c-------------------------------------------------------------------------------
      &                   zp1,zp2,zp3,zp4,zex)
 !                 quasiset_trace(lind)=
 !     &           (
-!     &           gamma0sphbdy_uu_tt*quasiset_tt(lind)
-!     &        +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
-!     &        +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
-!     &          +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
-!     &        +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
-!     &          +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &           gamma0qssphbdy_uu_tt*quasiset_tt(lind)
+!     &        +2*gamma0qssphbdy_uu_tchi*quasiset_tchi(lind)
+!     &        +2*gamma0qssphbdy_uu_txi*quasiset_txi(lind)
+!     &          +gamma0qssphbdy_uu_chichi*quasiset_chichi(lind)
+!     &        +2*gamma0qssphbdy_uu_chixi*quasiset_chixi(lind)
+!     &          +gamma0qssphbdy_uu_xixi*quasiset_xixi(lind)
 !     &                   )
                  quasiset_massdensity(lind)=
      &                 thirdord_extrap(

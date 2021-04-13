@@ -2678,7 +2678,7 @@ void AdS4D_var_post_init(char *pfile)
                    "r0/L=%lf, mass M = r0/2 = %lf, rotation parameter a/L= %lf\n"
                    "energy (the one employed in the first law of BH thermodynamics) E=M/(1-a^2/L^2)^2=%lf, angular momentum J0= M a/(1-a^2/L^2)^2= %lf\n"
                    "Initial BH radius in Boyer-Lindquist coordinates rotating at the boundary (not the ones used in the code)=%lf\n" 
-                   "Minimum and maximum BH radius in Kerr-Schild spherical compactified coordinates: rhomin=%lf, rhomax=%lf\n"
+                   "Minimum and maximum BH radius in Kerr-Schild quasi-spherical compactified coordinates: rhomin=%lf, rhomax=%lf\n"
                    "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
                    ,ief_bh_r0/AdS_L,M0,a_rot0/AdS_L,E,J0,rh,min_AH_R0,max_AH_R0,ex_rbuf[0]);
         } 
