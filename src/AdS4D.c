@@ -49,6 +49,9 @@ real kappa_cd,rho_cd;
 real phi1_amp_1,phi1_B_1,phi1_C_1,phi1_r0_1,phi1_delta_1,phi1_x0_1[3],phi1_ecc_1[3];
 real phi1_amp_2,phi1_B_2,phi1_C_2,phi1_r0_2,phi1_delta_2,phi1_x0_2[3],phi1_ecc_2[3];
 
+//parameters for perturbations
+real amp_Y,amp_V;
+
 // if > 0, initialize with exact BH
 real ief_bh_r0,a_rot0;
 
@@ -2278,6 +2281,8 @@ void AdS4D_var_post_init(char *pfile)
     phi1_amp_1=phi1_B_1=phi1_C_1=phi1_r0_1=phi1_x0_1[0]=phi1_x0_1[1]=phi1_x0_1[2]=phi1_ecc_1[0]=phi1_ecc_1[1]=phi1_ecc_1[2]=0;
     phi1_amp_2=phi1_B_2=phi1_C_2=phi1_r0_1=phi1_x0_2[0]=phi1_x0_2[1]=phi1_x0_2[2]=phi1_ecc_2[0]=phi1_ecc_2[1]=phi1_ecc_2[2]=0;  
 
+    amp_Y=amp_V=0;
+
     AMRD_real_param(pfile,"phi1_amp_1",&phi1_amp_1,1);
     AMRD_real_param(pfile,"phi1_B_1",&phi1_B_1,1);
     AMRD_real_param(pfile,"phi1_C_1",&phi1_C_1,1);
@@ -2292,6 +2297,9 @@ void AdS4D_var_post_init(char *pfile)
     AMRD_real_param(pfile,"phi1_delta_2",&phi1_delta_2,1);
     AMRD_real_param(pfile,"phi1_x0_2",phi1_x0_2,AMRD_dim);
     AMRD_real_param(pfile,"phi1_ecc_2",phi1_ecc_2,AMRD_dim);  
+
+    AMRD_real_param(pfile,"amp_Y",&amp_Y,1);
+    AMRD_real_param(pfile,"amp_V",&amp_V,1);
 
     kerrads_background=0; AMRD_int_param(pfile,"kerrads_background",&kerrads_background,1);  
 
@@ -3041,6 +3049,57 @@ void AdS4D_t0_cnst_data(void)
                             phys_bdy,
                             x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_background);
         	}
+
+	        if ((!AMRD_cp_restart)&&((fabs(amp_Y)>pow(10.0,-10))||(fabs(amp_V)>pow(10.0,-10))))
+	        {
+	
+	        	if (my_rank==0) 
+	        	{
+	        		printf("Adding l=2,m=2 spherical harmonics perturbations to initial gbs\n"
+	        			   "WARNING: constraint-violating initial data\n");
+	        		printf("Amplitudes\n");
+	        		printf("amp_Y=%lf,amp_V=%lf\n",amp_Y,amp_V);
+	        	}
+	
+	        	sph_harm_perturb_(phi1,
+	        				gb_tt,
+	                        gb_tx,
+	                        gb_ty,
+	                        gb_tz,
+	                        gb_xx,
+	                        gb_xy,
+	                        gb_xz,
+	                        gb_yy,
+	                        gb_yz,
+	                        gb_zz,
+	                        &amp_Y,&amp_V,
+	                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz);
+	
+	//					for (i=0; i<Nx; i++)
+	//					{    
+	//						for (j=0; j<Ny; j++)
+	//						{ 
+	//						   	for (k=0; k<Nz; k++)
+	//						    {  
+	//								if (sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k])<0.4)
+	//							    {   
+	//									ind=i+Nx*(j+Ny*k);
+	//									printf("POST-boost_perturb\n");
+	//									printf("i=%i,j=%i,k=%i,Nx=%i,Ny=%i,Nz=%i,x[i]=%lf,y[j]=%lf,z[k]=%lf,rho=%lf\n"
+	//									       ,i,j,k,Nx,Ny,Nz,x[i],y[j],z[k],sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k]));
+	//									printf("phi1_nm1[ind]=%lf,phi1_n[ind]=%lf,phi1_np1[ind]=%lf\n",phi1_nm1[ind],phi1_n[ind],phi1_np1[ind]);
+	//									printf("phi1_t_n[ind]=%lf\n",phi1_t_n[ind]);
+	//									printf("gb_tt_nm1[ind]=%lf,gb_tt_n[ind]=%lf,gb_tt_np1[ind]=%lf\n",gb_tt_nm1[ind],gb_tt_n[ind],gb_tt_np1[ind]);
+	//								}
+	//						    }
+	//						}
+	//					} 
+	//
+	//        	    MPI_Barrier(MPI_COMM_WORLD);
+	//    if (my_rank==0) {printf("POST-boost_perturb\n"); fflush(stdout); }
+	
+	        }
+
 	//   for (i=0; i<Nx; i++)  
 	//   {    
 	//      for (j=0; j<Ny; j++)    
@@ -3109,7 +3168,9 @@ void AdS4D_t0_cnst_data(void)
                     gb_yz,
                     gb_zz,Hb_t,Hb_x,Hb_y,
                     Hb_z,
-                    &AdS_L,mask_mg,phys_bdy,x,y,z,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&rhoa,&rhob);    
+                    &AdS_L,mask_mg,phys_bdy,x,y,z,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&rhoa,&rhob);  
+
+
 //   for (i=0; i<Nx; i++)   
 //   { 
 //      for (j=0; j<Ny; j++) 
@@ -3363,6 +3424,7 @@ void AdS4D_pre_io_calc(void)
     }
     else
     {
+
         //(NOTE: for t=t0, have *not* cycled time sequence, so still np1,n,nm1,
         // so here, time level np1 is the most advanced time level) 
         //we call the following functions just to save and output the values of the grid functions chrbdy, leadordcoeff_phi1 and quasiset_ll for t=0. These will be later then used to extrapolate the value of bdyphi and quasiset componenents at the AdS boundary in pre_tstep for t=0 (and post_tstep for later times)

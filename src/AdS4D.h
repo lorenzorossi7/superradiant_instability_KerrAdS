@@ -651,4 +651,18 @@ void init_kerrads4d_bh_(real *ief_bh_r0, real *a_rot, real *AdS_L,
                             int *phys_bdy,
                             real *x, real *y, real *z, real *dt,real *chr_mg,real *ex,int *Nx,int *Ny,int *Nz,int *regtype, int *kerrads_background);
 
+void sph_harm_perturb_(       real *phi1, 
+                              real *gb_tt,
+                              real *gb_tx,
+                              real *gb_ty,
+                              real *gb_tz,
+                              real *gb_xx,
+                              real *gb_xy,
+                              real *gb_xz,
+                              real *gb_yy,
+                              real *gb_yz,
+                              real *gb_zz,
+                              real *amp_Y, real *amp_V,
+                              real *AdS_L, real *x, real *y, real *z, real *dt, real *chr,real *exc, int *Nx, int *Ny, int *Nz);
+
 #endif

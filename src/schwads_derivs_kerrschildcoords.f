@@ -940,7 +940,7 @@ c----------------------------------------------------------------------
           end do
         end do
 
-        !define transformation matrix between spherical to Cartesian coordinates, 
+        !define transformation matrix between (quasi-)spherical to Cartesian coordinates, 
         !e.g. dxqssph_dxcar(2,3)=drho/dtheta, d2xqssph_dxcardxcar(2,3,4)=d^2rho/(dtheta dphi), 
         ! d3xqssph_dxcardxcardxcar(2,3,4,2)=d^2rho/(dtheta dphi drho)
 
@@ -1304,7 +1304,7 @@ c----------------------------------------------------------------------
        end if !closes condition on calc_der
 
 
-        !compute Cartesian quantities in terms of spherical ones
+        !compute Cartesian quantities in terms of (quasi-)spherical ones
         do a=1,4
          do b=1,4
           gschwads_ll(a,b)=0
