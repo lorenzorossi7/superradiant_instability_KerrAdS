@@ -85,6 +85,9 @@ background := 0
 skip_constraints := 1
 output_ires := 1
 output_bdyquantities := 1
+#if rad_extrap=1 we use boundary extrapolation along radial direction (output saved in the freepts txt files)
+#if rad_extrap=0 we extrapolate along Cartesian directions
+rad_extrap := 1
 output_outermostpts := 1
 bdy_extrap_freepts := 1
 bdy_extrap_fixedpts := 1
@@ -154,7 +157,7 @@ max_resolution_degree := 4
 #reduction_factor is the factor by which we need to reduce the number points of the lowest resolution used for convergence (i.e. the resolution with degree 1) so that we only select points that are present also in the resolutions with degree 2 and 3. To get the exact same points in higher resolutions, we need to reduce by a factor (reduction_factor**(max_resolution_degree-1))*((ratio_Lhighres_Llowres)**(resolution_degree-1)). ratio_Lhighres_Llowres and reduction_factor must be chosen so that this factor is an integer for all resolutions
 reduction_factor := 2
 
-base_shape := [17 17 17]
+base_shape := [33 33 33]
 #max_lev := 1
 lambda := 0.2
 rho_sp := 2
@@ -255,7 +258,7 @@ cp_restore_fname := "cp_L2_A"
 
 #------- solution related -------------------------------------------------
 
-steps := 1
+steps := 10
 evo_max_iter := 25
 evo_min_iter := 1
 evo_tol := 1.0e-6
