@@ -115,13 +115,15 @@ c----------------------------------------------------------------------
      &		         *(Re_V_122_chi+Re_V_222_chi)
      		pert_gbqssph_ll(1,4)=16*PI/3*(1-rho0)*amp_V
      &		         *(Re_V_122_xi+Re_V_222_xi)
-     		pert_gbqssph_ll(2,2)=(64*PI**3)/(8*PI**2)*(1-rho0)*amp_Y*Re_Y_22
+     		pert_gbqssph_ll(2,2)=(1.0d0/3.0d0)*(64*PI**3)
+     &             /(8*PI**2)*(1-rho0)*amp_Y*Re_Y_22
      		pert_gbqssph_ll(2,3)=0
      		pert_gbqssph_ll(2,4)=0
-     		pert_gbqssph_ll(3,3)=(64*PI**3)/12*(1-rho0)*amp_Y*Re_Y_22
+     		pert_gbqssph_ll(3,3)=(1.0d0/3.0d0)*(64*PI**3)
+     &             /12*(1-rho0)*amp_Y*Re_Y_22
      		pert_gbqssph_ll(3,4)=0
-     		pert_gbqssph_ll(4,4)=64*PI**3*(sin(PI*chi0)**2)/3*(1-rho0)
-     &		         *amp_Y*Re_Y_22
+     		pert_gbqssph_ll(4,4)=(1.0d0/3.0d0)*64*PI**3*(sin(PI*chi0)**2)
+     &		         /3*(1-rho0)*amp_Y*Re_Y_22
 
      	      do a=1,3
            	 do b=a+1,4
