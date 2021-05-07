@@ -3285,7 +3285,6 @@ void AdS4D_t0_cnst_data(void)
 	//        	    MPI_Barrier(MPI_COMM_WORLD);
 	//    if (my_rank==0) {printf("POST-boost_perturb\n"); fflush(stdout); }
 	
-	        }
         }   
     }   
     // initialize hbars 
