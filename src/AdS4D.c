@@ -2991,6 +2991,55 @@ void AdS4D_t0_cnst_data(void)
                     //       }  
                     //      } 
                     //   }   
+	        if ((!AMRD_cp_restart)&&((fabs(amp_Y)>pow(10.0,-10))||(fabs(amp_V)>pow(10.0,-10))))
+	        {
+	
+	        	if (my_rank==0) 
+	        	{
+	        		printf("Adding l=2,m=2 spherical harmonics perturbations to initial gbs\n"
+	        			   "WARNING: constraint-violating initial data\n");
+	        		printf("Amplitudes\n");
+	        		printf("amp_Y=%lf,amp_V=%lf\n",amp_Y,amp_V);
+	        	}
+	
+	        	sph_harm_perturb_(phi1,
+	        				gb_tt,
+	                        gb_tx,
+	                        gb_ty,
+	                        gb_tz,
+	                        gb_xx,
+	                        gb_xy,
+	                        gb_xz,
+	                        gb_yy,
+	                        gb_yz,
+	                        gb_zz,
+	                        &amp_Y,&amp_V,
+	                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz);
+	
+	//					for (i=0; i<Nx; i++)
+	//					{    
+	//						for (j=0; j<Ny; j++)
+	//						{ 
+	//						   	for (k=0; k<Nz; k++)
+	//						    {  
+	//								if (sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k])<0.4)
+	//							    {   
+	//									ind=i+Nx*(j+Ny*k);
+	//									printf("POST-boost_perturb\n");
+	//									printf("i=%i,j=%i,k=%i,Nx=%i,Ny=%i,Nz=%i,x[i]=%lf,y[j]=%lf,z[k]=%lf,rho=%lf\n"
+	//									       ,i,j,k,Nx,Ny,Nz,x[i],y[j],z[k],sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k]));
+	//									printf("phi1_nm1[ind]=%lf,phi1_n[ind]=%lf,phi1_np1[ind]=%lf\n",phi1_nm1[ind],phi1_n[ind],phi1_np1[ind]);
+	//									printf("phi1_t_n[ind]=%lf\n",phi1_t_n[ind]);
+	//									printf("gb_tt_nm1[ind]=%lf,gb_tt_n[ind]=%lf,gb_tt_np1[ind]=%lf\n",gb_tt_nm1[ind],gb_tt_n[ind],gb_tt_np1[ind]);
+	//								}
+	//						    }
+	//						}
+	//					} 
+	//
+	//        	    MPI_Barrier(MPI_COMM_WORLD);
+	//    if (my_rank==0) {printf("POST-boost_perturb\n"); fflush(stdout); }
+	
+	        }
             for (i=0; i<size; i++)
             {
                 gb_tt_np1[i]=gb_tt_nm1[i]=gb_tt[i];
@@ -3191,6 +3240,52 @@ void AdS4D_t0_cnst_data(void)
 //       }    
 //      }   
 //   } 
+	        if (my_rank==0) 
+	       	{
+	       		printf("Adding l=2,m=2 spherical harmonics perturbations to initial gbs\n"
+	       			   "WARNING: constraint-violating initial data\n");
+	       		printf("Amplitudes\n");
+	       		printf("amp_Y=%lf,amp_V=%lf\n",amp_Y,amp_V);
+	       	}
+	
+        	sph_harm_perturb_(phi1,
+	        				gb_tt,
+	                        gb_tx,
+	                        gb_ty,
+	                        gb_tz,
+	                        gb_xx,
+	                        gb_xy,
+	                        gb_xz,
+	                        gb_yy,
+	                        gb_yz,
+	                        gb_zz,
+	                        &amp_Y,&amp_V,
+	                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz);
+	
+	//					for (i=0; i<Nx; i++)
+	//					{    
+	//						for (j=0; j<Ny; j++)
+	//						{ 
+	//						   	for (k=0; k<Nz; k++)
+	//						    {  
+	//								if (sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k])<0.4)
+	//							    {   
+	//									ind=i+Nx*(j+Ny*k);
+	//									printf("POST-boost_perturb\n");
+	//									printf("i=%i,j=%i,k=%i,Nx=%i,Ny=%i,Nz=%i,x[i]=%lf,y[j]=%lf,z[k]=%lf,rho=%lf\n"
+	//									       ,i,j,k,Nx,Ny,Nz,x[i],y[j],z[k],sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k]));
+	//									printf("phi1_nm1[ind]=%lf,phi1_n[ind]=%lf,phi1_np1[ind]=%lf\n",phi1_nm1[ind],phi1_n[ind],phi1_np1[ind]);
+	//									printf("phi1_t_n[ind]=%lf\n",phi1_t_n[ind]);
+	//									printf("gb_tt_nm1[ind]=%lf,gb_tt_n[ind]=%lf,gb_tt_np1[ind]=%lf\n",gb_tt_nm1[ind],gb_tt_n[ind],gb_tt_np1[ind]);
+	//								}
+	//						    }
+	//						}
+	//					} 
+	//
+	//        	    MPI_Barrier(MPI_COMM_WORLD);
+	//    if (my_rank==0) {printf("POST-boost_perturb\n"); fflush(stdout); }
+	
+	        }
         }   
     }   
     // initialize hbars 
