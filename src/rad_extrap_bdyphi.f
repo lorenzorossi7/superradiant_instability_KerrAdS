@@ -1952,7 +1952,7 @@ c----------------------------------------------------------------------
 
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = abs(zp2/tan(PI*chip2))
+                        yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -1995,7 +1995,7 @@ c----------------------------------------------------------------------
 
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = -abs(zp2/tan(PI*chip2))
+                        yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2052,7 +2052,7 @@ c----------------------------------------------------------------------
 
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = abs(zp2/tan(PI*chip2))
+                        yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2095,7 +2095,7 @@ c----------------------------------------------------------------------
 
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = -abs(zp2/tan(PI*chip2))
+                        yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2156,7 +2156,7 @@ c----------------------------------------------------------------------
 
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = abs(zp2/tan(PI*chip2))
+                        yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2200,7 +2200,7 @@ c----------------------------------------------------------------------
 
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = abs(zp2/tan(PI*chip2))
+                        yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2257,7 +2257,7 @@ c----------------------------------------------------------------------
 
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = -abs(zp2/tan(PI*chip2))
+                        yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2301,7 +2301,7 @@ c----------------------------------------------------------------------
 
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = -abs(zp2/tan(PI*chip2))
+                        yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2375,7 +2375,7 @@ c----------------------------------------------------------------------
 
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = abs(zp2/tan(PI*chip2))
+                        yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2418,7 +2418,7 @@ c----------------------------------------------------------------------
 
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = -abs(zp2/tan(PI*chip2))
+                        yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2474,7 +2474,7 @@ c----------------------------------------------------------------------
 
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = abs(zp2/tan(PI*chip2))
+                        yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2517,7 +2517,7 @@ c----------------------------------------------------------------------
 
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = -abs(zp2/tan(PI*chip2))
+                        yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2578,7 +2578,7 @@ c----------------------------------------------------------------------
 
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = abs(zp2/tan(PI*chip2))
+                        yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2622,7 +2622,7 @@ c----------------------------------------------------------------------
 
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = abs(zp2/tan(PI*chip2))
+                        yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2679,7 +2679,7 @@ c----------------------------------------------------------------------
 
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = -abs(zp2/tan(PI*chip2))
+                        yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
@@ -2723,7 +2723,7 @@ c----------------------------------------------------------------------
 
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
-                        yp2  = -abs(zp2/tan(PI*chip2))
+                        yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
 
                         leadordcoeff_phi1_pa=
