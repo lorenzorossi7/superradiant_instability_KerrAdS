@@ -14583,7 +14583,7 @@ c-------------------------------------------------------------------------------
                       ypc=y(jpc)
                       ypd=y(jpd)
 
-                      if (xp1.gt.0) then !(i.e., quadrant Ia)
+                      if (xp1.gt.0) then !(i.e., quadrant IVa)
 
                         ipa=i
                         ipb=i-1

@@ -359,15 +359,15 @@ c----------------------------------------------------------------------
 
                     if (zp1.gt.0) then !(i.e., either quadrant Ia or IIa)
 
-                        kpa=k
-                        kpb=k
-                        kpc=k-1
-                        kpd=k-1
+                      kpa=k
+                      kpb=k
+                      kpc=k-1
+                      kpd=k-1
 
-                        zpa=z(kpa)
-                        zpb=z(kpb)
-                        zpc=z(kpc)
-                        zpd=z(kpd)
+                      zpa=z(kpa)
+                      zpb=z(kpb)
+                      zpc=z(kpc)
+                      zpd=z(kpd)
 
                       if (yp1.gt.0) then !(i.e., quadrant Ia)
 
@@ -2564,7 +2564,7 @@ c----------------------------------------------------------------------
                       ypc=y(jpc)
                       ypd=y(jpd)
 
-                      if (xp1.gt.0) then !(i.e., quadrant Ia)
+                      if (xp1.gt.0) then !(i.e., quadrant IVa)
 
                         ipa=i
                         ipb=i-1
