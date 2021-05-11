@@ -1,7 +1,8 @@
 c----------------------------------------------------------------------
 c in Cartesian coordinates t,x,y,z for x/y/z in [-1,1]
 c
-c routine for computing the scalar field phi of the boundary CFT
+c routine for computing the extrapolated value of the
+c leadordcoeff_f grid function at the AdS boundary
 c----------------------------------------------------------------------
 
         real*8 function firstord_func_radextrap(
@@ -2697,9 +2698,6 @@ c----------------------------------------------------------------------
                   end if !closes condition on (abs(xp1).gt.abs(yp1))
 
                 end if !closes condition on (zp1.gt.0)
-
-
-
 
 
 

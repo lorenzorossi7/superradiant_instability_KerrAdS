@@ -181,12 +181,17 @@ c----------------------------------------------------------------------
             if (bdy_extrap_order.eq.1) then
 
 
+! if some points are not suitable for radial extrapolation 
+! (typically because either their neighbouring points needed for extrapolation are not available
+! or because they are not the outermost points that are suitable for radial extrapolation)
+! the following routine sets chrbdy(i,j,k)=ex at these points.
               call firstord_chrbdy_radextrap(
      &                  chrbdy,
      &                  chrbdy2,
      &                  is,ie,js,je,ks,ke,
      &                  i,j,k,
-     &                  xp1,yp1,zp1,rhop1,chip1,xip1,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
      &                  chr,ex,Nx,Ny,Nz)
            
 
