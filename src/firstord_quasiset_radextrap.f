@@ -1,13 +1,11 @@
-c-------------------------------------------------------------------------------------
+c----------------------------------------------------------------------
 c in Cartesian coordinates t,x,y,z for x/y/z in [-1,1]
 c
-c routine for computing the asymptotic quasilocal stress-energy of AdS4D_polar  
-c using a 1-rho expansion about rho=1 AT the boundary through extrapolation.
-c The tensor components are given in spherical polar coordinates.
-c-------------------------------------------------------------------------------------
+c routine for computing the scalar field phi of the boundary CFT
+c----------------------------------------------------------------------
 
-        subroutine quasiset_radextrap(
-     &                  quasiset_tt,quasiset_tchi,quasiset_txi,
+        real*8 function firstord_quasiset_radextrap(
+     &				    quasiset_tt,quasiset_tchi,quasiset_txi,
      &                  quasiset_chichi,quasiset_chixi,
      &                  quasiset_xixi,
      &                  quasiset_trace,
@@ -23,10 +21,13 @@ c-------------------------------------------------------------------------------
      &                  quasiset_angmomdensityxll,
      &                  quasiset_angmomdensityyll,
      &                  quasiset_angmomdensityzll,
-     &                  xpbdy,ypbdy,zpbdy,
-     &                  chrbdy,numbdypoints,
-     &                  bdy_extrap_order,
-     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,phys_bdy,ghost_width)
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
 
 !----------------------------------------------------------------------
 
@@ -143,15 +144,6 @@ c-------------------------------------------------------------------------------
         real*8 gamma0sphbdy_uu_chixi
         real*8 gamma0sphbdy_uu_xixi
 
-        real*8 quasiset_tt(numbdypoints),quasiset_tchi(numbdypoints)
-        real*8 quasiset_txi(numbdypoints),quasiset_chichi(numbdypoints)
-        real*8 quasiset_chixi(numbdypoints),quasiset_xixi(numbdypoints)
-        real*8 quasiset_trace(numbdypoints)
-        real*8 quasiset_massdensity(numbdypoints)
-        real*8 quasiset_angmomdensityx(numbdypoints)
-        real*8 quasiset_angmomdensityy(numbdypoints)
-        real*8 quasiset_angmomdensityz(numbdypoints)
-
         real*8 xpbdy(numbdypoints)
         real*8 ypbdy(numbdypoints)
         real*8 zpbdy(numbdypoints)
@@ -203,89 +195,6 @@ c-------------------------------------------------------------------------------
         real*8 AdS_mass
 
 !----------------------------------------------------------------------
-
-        dx=x(2)-x(1)
-        dy=y(2)-y(1)
-        dz=z(2)-z(1)
-
-
-        ! set index bounds for main loop
-        is=2
-        ie=Nx-1
-        js=2
-        je=Ny-1
-        ks=2
-        ke=Nz-1
-
-        ! adjust index bounds to compensate for ghost_width
-        if (ghost_width(1).gt.0) is=is+ghost_width(1)-1
-        if (ghost_width(2).gt.0) ie=ie-(ghost_width(2)-1)
-        if (ghost_width(3).gt.0) js=js+ghost_width(3)-1
-        if (ghost_width(4).gt.0) je=je-(ghost_width(4)-1)
-        if (ghost_width(5).gt.0) ks=ks+ghost_width(5)-1
-        if (ghost_width(6).gt.0) ke=ke-(ghost_width(6)-1)
-
-        lind=0
-        do i=is,ie
-         do j=js,je
-          do k=ks,ke
-
-           if (chrbdy(i,j,k).ne.ex) then
-              lind=lind+1
-
-              xp1=x(i)
-              yp1=y(j)
-              zp1=z(k)
-              rhop1=sqrt(xp1**2+yp1**2+zp1**2)
-              chip1=(1/PI)*acos(xp1/rhop1)
-              if (zp1.lt.0) then
-                xip1=(1/(2*PI))*(atan2(zp1,yp1)+2*PI)
-              else
-                xip1=(1/(2*PI))*atan2(zp1,yp1)
-              end if
-  
-              quasiset_tt_p1=
-     &                        quasiset_tt_ll(i,j,k)
-              quasiset_tchi_p1=
-     &                        quasiset_tchi_ll(i,j,k)
-              quasiset_txi_p1=
-     &                        quasiset_txi_ll(i,j,k)
-              quasiset_chichi_p1=
-     &                        quasiset_chichi_ll(i,j,k)
-              quasiset_chixi_p1=
-     &                        quasiset_chixi_ll(i,j,k)
-              quasiset_xixi_p1=
-     &                        quasiset_xixi_ll(i,j,k)
-              quasiset_trace_p1=
-     &                        quasiset_tracell(i,j,k)
-              quasiset_massdensity_p1=
-     &                        quasiset_massdensityll(i,j,k)
-              quasiset_angmomdensityx_p1=
-     &                        quasiset_angmomdensityxll(i,j,k)
-              quasiset_angmomdensityy_p1=
-     &                        quasiset_angmomdensityyll(i,j,k)
-              quasiset_angmomdensityz_p1=
-     &                        quasiset_angmomdensityzll(i,j,k)
-
-              xex=xpbdy(lind)
-              yex=ypbdy(lind)
-              zex=zpbdy(lind)
-              rhoex=1
-              chiex=(1/PI)*acos(xex/rhoex)
-              if (zex.lt.0) then
-                xiex=(1/(2*PI))*(atan2(zex,yex)+2*PI)
-              else
-                xiex=(1/(2*PI))*atan2(zex,yex)
-              end if
-
-              !inverse of conformal metric on AdS boundary (needed for trace) at extrapolated point
-              gamma0sphbdy_uu_tt=-1
-              gamma0sphbdy_uu_tchi=0
-              gamma0sphbdy_uu_txi=0
-              gamma0sphbdy_uu_chichi=1/(PI**2)
-              gamma0sphbdy_uu_chixi=0
-              gamma0sphbdy_uu_xixi=1/((sin(PI*chiex))**2)/4/PI**2
-
 
 
             if (bdy_extrap_order.eq.1) then
@@ -15862,24 +15771,6 @@ c-------------------------------------------------------------------------------
 
 
               end if !closes condition on ((abs(xp1).gt.abs(yp1)).and.(abs(xp1).gt.abs(zp1)))
-
-
-
-!                  bdyphi(lind)=leadordcoeff_phi1_p1  !TEST
-!              write(*,*) "lind-1,xp1,yp1,zp1",lind-1,xp1,yp1,zp1
-!             write(*,*) "bdyphi(lind)=",bdyphi(lind)
-
-            end if !closes condition on bdy_extrap_order.eq.1
-
-
-           end if !closes condition on chrbdy(i,j,k).ne.ex
-
-
-
-
-          end do
-         end do
-        end do
 
 
         return
