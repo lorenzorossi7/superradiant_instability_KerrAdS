@@ -3565,7 +3565,7 @@ void AdS4D_pre_io_calc(void)
                 		//routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                 		if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters (saved in freepts_extraporder1_paramset1*.txt files\n");
+                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -3820,7 +3820,7 @@ void AdS4D_pre_io_calc(void)
                 	{
                 		if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters (saved in freepts_extraporder1_paramset1*.txt files\n");
+                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset1,&numbdypoints_freepts_extraporder1_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -3839,7 +3839,16 @@ void AdS4D_pre_io_calc(void)
                 	if (remove_repeated_bdypoints)
                     {
                         //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
-                        nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                        if (rad_extrap)
+                		{
+                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                		}
+                		else
+                		{
+                			nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+						}
+                        
     
                         MPI_Comm_size(MPI_COMM_WORLD,&uniSize); 
                         vecbdypoints_tmp = malloc(uniSize*sizeof(int));
@@ -3913,9 +3922,18 @@ void AdS4D_pre_io_calc(void)
                             }
                         }   
     
-                        xyz_extrap_outermost_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
+    					if (rad_extrap)
+                    	{
+                    		xyz_bdy_out_radextrap_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
                                     x_outermostpt_tmp,y_outermostpt_tmp,z_outermostpt_tmp,
                                     chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+                    	}
+                    	else
+                    	{
+                    		xyz_extrap_outermost_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
+                                    x_outermostpt_tmp,y_outermostpt_tmp,z_outermostpt_tmp,
+                                    chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+						}  
     
     
                         //x/y/zpbdy0 are arrays with xpbdy,ypbdy,zpbdy from all the processors one after the other
@@ -4076,7 +4094,15 @@ void AdS4D_pre_io_calc(void)
                     } //closes condition on remove_repeated_bdypoints
                     else
                     {
-                        nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                    	if (rad_extrap)
+                		{
+                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                		}
+                		else
+                		{
+                        	nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                        }
                     }
 
             	}  
@@ -4337,7 +4363,7 @@ void AdS4D_pre_io_calc(void)
                         //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                     	if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters (saved in freepts_extraporder1_paramset2*.txt files\n");
+                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -4593,7 +4619,7 @@ void AdS4D_pre_io_calc(void)
                     {
                     	if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters (saved in freepts_extraporder1_paramset2*.txt files\n");
+                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset2,&numbdypoints_freepts_extraporder1_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -4612,8 +4638,16 @@ void AdS4D_pre_io_calc(void)
                     if (remove_repeated_bdypoints)
                     {
                         //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
-                        nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
-    
+                        if (rad_extrap)
+                		{
+                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                		}
+                		else
+                		{
+                        	nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+    					}
+
                         MPI_Comm_size(MPI_COMM_WORLD,&uniSize); 
                         vecbdypoints_tmp = malloc(uniSize*sizeof(int));
                         dsplsbdypoints_tmp = malloc(uniSize*sizeof(int));    
@@ -4686,10 +4720,18 @@ void AdS4D_pre_io_calc(void)
                             }
                         }   
     
-                        xyz_extrap_outermost_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
+    					if (rad_extrap)
+                    	{
+                    		xyz_bdy_out_radextrap_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
                                     x_outermostpt_tmp,y_outermostpt_tmp,z_outermostpt_tmp,
                                     chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
-    
+                    	}
+                    	else
+                    	{
+                        	xyz_extrap_outermost_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
+                                    x_outermostpt_tmp,y_outermostpt_tmp,z_outermostpt_tmp,
+                                    chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+    					}
     
                         //x/y/zpbdy0 are arrays with xpbdy,ypbdy,zpbdy from all the processors one after the other
                         MPI_Allgatherv(xpbdy_tmp,numbdypoints_tmp,MPI_DOUBLE,xpbdy0_tmp,vecbdypoints_tmp,dsplsbdypoints_tmp,MPI_DOUBLE,MPI_COMM_WORLD);
@@ -4849,7 +4891,15 @@ void AdS4D_pre_io_calc(void)
                     } //closes condition on remove_repeated_bdypoints
                     else
                     {
-                        nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                    	if (rad_extrap)
+                		{
+                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                		}
+                		else
+                		{
+                        	nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                        }
                     }
 
                 }  
@@ -7959,10 +8009,19 @@ void AdS4D_pre_tstep(int L)
                             }
                         }   
                         
-                        xyz_extrap_outermost_(xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
-                                                                        x_outermostpt_freepts_extraporder2_paramset1,y_outermostpt_freepts_extraporder2_paramset1,z_outermostpt_freepts_extraporder2_paramset1,
-                                                                        chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
-                        
+                        if (rad_extrap)
+                    	{
+                    		xyz_bdy_out_radextrap_(xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
+                                                  x_outermostpt_freepts_extraporder2_paramset1,y_outermostpt_freepts_extraporder2_paramset1,z_outermostpt_freepts_extraporder2_paramset1,
+                                                  chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+                    	}
+                    	else
+                    	{
+                        	xyz_extrap_outermost_(xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
+                                                  x_outermostpt_freepts_extraporder2_paramset1,y_outermostpt_freepts_extraporder2_paramset1,z_outermostpt_freepts_extraporder2_paramset1,
+                                                  chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+                        }
+
                         //x/y/zpbdy0 are arrays with xpbdy,ypbdy,zpbdy from all the processors one after the other
                         MPI_Allgatherv(xpbdy_freepts_extraporder2_paramset1,numbdypoints_freepts_extraporder2_paramset1,MPI_DOUBLE,xpbdy0_freepts_extraporder2_paramset1,vecbdypoints_freepts_extraporder2_paramset1,dsplsbdypoints_freepts_extraporder2_paramset1,MPI_DOUBLE,MPI_COMM_WORLD);
                         MPI_Allgatherv(ypbdy_freepts_extraporder2_paramset1,numbdypoints_freepts_extraporder2_paramset1,MPI_DOUBLE,ypbdy0_freepts_extraporder2_paramset1,vecbdypoints_freepts_extraporder2_paramset1,dsplsbdypoints_freepts_extraporder2_paramset1,MPI_DOUBLE,MPI_COMM_WORLD);
@@ -8001,14 +8060,16 @@ void AdS4D_pre_tstep(int L)
                             }
                         }
 
-   
-                        extrap_bdyphi_freepts_(bdyphi_freepts_extraporder2_paramset1,
+						if (rad_extrap)
+                		{
+                			
+                			bdyphi_radextrap_(bdyphi_freepts_extraporder2_paramset1,
                                         leadordcoeff_phi1,
                                         xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
                                         chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,
                                         &bdy_extrap_order,
                                         x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
-                        extrap_quasiset_freepts_(quasiset_tt_freepts_extraporder2_paramset1,quasiset_tchi_freepts_extraporder2_paramset1,quasiset_txi_freepts_extraporder2_paramset1,
+                        	quasiset_radextrap_(quasiset_tt_freepts_extraporder2_paramset1,quasiset_tchi_freepts_extraporder2_paramset1,quasiset_txi_freepts_extraporder2_paramset1,
                                 quasiset_chichi_freepts_extraporder2_paramset1,quasiset_chixi_freepts_extraporder2_paramset1,
                                 quasiset_xixi_freepts_extraporder2_paramset1,
                                 quasiset_trace_freepts_extraporder2_paramset1,
@@ -8027,7 +8088,37 @@ void AdS4D_pre_tstep(int L)
                                 xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
                                 chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,
                                 &bdy_extrap_order,
-                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                		}
+                		else
+                		{   
+                        	extrap_bdyphi_freepts_(bdyphi_freepts_extraporder2_paramset1,
+                                        leadordcoeff_phi1,
+                                        xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
+                                        chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,
+                                        &bdy_extrap_order,
+                                        x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                        	extrap_quasiset_freepts_(quasiset_tt_freepts_extraporder2_paramset1,quasiset_tchi_freepts_extraporder2_paramset1,quasiset_txi_freepts_extraporder2_paramset1,
+                                quasiset_chichi_freepts_extraporder2_paramset1,quasiset_chixi_freepts_extraporder2_paramset1,
+                                quasiset_xixi_freepts_extraporder2_paramset1,
+                                quasiset_trace_freepts_extraporder2_paramset1,
+                                quasiset_massdensity_freepts_extraporder2_paramset1,
+                                quasiset_angmomdensityx_freepts_extraporder2_paramset1,
+                                quasiset_angmomdensityy_freepts_extraporder2_paramset1,
+                                quasiset_angmomdensityz_freepts_extraporder2_paramset1,
+                                quasiset_tt_ll,quasiset_tchi_ll,quasiset_txi_ll,
+                                quasiset_chichi_ll,quasiset_chixi_ll,
+                                quasiset_xixi_ll,
+                                quasiset_tracell,
+                                quasiset_massdensityll,
+                                quasiset_angmomdensityxll,
+                                quasiset_angmomdensityyll,
+                                quasiset_angmomdensityzll,
+                                xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
+                                chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,
+                                &bdy_extrap_order,
+                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                       	}
                         //distributing the values of the quasiset components of each process over an array lquasiset_ll0 defined globally. This array will be different for each process, in fact it will be zero everywhere except for a certain position (next to the one for the previous processor) containing the values of quasiset_ll of a specific process. This is repeated after each step of the evolution. 
                         for (i=is_bdy_freepts_extraporder2_paramset1; i<ie_bdy_freepts_extraporder2_paramset1; i++)
                         {
@@ -8870,10 +8961,19 @@ void AdS4D_pre_tstep(int L)
                             }
                         }   
                         
-                        xyz_extrap_outermost_(xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
-                                                                        x_outermostpt_freepts_extraporder2_paramset2,y_outermostpt_freepts_extraporder2_paramset2,z_outermostpt_freepts_extraporder2_paramset2,
-                                                                        chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
-                        
+                        if (rad_extrap)
+                    	{
+                    		xyz_bdy_out_radextrap_(xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
+                                                  x_outermostpt_freepts_extraporder2_paramset2,y_outermostpt_freepts_extraporder2_paramset2,z_outermostpt_freepts_extraporder2_paramset2,
+                                                  chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+                    	}
+                    	else
+                    	{
+                        	xyz_extrap_outermost_(xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
+                                                  x_outermostpt_freepts_extraporder2_paramset2,y_outermostpt_freepts_extraporder2_paramset2,z_outermostpt_freepts_extraporder2_paramset2,
+                                                  chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+                        }
+
                         //x/y/zpbdy0 are arrays with xpbdy,ypbdy,zpbdy from all the processors one after the other
                         MPI_Allgatherv(xpbdy_freepts_extraporder2_paramset2,numbdypoints_freepts_extraporder2_paramset2,MPI_DOUBLE,xpbdy0_freepts_extraporder2_paramset2,vecbdypoints_freepts_extraporder2_paramset2,dsplsbdypoints_freepts_extraporder2_paramset2,MPI_DOUBLE,MPI_COMM_WORLD);
                         MPI_Allgatherv(ypbdy_freepts_extraporder2_paramset2,numbdypoints_freepts_extraporder2_paramset2,MPI_DOUBLE,ypbdy0_freepts_extraporder2_paramset2,vecbdypoints_freepts_extraporder2_paramset2,dsplsbdypoints_freepts_extraporder2_paramset2,MPI_DOUBLE,MPI_COMM_WORLD);
@@ -8912,14 +9012,16 @@ void AdS4D_pre_tstep(int L)
                             }
                         }
 
-   
-                        extrap_bdyphi_freepts_(bdyphi_freepts_extraporder2_paramset2,
+   						if (rad_extrap)
+                		{
+                			
+                			bdyphi_radextrap_(bdyphi_freepts_extraporder2_paramset2,
                                         leadordcoeff_phi1,
                                         xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
                                         chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,
                                         &bdy_extrap_order,
                                         x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
-                        extrap_quasiset_freepts_(quasiset_tt_freepts_extraporder2_paramset2,quasiset_tchi_freepts_extraporder2_paramset2,quasiset_txi_freepts_extraporder2_paramset2,
+                        	quasiset_radextrap_(quasiset_tt_freepts_extraporder2_paramset2,quasiset_tchi_freepts_extraporder2_paramset2,quasiset_txi_freepts_extraporder2_paramset2,
                                 quasiset_chichi_freepts_extraporder2_paramset2,quasiset_chixi_freepts_extraporder2_paramset2,
                                 quasiset_xixi_freepts_extraporder2_paramset2,
                                 quasiset_trace_freepts_extraporder2_paramset2,
@@ -8938,7 +9040,37 @@ void AdS4D_pre_tstep(int L)
                                 xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
                                 chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,
                                 &bdy_extrap_order,
-                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);   
+                		}
+                		else
+                		{   
+                        	extrap_bdyphi_freepts_(bdyphi_freepts_extraporder2_paramset2,
+                                        leadordcoeff_phi1,
+                                        xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
+                                        chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,
+                                        &bdy_extrap_order,
+                                        x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                        	extrap_quasiset_freepts_(quasiset_tt_freepts_extraporder2_paramset2,quasiset_tchi_freepts_extraporder2_paramset2,quasiset_txi_freepts_extraporder2_paramset2,
+                                quasiset_chichi_freepts_extraporder2_paramset2,quasiset_chixi_freepts_extraporder2_paramset2,
+                                quasiset_xixi_freepts_extraporder2_paramset2,
+                                quasiset_trace_freepts_extraporder2_paramset2,
+                                quasiset_massdensity_freepts_extraporder2_paramset2,
+                                quasiset_angmomdensityx_freepts_extraporder2_paramset2,
+                                quasiset_angmomdensityy_freepts_extraporder2_paramset2,
+                                quasiset_angmomdensityz_freepts_extraporder2_paramset2,
+                                quasiset_tt_ll,quasiset_tchi_ll,quasiset_txi_ll,
+                                quasiset_chichi_ll,quasiset_chixi_ll,
+                                quasiset_xixi_ll,
+                                quasiset_tracell,
+                                quasiset_massdensityll,
+                                quasiset_angmomdensityxll,
+                                quasiset_angmomdensityyll,
+                                quasiset_angmomdensityzll,
+                                xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
+                                chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,
+                                &bdy_extrap_order,
+                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);   
+                        } 
                         //distributing the values of the quasiset components of each process over an array lquasiset_ll0 defined globally. This array will be different for each process, in fact it will be zero everywhere except for a certain position (next to the one for the previous processor) containing the values of quasiset_ll of a specific process. This is repeated after each step of the evolution. 
                         for (i=is_bdy_freepts_extraporder2_paramset2; i<ie_bdy_freepts_extraporder2_paramset2; i++)
                         {
@@ -16108,7 +16240,7 @@ void AdS4D_post_tstep(int L)
                 			//routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                 			if (rad_extrap)
                 			{
-                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters (saved in freepts_extraporder1_paramset1*.txt files\n");
+                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
                 				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 			}
                 			else
@@ -16359,7 +16491,7 @@ void AdS4D_post_tstep(int L)
                 		{
                 			if (rad_extrap)
 	                		{
-    	            			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters (saved in freepts_extraporder1_paramset1*.txt files\n");
+    	            			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
         	        			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset1,&numbdypoints_freepts_extraporder1_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
             	    		}
                 			else
@@ -16375,8 +16507,16 @@ void AdS4D_post_tstep(int L)
                 		if (remove_repeated_bdypoints)
                     	{
                         	//routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
-                        	nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
-	    
+                        	if (rad_extrap)
+	                		{
+    	            			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+        	        			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+            	    		}
+                			else
+                			{
+                        		nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+	    					}
+
                         	MPI_Comm_size(MPI_COMM_WORLD,&uniSize); 
                         	vecbdypoints_tmp = malloc(uniSize*sizeof(int));
                         	dsplsbdypoints_tmp = malloc(uniSize*sizeof(int));    
@@ -16449,10 +16589,18 @@ void AdS4D_post_tstep(int L)
                             	}
                         	}   
 	    
-                        	xyz_extrap_outermost_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
+	    					if (rad_extrap)
+                    		{
+                    			xyz_bdy_out_radextrap_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
                                     	x_outermostpt_tmp,y_outermostpt_tmp,z_outermostpt_tmp,
                                     	chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
-	    
+                    		}
+                    		else
+                    		{
+                        		xyz_extrap_outermost_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
+                                    	x_outermostpt_tmp,y_outermostpt_tmp,z_outermostpt_tmp,
+                                    	chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+	    					}
 	    
                         	//x/y/zpbdy0 are arrays with xpbdy,ypbdy,zpbdy from all the processors one after the other
                         	MPI_Allgatherv(xpbdy_tmp,numbdypoints_tmp,MPI_DOUBLE,xpbdy0_tmp,vecbdypoints_tmp,dsplsbdypoints_tmp,MPI_DOUBLE,MPI_COMM_WORLD);
@@ -16610,7 +16758,15 @@ void AdS4D_post_tstep(int L)
                     	} //closes condition on remove_repeated_bdypoints
                     	else
                     	{
-                        	nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                    		if (rad_extrap)
+	                		{
+    	            			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+        	        			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+            	    		}
+                			else
+                			{
+                        		nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                        	}
                     	}
             		}  
 
@@ -16869,7 +17025,7 @@ void AdS4D_post_tstep(int L)
                             //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                             if (rad_extrap)
                 			{
-                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters (saved in freepts_extraporder1_paramset2*.txt files\n");
+                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
                 				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 			}
                 			else
@@ -17120,7 +17276,7 @@ void AdS4D_post_tstep(int L)
                         {
                         	if (rad_extrap)
                 			{
-                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters (saved in freepts_extraporder1_paramset2*.txt files\n");
+                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
                 				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset2,&numbdypoints_freepts_extraporder1_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 			}
                 			else
@@ -17136,8 +17292,16 @@ void AdS4D_post_tstep(int L)
                         if (remove_repeated_bdypoints)
                         {
                             //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
-                            nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
-        
+                            if (rad_extrap)
+                			{
+                				if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
+                				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                			}
+                			else
+                			{
+                            	nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+        					}
+
                             MPI_Comm_size(MPI_COMM_WORLD,&uniSize); 
                             vecbdypoints_tmp = malloc(uniSize*sizeof(int));
                             dsplsbdypoints_tmp = malloc(uniSize*sizeof(int));    
@@ -17210,10 +17374,18 @@ void AdS4D_post_tstep(int L)
                                 }
                             }   
         
-                            xyz_extrap_outermost_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
+        					if (rad_extrap)
+                    		{
+                    			xyz_bdy_out_radextrap_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
                                         x_outermostpt_tmp,y_outermostpt_tmp,z_outermostpt_tmp,
                                         chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
-        
+                    		}
+                    		else
+                    		{
+                            	xyz_extrap_outermost_(xpbdy_tmp,ypbdy_tmp,zpbdy_tmp,
+                                        x_outermostpt_tmp,y_outermostpt_tmp,z_outermostpt_tmp,
+                                        chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+        					}
         
                             //x/y/zpbdy0 are arrays with xpbdy,ypbdy,zpbdy from all the processors one after the other
                             MPI_Allgatherv(xpbdy_tmp,numbdypoints_tmp,MPI_DOUBLE,xpbdy0_tmp,vecbdypoints_tmp,dsplsbdypoints_tmp,MPI_DOUBLE,MPI_COMM_WORLD);
@@ -17371,7 +17543,15 @@ void AdS4D_post_tstep(int L)
                         } //closes condition on remove_repeated_bdypoints
                         else
                         {
-                            nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                        	if (rad_extrap)
+                			{
+                				if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
+                				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                			}
+                			else
+                			{
+                            	nexttobdypoints_freepts_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                            }
                         }
                     }  
 
@@ -19644,10 +19824,19 @@ void AdS4D_post_tstep(int L)
                             }
                         }   
                         
-                        xyz_extrap_outermost_(xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
-                                                                        x_outermostpt_freepts_extraporder2_paramset1,y_outermostpt_freepts_extraporder2_paramset1,z_outermostpt_freepts_extraporder2_paramset1,
-                                                                        chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
-                        
+                        if (rad_extrap)
+						{
+							xyz_bdy_out_radextrap_(xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
+                                                  x_outermostpt_freepts_extraporder2_paramset1,y_outermostpt_freepts_extraporder2_paramset1,z_outermostpt_freepts_extraporder2_paramset1,
+                                                  chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+						}
+                    	else
+                    	{
+                        	xyz_extrap_outermost_(xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
+                                                  x_outermostpt_freepts_extraporder2_paramset1,y_outermostpt_freepts_extraporder2_paramset1,z_outermostpt_freepts_extraporder2_paramset1,
+                                                  chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+                        }
+
                         //x/y/zpbdy0 are arrays with xpbdy,ypbdy,zpbdy from all the processors one after the other
                         MPI_Allgatherv(xpbdy_freepts_extraporder2_paramset1,numbdypoints_freepts_extraporder2_paramset1,MPI_DOUBLE,xpbdy0_freepts_extraporder2_paramset1,vecbdypoints_freepts_extraporder2_paramset1,dsplsbdypoints_freepts_extraporder2_paramset1,MPI_DOUBLE,MPI_COMM_WORLD);
                         MPI_Allgatherv(ypbdy_freepts_extraporder2_paramset1,numbdypoints_freepts_extraporder2_paramset1,MPI_DOUBLE,ypbdy0_freepts_extraporder2_paramset1,vecbdypoints_freepts_extraporder2_paramset1,dsplsbdypoints_freepts_extraporder2_paramset1,MPI_DOUBLE,MPI_COMM_WORLD);
@@ -19686,14 +19875,16 @@ void AdS4D_post_tstep(int L)
                             }
                         }
 
-   
-                        extrap_bdyphi_freepts_(bdyphi_freepts_extraporder2_paramset1,
+   						if (rad_extrap)
+                		{
+                			
+                			bdyphi_radextrap_(bdyphi_freepts_extraporder2_paramset1,
                                         leadordcoeff_phi1,
                                         xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
                                         chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,
                                         &bdy_extrap_order,
                                         x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
-                        extrap_quasiset_freepts_(quasiset_tt_freepts_extraporder2_paramset1,quasiset_tchi_freepts_extraporder2_paramset1,quasiset_txi_freepts_extraporder2_paramset1,
+                        	quasiset_radextrap_(quasiset_tt_freepts_extraporder2_paramset1,quasiset_tchi_freepts_extraporder2_paramset1,quasiset_txi_freepts_extraporder2_paramset1,
                                 quasiset_chichi_freepts_extraporder2_paramset1,quasiset_chixi_freepts_extraporder2_paramset1,
                                 quasiset_xixi_freepts_extraporder2_paramset1,
                                 quasiset_trace_freepts_extraporder2_paramset1,
@@ -19712,7 +19903,37 @@ void AdS4D_post_tstep(int L)
                                 xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
                                 chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,
                                 &bdy_extrap_order,
-                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                		}
+                		else
+                		{   
+                        	extrap_bdyphi_freepts_(bdyphi_freepts_extraporder2_paramset1,
+                                        leadordcoeff_phi1,
+                                        xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
+                                        chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,
+                                        &bdy_extrap_order,
+                                        x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                        	extrap_quasiset_freepts_(quasiset_tt_freepts_extraporder2_paramset1,quasiset_tchi_freepts_extraporder2_paramset1,quasiset_txi_freepts_extraporder2_paramset1,
+                                quasiset_chichi_freepts_extraporder2_paramset1,quasiset_chixi_freepts_extraporder2_paramset1,
+                                quasiset_xixi_freepts_extraporder2_paramset1,
+                                quasiset_trace_freepts_extraporder2_paramset1,
+                                quasiset_massdensity_freepts_extraporder2_paramset1,
+                                quasiset_angmomdensityx_freepts_extraporder2_paramset1,
+                                quasiset_angmomdensityy_freepts_extraporder2_paramset1,
+                                quasiset_angmomdensityz_freepts_extraporder2_paramset1,
+                                quasiset_tt_ll,quasiset_tchi_ll,quasiset_txi_ll,
+                                quasiset_chichi_ll,quasiset_chixi_ll,
+                                quasiset_xixi_ll,
+                                quasiset_tracell,
+                                quasiset_massdensityll,
+                                quasiset_angmomdensityxll,
+                                quasiset_angmomdensityyll,
+                                quasiset_angmomdensityzll,
+                                xpbdy_freepts_extraporder2_paramset1,ypbdy_freepts_extraporder2_paramset1,zpbdy_freepts_extraporder2_paramset1,
+                                chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,
+                                &bdy_extrap_order,
+                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                        }
                         //distributing the values of the quasiset components of each process over an array lquasiset_ll0 defined globally. This array will be different for each process, in fact it will be zero everywhere except for a certain position (next to the one for the previous processor) containing the values of quasiset_ll of a specific process. This is repeated after each step of the evolution. 
                         for (i=is_bdy_freepts_extraporder2_paramset1; i<ie_bdy_freepts_extraporder2_paramset1; i++)
                         {
@@ -20556,10 +20777,19 @@ void AdS4D_post_tstep(int L)
                             }
                         }   
                         
-                        xyz_extrap_outermost_(xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
-                                                                        x_outermostpt_freepts_extraporder2_paramset2,y_outermostpt_freepts_extraporder2_paramset2,z_outermostpt_freepts_extraporder2_paramset2,
-                                                                        chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
-                        
+                        if (rad_extrap)
+						{
+							xyz_bdy_out_radextrap_(xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
+                                                  x_outermostpt_freepts_extraporder2_paramset2,y_outermostpt_freepts_extraporder2_paramset2,z_outermostpt_freepts_extraporder2_paramset2,
+                                                  chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+						}
+                    	else
+                    	{
+                        	xyz_extrap_outermost_(xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
+                                                  x_outermostpt_freepts_extraporder2_paramset2,y_outermostpt_freepts_extraporder2_paramset2,z_outermostpt_freepts_extraporder2_paramset2,
+                                                  chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,ghost_width);    
+                        }
+
                         //x/y/zpbdy0 are arrays with xpbdy,ypbdy,zpbdy from all the processors one after the other
                         MPI_Allgatherv(xpbdy_freepts_extraporder2_paramset2,numbdypoints_freepts_extraporder2_paramset2,MPI_DOUBLE,xpbdy0_freepts_extraporder2_paramset2,vecbdypoints_freepts_extraporder2_paramset2,dsplsbdypoints_freepts_extraporder2_paramset2,MPI_DOUBLE,MPI_COMM_WORLD);
                         MPI_Allgatherv(ypbdy_freepts_extraporder2_paramset2,numbdypoints_freepts_extraporder2_paramset2,MPI_DOUBLE,ypbdy0_freepts_extraporder2_paramset2,vecbdypoints_freepts_extraporder2_paramset2,dsplsbdypoints_freepts_extraporder2_paramset2,MPI_DOUBLE,MPI_COMM_WORLD);
@@ -20598,14 +20828,16 @@ void AdS4D_post_tstep(int L)
                             }
                         }
 
-   
-                        extrap_bdyphi_freepts_(bdyphi_freepts_extraporder2_paramset2,
+   						if (rad_extrap)
+                		{
+                			
+                			bdyphi_radextrap_(bdyphi_freepts_extraporder2_paramset2,
                                         leadordcoeff_phi1,
                                         xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
                                         chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,
                                         &bdy_extrap_order,
                                         x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
-                        extrap_quasiset_freepts_(quasiset_tt_freepts_extraporder2_paramset2,quasiset_tchi_freepts_extraporder2_paramset2,quasiset_txi_freepts_extraporder2_paramset2,
+                        	quasiset_radextrap_(quasiset_tt_freepts_extraporder2_paramset2,quasiset_tchi_freepts_extraporder2_paramset2,quasiset_txi_freepts_extraporder2_paramset2,
                                 quasiset_chichi_freepts_extraporder2_paramset2,quasiset_chixi_freepts_extraporder2_paramset2,
                                 quasiset_xixi_freepts_extraporder2_paramset2,
                                 quasiset_trace_freepts_extraporder2_paramset2,
@@ -20624,7 +20856,37 @@ void AdS4D_post_tstep(int L)
                                 xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
                                 chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,
                                 &bdy_extrap_order,
-                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                		}
+                		else
+                		{   
+                        	extrap_bdyphi_freepts_(bdyphi_freepts_extraporder2_paramset2,
+                                        leadordcoeff_phi1,
+                                        xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
+                                        chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,
+                                        &bdy_extrap_order,
+                                        x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);    
+                        	extrap_quasiset_freepts_(quasiset_tt_freepts_extraporder2_paramset2,quasiset_tchi_freepts_extraporder2_paramset2,quasiset_txi_freepts_extraporder2_paramset2,
+                                quasiset_chichi_freepts_extraporder2_paramset2,quasiset_chixi_freepts_extraporder2_paramset2,
+                                quasiset_xixi_freepts_extraporder2_paramset2,
+                                quasiset_trace_freepts_extraporder2_paramset2,
+                                quasiset_massdensity_freepts_extraporder2_paramset2,
+                                quasiset_angmomdensityx_freepts_extraporder2_paramset2,
+                                quasiset_angmomdensityy_freepts_extraporder2_paramset2,
+                                quasiset_angmomdensityz_freepts_extraporder2_paramset2,
+                                quasiset_tt_ll,quasiset_tchi_ll,quasiset_txi_ll,
+                                quasiset_chichi_ll,quasiset_chixi_ll,
+                                quasiset_xixi_ll,
+                                quasiset_tracell,
+                                quasiset_massdensityll,
+                                quasiset_angmomdensityxll,
+                                quasiset_angmomdensityyll,
+                                quasiset_angmomdensityzll,
+                                xpbdy_freepts_extraporder2_paramset2,ypbdy_freepts_extraporder2_paramset2,zpbdy_freepts_extraporder2_paramset2,
+                                chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,
+                                &bdy_extrap_order,
+                                x,y,z,&dt,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
+                        }
                         //distributing the values of the quasiset components of each process over an array lquasiset_ll0 defined globally. This array will be different for each process, in fact it will be zero everywhere except for a certain position (next to the one for the previous processor) containing the values of quasiset_ll of a specific process. This is repeated after each step of the evolution. 
                         for (i=is_bdy_freepts_extraporder2_paramset2; i<ie_bdy_freepts_extraporder2_paramset2; i++)
                         {

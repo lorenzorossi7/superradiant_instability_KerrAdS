@@ -1,11 +1,11 @@
 c----------------------------------------------------------------------
 c in Cartesian coordinates t,x,y,z for x/y/z in [-1,1]
 c
-c routine for computing the extrapolated value of the first order radially extrapolated
-c value of the leadordcoeff_f grid function at the AdS boundary
+c routine for computing the second order radially extrapolated value of the
+c leadordcoeff_f grid function at the AdS boundary
 c----------------------------------------------------------------------
 
-        real*8 function firstord_func_radextrap(
+        real*8 function secondord_func_radextrap(
      &                  leadordcoeff_f,
      &                  leadordcoeff_f_p1,
      &                  lind,
@@ -29,6 +29,12 @@ c----------------------------------------------------------------------
         integer ip2b,jp2b,kp2b
         integer ip2c,jp2c,kp2c
         integer ip2d,jp2d,kp2d
+
+        integer ip3a,jp3a,kp3a
+        integer ip3b,jp3b,kp3b
+        integer ip3c,jp3c,kp3c
+        integer ip3d,jp3d,kp3d
+
         integer a,b,c,d
 
         integer ix1,ix2,ix3,jy1,jy2,jy3,kz1,kz2,kz3
@@ -39,6 +45,10 @@ c----------------------------------------------------------------------
         real*8 xp2a,xp2b,xp2c,xp2d
         real*8 yp2a,yp2b,yp2c,yp2d
         real*8 zp2a,zp2b,zp2c,zp2d
+
+        real*8 xp3a,xp3b,xp3c,xp3d
+        real*8 yp3a,yp3b,yp3c,yp3d
+        real*8 zp3a,zp3b,zp3c,zp3d
 
         real*8 dx,dy,dz
 
@@ -53,6 +63,11 @@ c----------------------------------------------------------------------
         real*8 leadordcoeff_f_p2c
         real*8 leadordcoeff_f_p2d
 
+        real*8 leadordcoeff_f_p3a
+        real*8 leadordcoeff_f_p3b
+        real*8 leadordcoeff_f_p3c
+        real*8 leadordcoeff_f_p3d
+
         real*8 leadordcoeff_f_p2
         real*8 leadordcoeff_f_p3
         real*8 leadordcoeff_f_p4
@@ -64,17 +79,18 @@ c----------------------------------------------------------------------
         real*8 xex,yex,zex,rhoex,chiex,xiex
         real*8 rhop1,chip1,xip1
         real*8 rhop2,chip2,xip2
+        real*8 rhop3,chip3,xip3
         real*8 maxxyzp1
 
         real*8 bilinear_interp
-        real*8 firstord_extrap
         real*8 secondord_extrap
-        real*8 thirdord_extrap
-        real*8 fourthord_extrap
 !----------------------------------------------------------------------
 
               chip2=chip1
               xip2=xip1
+
+              chip3=chip1
+              xip3=xip1
 
 
               if ((abs(xp1).gt.abs(yp1)).and.
@@ -88,11 +104,22 @@ c----------------------------------------------------------------------
                   ip2c=i-1
                   ip2d=i-1
 
+                  ip3a=i-2
+                  ip3b=i-2
+                  ip3c=i-2
+                  ip3d=i-2
+
                   xp2a=x(ip2a)
                   xp2b=x(ip2b)
                   xp2c=x(ip2c)
                   xp2d=x(ip2d)
                   xp2=x(ip2a)
+
+                  xp3a=x(ip3a)
+                  xp3b=x(ip3b)
+                  xp3c=x(ip3c)
+                  xp3d=x(ip3d)
+                  xp3=x(ip3a)
 
                   if (abs(yp1).gt.abs(zp1)) then !(i.e., |yp1|>|zp1|, so yp1 cannot be 0)
                     if (yp1.gt.0) then !(i.e., either quadrant Ia or IVa)
@@ -102,10 +129,20 @@ c----------------------------------------------------------------------
                       jp2c=j-1
                       jp2d=j-1
 
+                      jp3a=j
+                      jp3b=j
+                      jp3c=j-1
+                      jp3d=j-1
+
                       yp2a=y(jp2a)
                       yp2b=y(jp2b)
                       yp2c=y(jp2c)
                       yp2d=y(jp2d)
+
+                      yp3a=y(jp3a)
+                      yp3b=y(jp3b)
+                      yp3c=y(jp3c)
+                      yp3d=y(jp3d)
 
                       if (zp1.gt.0) then !(i.e., quadrant Ia)
 
@@ -114,14 +151,28 @@ c----------------------------------------------------------------------
                         kp2c=k-1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k-1
+                        kp3c=k-1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         yp2  = abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -131,6 +182,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -143,11 +203,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., zp1<=0: quadrant IVa)
 
@@ -156,14 +228,28 @@ c----------------------------------------------------------------------
                         kp2c=k+1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k+1
+                        kp3c=k+1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         yp2  = abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = -abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = -abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -173,6 +259,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -185,11 +280,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -200,10 +307,20 @@ c----------------------------------------------------------------------
                       jp2c=j+1
                       jp2d=j+1
 
+                      jp3a=j
+                      jp3b=j
+                      jp3c=j+1
+                      jp3d=j+1
+
                       yp2a=y(jp2a)
                       yp2b=y(jp2b)
                       yp2c=y(jp2c)
                       yp2d=y(jp2d)
+
+                      yp3a=y(jp3a)
+                      yp3b=y(jp3b)
+                      yp3c=y(jp3c)
+                      yp3d=y(jp3d)
 
                       if (zp1.gt.0) then !(i.e., quadrant IIa)
 
@@ -212,14 +329,28 @@ c----------------------------------------------------------------------
                         kp2c=k-1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k-1
+                        kp3c=k-1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         yp2  = -abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = -abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -229,6 +360,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -241,11 +381,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., zp1<=0: quadrant IIIa)
 
@@ -254,14 +406,28 @@ c----------------------------------------------------------------------
                         kp2c=k+1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k+1
+                        kp3c=k+1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         yp2  = -abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = -abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = -abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = -abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -271,6 +437,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -283,11 +458,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -302,10 +489,20 @@ c----------------------------------------------------------------------
                       kp2c=k-1
                       kp2d=k-1
 
+                      kp3a=k
+                      kp3b=k
+                      kp3c=k-1
+                      kp3d=k-1
+
                       zp2a=z(kp2a)
                       zp2b=z(kp2b)
                       zp2c=z(kp2c)
                       zp2d=z(kp2d)
+
+                      zp3a=z(kp3a)
+                      zp3b=z(kp3b)
+                      zp3c=z(kp3c)
+                      zp3d=z(kp3d)
 
                       if (yp1.gt.0) then !(i.e., quadrant Ia)
 
@@ -314,15 +511,29 @@ c----------------------------------------------------------------------
                         jp2c=j-1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j-1
+                        jp3c=j-1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
 
                         yp2  = abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -332,6 +543,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -344,11 +564,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., yp1<=0: quadrant IIa)
@@ -358,15 +590,29 @@ c----------------------------------------------------------------------
                         jp2c=j+1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j+1
+                        jp3c=j+1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
 
                         yp2  = -abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = -abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -376,6 +622,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -388,11 +643,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -403,10 +670,20 @@ c----------------------------------------------------------------------
                       kp2c=k+1
                       kp2d=k+1
 
+                      kp3a=k
+                      kp3b=k
+                      kp3c=k+1
+                      kp3d=k+1
+
                       zp2a=z(kp2a)
                       zp2b=z(kp2b)
                       zp2c=z(kp2c)
                       zp2d=z(kp2d)
+
+                      zp3a=z(kp3a)
+                      zp3b=z(kp3b)
+                      zp3c=z(kp3c)
+                      zp3d=z(kp3d)
 
                       if (yp1.gt.0) then !(i.e., quadrant IVa)
 
@@ -415,15 +692,29 @@ c----------------------------------------------------------------------
                         jp2c=j-1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j-1
+                        jp3c=j-1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
 
                         yp2  = abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = -abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = -abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -433,6 +724,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -445,11 +745,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., yp1<=0: quadrant IIIa)
@@ -461,12 +773,24 @@ c----------------------------------------------------------------------
                           yp2c=0.0d0
                           yp2d=0.0d0
 
+                          yp3a=0.0d0
+                          yp3b=0.0d0
+                          yp3c=0.0d0
+                          yp3d=0.0d0
+
                           yp2=0.0d0
                           zp2=0.0d0
                           rhop2=abs(xp2)
 
+                          yp3=0.0d0
+                          zp3=0.0d0
+                          rhop3=abs(xp3)
+
                           leadordcoeff_f_p2=
      &                        leadordcoeff_f(i-1,j,k)
+
+                          leadordcoeff_f_p3=
+     &                        leadordcoeff_f(i-2,j,k)
 
 
                         else
@@ -476,15 +800,29 @@ c----------------------------------------------------------------------
                           jp2c=j+1
                           jp2d=j
 
+                          jp3a=j
+                          jp3b=j+1
+                          jp3c=j+1
+                          jp3d=j
+
                           yp2a=y(jp2a)
                           yp2b=y(jp2b)
                           yp2c=y(jp2c)
                           yp2d=y(jp2d)
 
+                          yp3a=y(jp3a)
+                          yp3b=y(jp3b)
+                          yp3c=y(jp3c)
+                          yp3d=y(jp3d)
+
 
                           yp2  = -abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                           zp2  = -abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                           rhop2=abs(xp2/cos(PI*chip2))
+
+                          yp3  = -abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                          zp3  = -abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                          rhop3=abs(xp3/cos(PI*chip3))
 
                           leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -494,6 +832,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                           leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                          leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                          leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                          leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                          leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                           leadordcoeff_f_p2=
      &                        bilinear_interp(
@@ -506,13 +853,25 @@ c----------------------------------------------------------------------
      &                             yp2,
      &                             zp2)
 
+                          leadordcoeff_f_p3=
+     &                        bilinear_interp(
+     &                             leadordcoeff_f_p3a,
+     &                             leadordcoeff_f_p3b,
+     &                             leadordcoeff_f_p3c,
+     &                             leadordcoeff_f_p3d,
+     &                             yp3a,yp3b,yp3c,yp3d,
+     &                             zp3a,zp3b,zp3c,zp3d,
+     &                             yp3,
+     &                             zp3)
+
                         end if
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       end if
@@ -529,11 +888,22 @@ c----------------------------------------------------------------------
                   ip2c=i+1
                   ip2d=i+1
 
+                  ip3a=i+2
+                  ip3b=i+2
+                  ip3c=i+2
+                  ip3d=i+2
+
                   xp2a=x(ip2a)
                   xp2b=x(ip2b)
                   xp2c=x(ip2c)
                   xp2d=x(ip2d)
                   xp2=x(ip2a)
+
+                  xp3a=x(ip3a)
+                  xp3b=x(ip3b)
+                  xp3c=x(ip3c)
+                  xp3d=x(ip3d)
+                  xp3=x(ip3a)
 
                   if (abs(yp1).gt.abs(zp1)) then !(i.e., |yp1|>|zp1|, so yp1 cannot be 0)
                     if (yp1.gt.0) then !(i.e., either quadrant Ia or IVa)
@@ -542,10 +912,20 @@ c----------------------------------------------------------------------
                       jp2c=j-1
                       jp2d=j-1
 
+                      jp3a=j
+                      jp3b=j
+                      jp3c=j-1
+                      jp3d=j-1
+
                       yp2a=y(jp2a)
                       yp2b=y(jp2b)
                       yp2c=y(jp2c)
                       yp2d=y(jp2d)
+
+                      yp3a=y(jp3a)
+                      yp3b=y(jp3b)
+                      yp3c=y(jp3c)
+                      yp3d=y(jp3d)
 
                       if (zp1.gt.0) then !(i.e., quadrant Ia)
                         kp2a=k
@@ -553,14 +933,28 @@ c----------------------------------------------------------------------
                         kp2c=k-1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k-1
+                        kp3c=k-1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         yp2  = abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -570,6 +964,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -582,11 +985,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., zp1<=0: quadrant IVa)
 
@@ -595,14 +1010,28 @@ c----------------------------------------------------------------------
                         kp2c=k+1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k+1
+                        kp3c=k+1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         yp2  = abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = -abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = -abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -612,6 +1041,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -624,11 +1062,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -639,10 +1089,20 @@ c----------------------------------------------------------------------
                       jp2c=j+1
                       jp2d=j+1
 
+                      jp3a=j
+                      jp3b=j
+                      jp3c=j+1
+                      jp3d=j+1
+
                       yp2a=y(jp2a)
                       yp2b=y(jp2b)
                       yp2c=y(jp2c)
                       yp2d=y(jp2d)
+
+                      yp3a=y(jp3a)
+                      yp3b=y(jp3b)
+                      yp3c=y(jp3c)
+                      yp3d=y(jp3d)
 
                       if (zp1.gt.0) then !(i.e., quadrant IIa)
                         kp2a=k
@@ -650,14 +1110,28 @@ c----------------------------------------------------------------------
                         kp2c=k-1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k-1
+                        kp3c=k-1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         yp2  = -abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = -abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -667,6 +1141,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -679,11 +1162,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., zp1<=0: quadrant IIIa)
 
@@ -692,14 +1187,28 @@ c----------------------------------------------------------------------
                         kp2c=k+1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k+1
+                        kp3c=k+1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         yp2  = -abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = -abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = -abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = -abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -709,6 +1218,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -721,11 +1239,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -740,10 +1270,20 @@ c----------------------------------------------------------------------
                       kp2c=k-1
                       kp2d=k-1
 
+                      kp3a=k
+                      kp3b=k
+                      kp3c=k-1
+                      kp3d=k-1
+
                       zp2a=z(kp2a)
                       zp2b=z(kp2b)
                       zp2c=z(kp2c)
                       zp2d=z(kp2d)
+
+                      zp3a=z(kp3a)
+                      zp3b=z(kp3b)
+                      zp3c=z(kp3c)
+                      zp3d=z(kp3d)
 
                       if (yp1.gt.0) then !(i.e., quadrant Ia)
 
@@ -752,15 +1292,29 @@ c----------------------------------------------------------------------
                         jp2c=j-1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j-1
+                        jp3c=j-1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
 
                         yp2  = abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -770,6 +1324,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -782,11 +1345,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., yp1<=0: quadrant IIa)
@@ -796,15 +1371,29 @@ c----------------------------------------------------------------------
                         jp2c=j+1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j+1
+                        jp3c=j+1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
 
                         yp2  = -abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = -abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -814,6 +1403,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -826,11 +1424,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -841,10 +1451,20 @@ c----------------------------------------------------------------------
                       kp2c=k+1
                       kp2d=k+1
 
+                      kp3a=k
+                      kp3b=k
+                      kp3c=k+1
+                      kp3d=k+1
+
                       zp2a=z(kp2a)
                       zp2b=z(kp2b)
                       zp2c=z(kp2c)
                       zp2d=z(kp2d)
+
+                      zp3a=z(kp3a)
+                      zp3b=z(kp3b)
+                      zp3c=z(kp3c)
+                      zp3d=z(kp3d)
 
                       if (yp1.gt.0) then !(i.e., quadrant IVa)
 
@@ -853,15 +1473,29 @@ c----------------------------------------------------------------------
                         jp2c=j-1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j-1
+                        jp3c=j-1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
 
                         yp2  = abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                         zp2  = -abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                         rhop2=abs(xp2/cos(PI*chip2))
+
+                        yp3  = abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                        zp3  = -abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                        rhop3=abs(xp3/cos(PI*chip3))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -871,6 +1505,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -883,11 +1526,23 @@ c----------------------------------------------------------------------
      &                           yp2,
      &                           zp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           yp3,
+     &                           zp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., yp1<=0: quadrant IIIa)
@@ -899,12 +1554,24 @@ c----------------------------------------------------------------------
                           yp2c=0.0d0
                           yp2d=0.0d0
 
+                          yp3a=0.0d0
+                          yp3b=0.0d0
+                          yp3c=0.0d0
+                          yp3d=0.0d0
+
                           yp2=0.0d0
                           zp2=0.0d0
                           rhop2=abs(xp2)
 
+                          yp3=0.0d0
+                          zp3=0.0d0
+                          rhop3=abs(xp3)
+
                           leadordcoeff_f_p2=
      &                        leadordcoeff_f(i+1,j,k)
+
+                          leadordcoeff_f_p3=
+     &                        leadordcoeff_f(i+2,j,k)
 
 
                         else
@@ -914,15 +1581,29 @@ c----------------------------------------------------------------------
                           jp2c=j+1
                           jp2d=j
 
+                          jp3a=j
+                          jp3b=j+1
+                          jp3c=j+1
+                          jp3d=j
+
                           yp2a=y(jp2a)
                           yp2b=y(jp2b)
                           yp2c=y(jp2c)
                           yp2d=y(jp2d)
 
+                          yp3a=y(jp3a)
+                          yp3b=y(jp3b)
+                          yp3c=y(jp3c)
+                          yp3d=y(jp3d)
+
 
                           yp2  = -abs(xp2*tan(PI*chip2)*cos(2*PI*xip2))
                           zp2  = -abs(xp2*tan(PI*chip2)*sin(2*PI*xip2))
                           rhop2=abs(xp2/cos(PI*chip2))
+
+                          yp3  = -abs(xp3*tan(PI*chip3)*cos(2*PI*xip3))
+                          zp3  = -abs(xp3*tan(PI*chip3)*sin(2*PI*xip3))
+                          rhop3=abs(xp3/cos(PI*chip3))
 
                           leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -932,6 +1613,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                           leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                          leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                          leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                          leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                          leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                           leadordcoeff_f_p2=
      &                        bilinear_interp(
@@ -944,13 +1634,25 @@ c----------------------------------------------------------------------
      &                             yp2,
      &                             zp2)
 
+                          leadordcoeff_f_p3=
+     &                        bilinear_interp(
+     &                             leadordcoeff_f_p3a,
+     &                             leadordcoeff_f_p3b,
+     &                             leadordcoeff_f_p3c,
+     &                             leadordcoeff_f_p3d,
+     &                             yp3a,yp3b,yp3c,yp3d,
+     &                             zp3a,zp3b,zp3c,zp3d,
+     &                             yp3,
+     &                             zp3)
+
                         end if
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       end if
@@ -989,11 +1691,22 @@ c----------------------------------------------------------------------
                   jp2c=j-1
                   jp2d=j-1
 
+                  jp3a=j-2
+                  jp3b=j-2
+                  jp3c=j-2
+                  jp3d=j-2
+
                   yp2a=y(jp2a)
                   yp2b=y(jp2b)
                   yp2c=y(jp2c)
                   yp2d=y(jp2d)
                   yp2=y(jp2a)
+
+                  yp3a=y(jp3a)
+                  yp3b=y(jp3b)
+                  yp3c=y(jp3c)
+                  yp3d=y(jp3d)
+                  yp3=y(jp3a)
 
                   if (abs(zp1).gt.abs(xp1)) then !(i.e., |zp1|>|xp1|, so zp1 cannot be 0)
                     if (zp1.gt.0) then !(i.e., either quadrant Ia or Ib)
@@ -1003,10 +1716,20 @@ c----------------------------------------------------------------------
                       kp2c=k-1
                       kp2d=k-1
 
+                      kp3a=k
+                      kp3b=k
+                      kp3c=k-1
+                      kp3d=k-1
+
                       zp2a=z(kp2a)
                       zp2b=z(kp2b)
                       zp2c=z(kp2c)
                       zp2d=z(kp2d)
+
+                      zp3a=z(kp3a)
+                      zp3b=z(kp3b)
+                      zp3c=z(kp3c)
+                      zp3d=z(kp3d)
 
                       if (xp1.gt.0) then !(i.e., quadrant Ia)
 
@@ -1015,15 +1738,30 @@ c----------------------------------------------------------------------
                         ip2c=i-1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i-1
+                        ip3c=i-1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         zp2  = abs(yp2*tan(2*PI*xip2))
                         xp2  = abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = abs(yp3*tan(2*PI*xip3))
+                        xp3  = abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1033,6 +1771,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1045,11 +1792,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., xp1<=0: quadrant Ib)
 
@@ -1058,15 +1817,30 @@ c----------------------------------------------------------------------
                         ip2c=i+1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i+1
+                        ip3c=i+1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         zp2  = abs(yp2*tan(2*PI*xip2))
                         xp2  = -abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = abs(yp3*tan(2*PI*xip3))
+                        xp3  = -abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1076,6 +1850,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1088,11 +1871,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -1103,10 +1898,20 @@ c----------------------------------------------------------------------
                       kp2c=k+1
                       kp2d=k+1
 
+                      kp3a=k
+                      kp3b=k
+                      kp3c=k+1
+                      kp3d=k+1
+
                       zp2a=z(kp2a)
                       zp2b=z(kp2b)
                       zp2c=z(kp2c)
                       zp2d=z(kp2d)
+
+                      zp3a=z(kp3a)
+                      zp3b=z(kp3b)
+                      zp3c=z(kp3c)
+                      zp3d=z(kp3d)
 
                       if (xp1.gt.0) then !(i.e., quadrant IVa)
 
@@ -1115,15 +1920,30 @@ c----------------------------------------------------------------------
                         ip2c=i-1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i-1
+                        ip3c=i-1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         zp2  = -abs(yp2*tan(2*PI*xip2))
                         xp2  = abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = -abs(yp3*tan(2*PI*xip3))
+                        xp3  = abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1133,6 +1953,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1145,11 +1974,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., xp1<=0: quadrant IVb)
 
@@ -1158,15 +1999,30 @@ c----------------------------------------------------------------------
                         ip2c=i+1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i+1
+                        ip3c=i+1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         zp2  = -abs(yp2*tan(2*PI*xip2))
                         xp2  = -abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = -abs(yp3*tan(2*PI*xip3))
+                        xp3  = -abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1176,6 +2032,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1188,11 +2053,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -1207,10 +2084,20 @@ c----------------------------------------------------------------------
                       ip2c=i-1
                       ip2d=i-1
 
+                      ip3a=i
+                      ip3b=i
+                      ip3c=i-1
+                      ip3d=i-1
+
                       xp2a=x(ip2a)
                       xp2b=x(ip2b)
                       xp2c=x(ip2c)
                       xp2d=x(ip2d)
+
+                      xp3a=x(ip3a)
+                      xp3b=x(ip3b)
+                      xp3c=x(ip3c)
+                      xp3d=x(ip3d)
 
                       if (zp1.gt.0) then !(i.e., quadrant Ia)
 
@@ -1219,16 +2106,31 @@ c----------------------------------------------------------------------
                         kp2c=k-1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k-1
+                        kp3c=k-1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
+
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
 
 
                         zp2  = abs(yp2*tan(2*PI*xip2))
                         xp2  = abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = abs(yp3*tan(2*PI*xip3))
+                        xp3  = abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1238,6 +2140,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1250,11 +2161,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., zp1<=0: quadrant IVa)
@@ -1264,16 +2187,31 @@ c----------------------------------------------------------------------
                         kp2c=k+1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k+1
+                        kp3c=k+1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
+
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
 
 
                         zp2  = -abs(yp2*tan(2*PI*xip2))
                         xp2  = abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = -abs(yp3*tan(2*PI*xip3))
+                        xp3  = abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1283,6 +2221,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1295,11 +2242,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -1310,10 +2269,20 @@ c----------------------------------------------------------------------
                       ip2c=i+1
                       ip2d=i+1
 
+                      ip3a=i
+                      ip3b=i
+                      ip3c=i+1
+                      ip3d=i+1
+
                       xp2a=x(ip2a)
                       xp2b=x(ip2b)
                       xp2c=x(ip2c)
                       xp2d=x(ip2d)
+
+                      xp3a=x(ip3a)
+                      xp3b=x(ip3b)
+                      xp3c=x(ip3c)
+                      xp3d=x(ip3d)
 
                       if (zp1.gt.0) then !(i.e., quadrant Ib)
 
@@ -1322,15 +2291,30 @@ c----------------------------------------------------------------------
                         kp2c=k-1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k-1
+                        kp3c=k-1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         zp2  = abs(yp2*tan(2*PI*xip2))
                         xp2  = -abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = abs(yp3*tan(2*PI*xip3))
+                        xp3  = -abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1340,6 +2324,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1352,11 +2345,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., zp1<=0: quadrant IVb)
@@ -1366,15 +2371,30 @@ c----------------------------------------------------------------------
                         kp2c=k+1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k+1
+                        kp3c=k+1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
 
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
+
                         zp2  = -abs(yp2*tan(2*PI*xip2))
                         xp2  = -abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = -abs(yp3*tan(2*PI*xip3))
+                        xp3  = -abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1384,6 +2404,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1396,11 +2425,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       end if
@@ -1416,11 +2457,22 @@ c----------------------------------------------------------------------
                   jp2c=j+1
                   jp2d=j+1
 
+                  jp3a=j+2
+                  jp3b=j+2
+                  jp3c=j+2
+                  jp3d=j+2
+
                   yp2a=y(jp2a)
                   yp2b=y(jp2b)
                   yp2c=y(jp2c)
                   yp2d=y(jp2d)
                   yp2=y(jp2a)
+
+                  yp3a=y(jp3a)
+                  yp3b=y(jp3b)
+                  yp3c=y(jp3c)
+                  yp3d=y(jp3d)
+                  yp3=y(jp3a)
 
                   if (abs(zp1).gt.abs(xp1)) then !(i.e., |zp1|>|xp1|, so zp1 cannot be 0)
                     if (zp1.gt.0) then !(i.e., either quadrant IIa or IIb)
@@ -1429,10 +2481,20 @@ c----------------------------------------------------------------------
                       kp2c=k-1
                       kp2d=k-1
 
+                      kp3a=k
+                      kp3b=k
+                      kp3c=k-1
+                      kp3d=k-1
+
                       zp2a=z(kp2a)
                       zp2b=z(kp2b)
                       zp2c=z(kp2c)
                       zp2d=z(kp2d)
+
+                      zp3a=z(kp3a)
+                      zp3b=z(kp3b)
+                      zp3c=z(kp3c)
+                      zp3d=z(kp3d)
 
                       if (xp1.gt.0) then !(i.e., quadrant Ia)
                         ip2a=i
@@ -1440,15 +2502,30 @@ c----------------------------------------------------------------------
                         ip2c=i-1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i-1
+                        ip3c=i-1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         zp2  = abs(yp2*tan(2*PI*xip2))
                         xp2  = abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = abs(yp3*tan(2*PI*xip3))
+                        xp3  = abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1458,6 +2535,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1470,11 +2556,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., xp1<=0: quadrant IIb)
 
@@ -1483,15 +2581,30 @@ c----------------------------------------------------------------------
                         ip2c=i+1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i+1
+                        ip3c=i+1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         zp2  = abs(yp2*tan(2*PI*xip2))
                         xp2  = -abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = abs(yp3*tan(2*PI*xip3))
+                        xp3  = -abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1501,6 +2614,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1513,11 +2635,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -1528,10 +2662,20 @@ c----------------------------------------------------------------------
                       kp2c=k+1
                       kp2d=k+1
 
+                      kp3a=k
+                      kp3b=k
+                      kp3c=k+1
+                      kp3d=k+1
+
                       zp2a=z(kp2a)
                       zp2b=z(kp2b)
                       zp2c=z(kp2c)
                       zp2d=z(kp2d)
+
+                      zp3a=z(kp3a)
+                      zp3b=z(kp3b)
+                      zp3c=z(kp3c)
+                      zp3d=z(kp3d)
 
                       if (xp1.gt.0) then !(i.e., quadrant IIIa)
                         ip2a=i
@@ -1539,15 +2683,30 @@ c----------------------------------------------------------------------
                         ip2c=i-1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i-1
+                        ip3c=i-1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         zp2  = -abs(yp2*tan(2*PI*xip2))
                         xp2  = abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = -abs(yp3*tan(2*PI*xip3))
+                        xp3  = abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1557,6 +2716,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1569,11 +2737,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., xp1<=0: quadrant IIIb)
 
@@ -1582,15 +2762,30 @@ c----------------------------------------------------------------------
                         ip2c=i+1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i+1
+                        ip3c=i+1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         zp2  = -abs(yp2*tan(2*PI*xip2))
                         xp2  = -abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = -abs(yp3*tan(2*PI*xip3))
+                        xp3  = -abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1600,6 +2795,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1612,11 +2816,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -1631,10 +2847,20 @@ c----------------------------------------------------------------------
                       ip2c=i-1
                       ip2d=i-1
 
+                      ip3a=i
+                      ip3b=i
+                      ip3c=i-1
+                      ip3d=i-1
+
                       xp2a=x(ip2a)
                       xp2b=x(ip2b)
                       xp2c=x(ip2c)
                       xp2d=x(ip2d)
+
+                      xp3a=x(ip3a)
+                      xp3b=x(ip3b)
+                      xp3c=x(ip3c)
+                      xp3d=x(ip3d)
 
                       if (zp1.gt.0) then !(i.e., quadrant IIa)
 
@@ -1643,16 +2869,31 @@ c----------------------------------------------------------------------
                         kp2c=k-1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k-1
+                        kp3c=k-1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
+
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
 
 
                         zp2  = abs(yp2*tan(2*PI*xip2))
                         xp2  = abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = abs(yp3*tan(2*PI*xip3))
+                        xp3  = abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1662,6 +2903,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1674,11 +2924,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., zp1<=0: quadrant IIIa)
@@ -1688,16 +2950,31 @@ c----------------------------------------------------------------------
                         kp2c=k+1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k+1
+                        kp3c=k+1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
+
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
 
 
                         zp2  = -abs(yp2*tan(2*PI*xip2))
                         xp2  = abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = -abs(yp3*tan(2*PI*xip3))
+                        xp3  = abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1707,6 +2984,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1719,11 +3005,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -1734,10 +3032,20 @@ c----------------------------------------------------------------------
                       ip2c=i+1
                       ip2d=i+1
 
+                      ip3a=i
+                      ip3b=i
+                      ip3c=i+1
+                      ip3d=i+1
+
                       xp2a=x(ip2a)
                       xp2b=x(ip2b)
                       xp2c=x(ip2c)
                       xp2d=x(ip2d)
+
+                      xp3a=x(ip3a)
+                      xp3b=x(ip3b)
+                      xp3c=x(ip3c)
+                      xp3d=x(ip3d)
 
                       if (zp1.gt.0) then !(i.e., quadrant IIb)
 
@@ -1746,16 +3054,31 @@ c----------------------------------------------------------------------
                         kp2c=k-1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k-1
+                        kp3c=k-1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
+
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
 
 
                         zp2  = abs(yp2*tan(2*PI*xip2))
                         xp2  = -abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = abs(yp3*tan(2*PI*xip3))
+                        xp3  = -abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1765,6 +3088,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1777,11 +3109,23 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., zp1<=0: quadrant IIIb)
@@ -1791,16 +3135,31 @@ c----------------------------------------------------------------------
                         kp2c=k+1
                         kp2d=k
 
+                        kp3a=k
+                        kp3b=k+1
+                        kp3c=k+1
+                        kp3d=k
+
                         zp2a=z(kp2a)
                         zp2b=z(kp2b)
                         zp2c=z(kp2c)
                         zp2d=z(kp2d)
+
+                        zp3a=z(kp3a)
+                        zp3b=z(kp3b)
+                        zp3c=z(kp3c)
+                        zp3d=z(kp3d)
 
 
                         zp2  = -abs(yp2*tan(2*PI*xip2))
                         xp2  = -abs(yp2*(1/tan(PI*chip2))
      &                     /cos(2*PI*xip2))
                         rhop2=abs(yp2/(sin(PI*chip2)*cos(2*PI*xip2)))
+
+                        zp3  = -abs(yp3*tan(2*PI*xip3))
+                        xp3  = -abs(yp3*(1/tan(PI*chip3))
+     &                     /cos(2*PI*xip3))
+                        rhop3=abs(yp3/(sin(PI*chip3)*cos(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1810,6 +3169,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1822,12 +3190,24 @@ c----------------------------------------------------------------------
      &                           zp2,
      &                           xp2)
 
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           zp3a,zp3b,zp3c,zp3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           zp3,
+     &                           xp3)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       end if
@@ -1857,11 +3237,22 @@ c----------------------------------------------------------------------
                   kp2c=k-1
                   kp2d=k-1
 
+                  kp3a=k-2
+                  kp3b=k-2
+                  kp3c=k-2
+                  kp3d=k-2
+
                   zp2a=z(kp2a)
                   zp2b=z(kp2b)
                   zp2c=z(kp2c)
                   zp2d=z(kp2d)
                   zp2=z(kp2a)
+
+                  zp3a=z(kp3a)
+                  zp3b=z(kp3b)
+                  zp3c=z(kp3c)
+                  zp3d=z(kp3d)
+                  zp3=z(kp3a)
 
                   if (abs(xp1).gt.abs(yp1)) then !(i.e., |xp1|>|yp1|, so xp1 cannot be 0)
                     if (xp1.gt.0) then !(i.e., either quadrant Ia or IIa)
@@ -1871,10 +3262,20 @@ c----------------------------------------------------------------------
                       ip2c=i-1
                       ip2d=i-1
 
+                      ip3a=i
+                      ip3b=i
+                      ip3c=i-1
+                      ip3d=i-1
+
                       xp2a=x(ip2a)
                       xp2b=x(ip2b)
                       xp2c=x(ip2c)
                       xp2d=x(ip2d)
+
+                      xp3a=x(ip3a)
+                      xp3b=x(ip3b)
+                      xp3c=x(ip3c)
+                      xp3d=x(ip3d)
 
                       if (yp1.gt.0) then !(i.e., quadrant Ia)
 
@@ -1883,15 +3284,30 @@ c----------------------------------------------------------------------
                         jp2c=j-1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j-1
+                        jp3c=j-1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1901,6 +3317,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1913,11 +3338,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., yp1<=0: quadrant IIa)
 
@@ -1926,15 +3363,30 @@ c----------------------------------------------------------------------
                         jp2c=j+1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j+1
+                        jp3c=j+1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = -abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -1944,6 +3396,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -1956,11 +3417,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -1971,10 +3444,20 @@ c----------------------------------------------------------------------
                       ip2c=i+1
                       ip2d=i+1
 
+                      ip3a=i
+                      ip3b=i
+                      ip3c=i+1
+                      ip3d=i+1
+
                       xp2a=x(ip2a)
                       xp2b=x(ip2b)
                       xp2c=x(ip2c)
                       xp2d=x(ip2d)
+
+                      xp3a=x(ip3a)
+                      xp3b=x(ip3b)
+                      xp3c=x(ip3c)
+                      xp3d=x(ip3d)
 
                       if (yp1.gt.0) then !(i.e., quadrant Ib)
 
@@ -1983,15 +3466,30 @@ c----------------------------------------------------------------------
                         jp2c=j-1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j-1
+                        jp3c=j-1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = -abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2001,6 +3499,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2013,11 +3520,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., yp1<=0: quadrant IIb)
 
@@ -2026,15 +3545,30 @@ c----------------------------------------------------------------------
                         jp2c=j+1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j+1
+                        jp3c=j+1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = -abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = -abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2044,6 +3578,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2056,11 +3599,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -2075,10 +3630,20 @@ c----------------------------------------------------------------------
                       jp2c=j-1
                       jp2d=j-1
 
+                      jp3a=j
+                      jp3b=j
+                      jp3c=j-1
+                      jp3d=j-1
+
                       yp2a=y(jp2a)
                       yp2b=y(jp2b)
                       yp2c=y(jp2c)
                       yp2d=y(jp2d)
+
+                      yp3a=y(jp3a)
+                      yp3b=y(jp3b)
+                      yp3c=y(jp3c)
+                      yp3d=y(jp3d)
 
                       if (xp1.gt.0) then !(i.e., quadrant Ia)
 
@@ -2087,15 +3652,30 @@ c----------------------------------------------------------------------
                         ip2c=i-1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i-1
+                        ip3c=i-1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2105,6 +3685,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2117,11 +3706,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., xp1<=0: quadrant Ib)
@@ -2131,15 +3732,30 @@ c----------------------------------------------------------------------
                         ip2c=i+1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i+1
+                        ip3c=i+1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = -abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2149,6 +3765,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2161,11 +3786,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -2176,10 +3813,20 @@ c----------------------------------------------------------------------
                       jp2c=j+1
                       jp2d=j+1
 
+                      jp3a=j
+                      jp3b=j
+                      jp3c=j+1
+                      jp3d=j+1
+
                       yp2a=y(jp2a)
                       yp2b=y(jp2b)
                       yp2c=y(jp2c)
                       yp2d=y(jp2d)
+
+                      yp3a=y(jp3a)
+                      yp3b=y(jp3b)
+                      yp3c=y(jp3c)
+                      yp3d=y(jp3d)
 
                       if (xp1.gt.0) then !(i.e., quadrant IIa)
 
@@ -2188,15 +3835,30 @@ c----------------------------------------------------------------------
                         ip2c=i-1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i-1
+                        ip3c=i-1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = -abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2206,6 +3868,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2218,11 +3889,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., xp1<=0: quadrant IIb)
@@ -2232,15 +3915,30 @@ c----------------------------------------------------------------------
                         ip2c=i+1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i+1
+                        ip3c=i+1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = -abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = -abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2250,6 +3948,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2262,11 +3969,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       end if
@@ -2282,23 +4001,45 @@ c----------------------------------------------------------------------
                   kp2c=k+1
                   kp2d=k+1
 
+                  kp3a=k+2
+                  kp3b=k+2
+                  kp3c=k+2
+                  kp3d=k+2
+
                   zp2a=z(kp2a)
                   zp2b=z(kp2b)
                   zp2c=z(kp2c)
                   zp2d=z(kp2d)
                   zp2=z(kp2a)
 
+                  zp3a=z(kp3a)
+                  zp3b=z(kp3b)
+                  zp3c=z(kp3c)
+                  zp3d=z(kp3d)
+                  zp3=z(kp3a)
+
                   if (abs(xp1).gt.abs(yp1)) then !(i.e., |xp1|>|yp1|, so xp1 cannot be 0)
                     if (xp1.gt.0) then !(i.e., either quadrant IIIa or IVa)
+
                       ip2a=i
                       ip2b=i
                       ip2c=i-1
                       ip2d=i-1
 
+                      ip3a=i
+                      ip3b=i
+                      ip3c=i-1
+                      ip3d=i-1
+
                       xp2a=x(ip2a)
                       xp2b=x(ip2b)
                       xp2c=x(ip2c)
                       xp2d=x(ip2d)
+
+                      xp3a=x(ip3a)
+                      xp3b=x(ip3b)
+                      xp3c=x(ip3c)
+                      xp3d=x(ip3d)
 
                       if (yp1.gt.0) then !(i.e., quadrant IVa)
                         jp2a=j
@@ -2306,15 +4047,30 @@ c----------------------------------------------------------------------
                         jp2c=j-1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j-1
+                        jp3c=j-1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2324,6 +4080,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2336,11 +4101,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., yp1<=0: quadrant IIIa)
 
@@ -2349,15 +4126,30 @@ c----------------------------------------------------------------------
                         jp2c=j+1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j+1
+                        jp3c=j+1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = -abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2367,6 +4159,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2379,11 +4180,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -2394,10 +4207,20 @@ c----------------------------------------------------------------------
                       ip2c=i+1
                       ip2d=i+1
 
+                      ip3a=i
+                      ip3b=i
+                      ip3c=i+1
+                      ip3d=i+1
+
                       xp2a=x(ip2a)
                       xp2b=x(ip2b)
                       xp2c=x(ip2c)
                       xp2d=x(ip2d)
+
+                      xp3a=x(ip3a)
+                      xp3b=x(ip3b)
+                      xp3c=x(ip3c)
+                      xp3d=x(ip3d)
 
                       if (yp1.gt.0) then !(i.e., quadrant IVb)
                         jp2a=j
@@ -2405,15 +4228,30 @@ c----------------------------------------------------------------------
                         jp2c=j-1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j-1
+                        jp3c=j-1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = -abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2423,6 +4261,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2435,11 +4282,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       else !(i.e., yp1<=0: quadrant IIIb)
 
@@ -2448,15 +4307,30 @@ c----------------------------------------------------------------------
                         jp2c=j+1
                         jp2d=j
 
+                        jp3a=j
+                        jp3b=j+1
+                        jp3c=j+1
+                        jp3d=j
+
                         yp2a=y(jp2a)
                         yp2b=y(jp2b)
                         yp2c=y(jp2c)
                         yp2d=y(jp2d)
 
+                        yp3a=y(jp3a)
+                        yp3b=y(jp3b)
+                        yp3c=y(jp3c)
+                        yp3d=y(jp3d)
+
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = -abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = -abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2466,6 +4340,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2478,11 +4361,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -2497,10 +4392,20 @@ c----------------------------------------------------------------------
                       jp2c=j-1
                       jp2d=j-1
 
+                      jp3a=j
+                      jp3b=j
+                      jp3c=j-1
+                      jp3d=j-1
+
                       yp2a=y(jp2a)
                       yp2b=y(jp2b)
                       yp2c=y(jp2c)
                       yp2d=y(jp2d)
+
+                      yp3a=y(jp3a)
+                      yp3b=y(jp3b)
+                      yp3c=y(jp3c)
+                      yp3d=y(jp3d)
 
                       if (xp1.gt.0) then !(i.e., quadrant IVa)
 
@@ -2509,15 +4414,30 @@ c----------------------------------------------------------------------
                         ip2c=i-1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i-1
+                        ip3c=i-1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2527,6 +4447,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2539,11 +4468,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., xp1<=0: quadrant IVb)
@@ -2553,15 +4494,30 @@ c----------------------------------------------------------------------
                         ip2c=i+1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i+1
+                        ip3c=i+1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = -abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2571,6 +4527,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2583,11 +4548,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
                       end if
 
@@ -2598,10 +4575,20 @@ c----------------------------------------------------------------------
                       jp2c=j+1
                       jp2d=j+1
 
+                      jp3a=j
+                      jp3b=j
+                      jp3c=j+1
+                      jp3d=j+1
+
                       yp2a=y(jp2a)
                       yp2b=y(jp2b)
                       yp2c=y(jp2c)
                       yp2d=y(jp2d)
+
+                      yp3a=y(jp3a)
+                      yp3b=y(jp3b)
+                      yp3c=y(jp3c)
+                      yp3d=y(jp3d)
 
                       if (xp1.gt.0) then !(i.e., quadrant IIIa)
 
@@ -2610,15 +4597,30 @@ c----------------------------------------------------------------------
                         ip2c=i-1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i-1
+                        ip3c=i-1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         xp2  = abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = -abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2628,6 +4630,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2640,11 +4651,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       else !(i.e., xp1<=0: quadrant IIIb)
@@ -2654,15 +4677,30 @@ c----------------------------------------------------------------------
                         ip2c=i+1
                         ip2d=i
 
+                        ip3a=i
+                        ip3b=i+1
+                        ip3c=i+1
+                        ip3d=i
+
                         xp2a=x(ip2a)
                         xp2b=x(ip2b)
                         xp2c=x(ip2c)
                         xp2d=x(ip2d)
 
+                        xp3a=x(ip3a)
+                        xp3b=x(ip3b)
+                        xp3c=x(ip3c)
+                        xp3d=x(ip3d)
+
                         xp2  = -abs(zp2*(1/tan(PI*chip2))
      &                     /sin(2*PI*xip2))
                         yp2  = -abs(zp2/tan(2*PI*xip2))
                         rhop2=abs(zp2/(sin(PI*chip2)*sin(2*PI*xip2)))
+
+                        xp3  = -abs(zp3*(1/tan(PI*chip3))
+     &                     /sin(2*PI*xip3))
+                        yp3  = -abs(zp3/tan(2*PI*xip3))
+                        rhop3=abs(zp3/(sin(PI*chip3)*sin(2*PI*xip3)))
 
                         leadordcoeff_f_p2a=
      &                        leadordcoeff_f(ip2a,jp2a,kp2a)
@@ -2672,6 +4710,15 @@ c----------------------------------------------------------------------
      &                        leadordcoeff_f(ip2c,jp2c,kp2c)
                         leadordcoeff_f_p2d=
      &                        leadordcoeff_f(ip2d,jp2d,kp2d)
+
+                        leadordcoeff_f_p3a=
+     &                        leadordcoeff_f(ip3a,jp3a,kp3a)
+                        leadordcoeff_f_p3b=
+     &                        leadordcoeff_f(ip3b,jp3b,kp3b)
+                        leadordcoeff_f_p3c=
+     &                        leadordcoeff_f(ip3c,jp3c,kp3c)
+                        leadordcoeff_f_p3d=
+     &                        leadordcoeff_f(ip3d,jp3d,kp3d)
 
                         leadordcoeff_f_p2=
      &                      bilinear_interp(
@@ -2684,11 +4731,23 @@ c----------------------------------------------------------------------
      &                           xp2,
      &                           yp2)
 
-                        firstord_func_radextrap=
-     &                      firstord_extrap(
+                        leadordcoeff_f_p3=
+     &                      bilinear_interp(
+     &                           leadordcoeff_f_p3a,
+     &                           leadordcoeff_f_p3b,
+     &                           leadordcoeff_f_p3c,
+     &                           leadordcoeff_f_p3d,
+     &                           xp3a,xp3b,xp3c,xp3d,
+     &                           yp3a,yp3b,yp3c,yp3d,
+     &                           xp3,
+     &                           yp3)
+
+                        secondord_func_radextrap=
+     &                      secondord_extrap(
      &                           leadordcoeff_f_p1,
      &                           leadordcoeff_f_p2,
-     &                           rhop1,rhop2,rhoex)
+     &                           leadordcoeff_f_p3,
+     &                           rhop1,rhop2,rhop3,rhoex)
 
 
                       end if

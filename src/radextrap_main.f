@@ -45,10 +45,10 @@ c----------------------------------------------------------------------
         real*8 chrbdy(Nx,Ny,Nz),chrbdy2(Nx,Ny,Nz)
 
         integer i,j,k,is,ie,js,je,ks,ke
-        integer ipa,jpa,kpa
-        integer ipb,jpb,kpb
-        integer ipc,jpc,kpc
-        integer ipd,jpd,kpd
+        integer ip2a,jp2a,kp2a
+        integer ip2b,jp2b,kp2b
+        integer ip2c,jp2c,kp2c
+        integer ip2d,jp2d,kp2d
 
         integer ix1,ix2,ix3,jy1,jy2,jy3,kz1,kz2,kz3
         integer ix,jy,kz
@@ -196,6 +196,25 @@ c----------------------------------------------------------------------
            
 
             end if !closes condition on bdy_extrap_order.eq.1
+
+            if (bdy_extrap_order.eq.2) then
+
+
+! if some points are not suitable for radial extrapolation 
+! (typically because either their neighbouring points needed for extrapolation are not available
+! or because they are not the outermost points that are suitable for radial extrapolation)
+! the following routine sets chrbdy(i,j,k)=ex at these points.
+              call secondord_chrbdy_radextrap(
+     &                  chrbdy,
+     &                  chrbdy2,
+     &                  is,ie,js,je,ks,ke,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  chr,ex,Nx,Ny,Nz)
+           
+
+            end if !closes condition on bdy_extrap_order.eq.2
 
 
           end if !closes condition on chrbdy(i,j,k).ne.ex
@@ -361,10 +380,10 @@ c----------------------------------------------------------------------
         real*8 x(Nx),y(Ny),z(Nz),dt,chr(Nx,Ny,Nz),ex
 
         integer i,j,k,is,ie,js,je,ks,ke,lind
-        integer ipa,jpa,kpa
-        integer ipb,jpb,kpb
-        integer ipc,jpc,kpc
-        integer ipd,jpd,kpd
+        integer ip2a,jp2a,kp2a
+        integer ip2b,jp2b,kp2b
+        integer ip2c,jp2c,kp2c
+        integer ip2d,jp2d,kp2d
         integer a,b,c,d
 
         integer ix1,ix2,ix3,jy1,jy2,jy3,kz1,kz2,kz3
@@ -372,9 +391,9 @@ c----------------------------------------------------------------------
 
 
         real*8 x0,y0,z0,rho0,q,chi0,xi0
-        real*8 xpa,xpb,xpc,xpd
-        real*8 ypa,ypb,ypc,ypd
-        real*8 zpa,zpb,zpc,zpd
+        real*8 xp2a,xp2b,xp2c,xp2d
+        real*8 yp2a,yp2b,yp2c,yp2d
+        real*8 zp2a,zp2b,zp2c,zp2d
 
         real*8 dx,dy,dz
 
@@ -384,10 +403,10 @@ c----------------------------------------------------------------------
         real*8 leadordcoeff_phi1(Nx,Ny,Nz)
         real*8 leadordcoeff_phi1_p1
 
-        real*8 leadordcoeff_phi1_pa
-        real*8 leadordcoeff_phi1_pb
-        real*8 leadordcoeff_phi1_pc
-        real*8 leadordcoeff_phi1_pd
+        real*8 leadordcoeff_phi1_p2a
+        real*8 leadordcoeff_phi1_p2b
+        real*8 leadordcoeff_phi1_p2c
+        real*8 leadordcoeff_phi1_p2d
 
         real*8 leadordcoeff_phi1_p2
         real*8 leadordcoeff_phi1_p3
@@ -414,6 +433,7 @@ c----------------------------------------------------------------------
         real*8 fourthord_extrap
 
         real*8 firstord_func_radextrap
+        real*8 secondord_func_radextrap
 !----------------------------------------------------------------------
 
         dx=x(2)-x(1)
@@ -492,7 +512,30 @@ c----------------------------------------------------------------------
 !              write(*,*) "lind-1,xp1,yp1,zp1",lind-1,xp1,yp1,zp1
 !             write(*,*) "bdyphi(lind)=",bdyphi(lind)
 
-            end if !closes condition on bdy_extrap_order.eq.1
+            end if !closes condition on bdy_extrap_order.eq.
+
+            if (bdy_extrap_order.eq.2) then
+
+                      bdyphi(lind)=
+     &                   secondord_func_radextrap(
+     &                  leadordcoeff_phi1,
+     &                  leadordcoeff_phi1_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+
+
+
+!                  bdyphi(lind)=leadordcoeff_phi1_p1  !TEST
+!              write(*,*) "lind-1,xp1,yp1,zp1",lind-1,xp1,yp1,zp1
+!             write(*,*) "bdyphi(lind)=",bdyphi(lind)
+
+            end if !closes condition on bdy_extrap_order.eq.2
 
 
            end if !closes condition on chrbdy(i,j,k).ne.ex
@@ -583,41 +626,41 @@ c-------------------------------------------------------------------------------
         real*8 quasiset_angmomdensityy_p1
         real*8 quasiset_angmomdensityz_p1
 
-        real*8 quasiset_tt_pa,quasiset_tchi_pa
-        real*8 quasiset_txi_pa,quasiset_chichi_pa
-        real*8 quasiset_chixi_pa,quasiset_xixi_pa
-        real*8 quasiset_trace_pa
-        real*8 quasiset_massdensity_pa
-        real*8 quasiset_angmomdensityx_pa
-        real*8 quasiset_angmomdensityy_pa
-        real*8 quasiset_angmomdensityz_pa
+        real*8 quasiset_tt_p2a,quasiset_tchi_p2a
+        real*8 quasiset_txi_p2a,quasiset_chichi_p2a
+        real*8 quasiset_chixi_p2a,quasiset_xixi_p2a
+        real*8 quasiset_trace_p2a
+        real*8 quasiset_massdensity_p2a
+        real*8 quasiset_angmomdensityx_p2a
+        real*8 quasiset_angmomdensityy_p2a
+        real*8 quasiset_angmomdensityz_p2a
 
-        real*8 quasiset_tt_pb,quasiset_tchi_pb
-        real*8 quasiset_txi_pb,quasiset_chichi_pb
-        real*8 quasiset_chixi_pb,quasiset_xixi_pb
-        real*8 quasiset_trace_pb
-        real*8 quasiset_massdensity_pb
-        real*8 quasiset_angmomdensityx_pb
-        real*8 quasiset_angmomdensityy_pb
-        real*8 quasiset_angmomdensityz_pb
+        real*8 quasiset_tt_p2b,quasiset_tchi_p2b
+        real*8 quasiset_txi_p2b,quasiset_chichi_p2b
+        real*8 quasiset_chixi_p2b,quasiset_xixi_p2b
+        real*8 quasiset_trace_p2b
+        real*8 quasiset_massdensity_p2b
+        real*8 quasiset_angmomdensityx_p2b
+        real*8 quasiset_angmomdensityy_p2b
+        real*8 quasiset_angmomdensityz_p2b
 
-        real*8 quasiset_tt_pc,quasiset_tchi_pc
-        real*8 quasiset_txi_pc,quasiset_chichi_pc
-        real*8 quasiset_chixi_pc,quasiset_xixi_pc
-        real*8 quasiset_trace_pc
-        real*8 quasiset_massdensity_pc
-        real*8 quasiset_angmomdensityx_pc
-        real*8 quasiset_angmomdensityy_pc
-        real*8 quasiset_angmomdensityz_pc
+        real*8 quasiset_tt_p2c,quasiset_tchi_p2c
+        real*8 quasiset_txi_p2c,quasiset_chichi_p2c
+        real*8 quasiset_chixi_p2c,quasiset_xixi_p2c
+        real*8 quasiset_trace_p2c
+        real*8 quasiset_massdensity_p2c
+        real*8 quasiset_angmomdensityx_p2c
+        real*8 quasiset_angmomdensityy_p2c
+        real*8 quasiset_angmomdensityz_p2c
 
-        real*8 quasiset_tt_pd,quasiset_tchi_pd
-        real*8 quasiset_txi_pd,quasiset_chichi_pd
-        real*8 quasiset_chixi_pd,quasiset_xixi_pd
-        real*8 quasiset_trace_pd
-        real*8 quasiset_massdensity_pd
-        real*8 quasiset_angmomdensityx_pd
-        real*8 quasiset_angmomdensityy_pd
-        real*8 quasiset_angmomdensityz_pd
+        real*8 quasiset_tt_p2d,quasiset_tchi_p2d
+        real*8 quasiset_txi_p2d,quasiset_chichi_p2d
+        real*8 quasiset_chixi_p2d,quasiset_xixi_p2d
+        real*8 quasiset_trace_p2d
+        real*8 quasiset_massdensity_p2d
+        real*8 quasiset_angmomdensityx_p2d
+        real*8 quasiset_angmomdensityy_p2d
+        real*8 quasiset_angmomdensityz_p2d
 
         real*8 quasiset_tt_p2,quasiset_tchi_p2
         real*8 quasiset_txi_p2,quasiset_chichi_p2
@@ -684,15 +727,15 @@ c-------------------------------------------------------------------------------
         integer ix1,ix2,ix3,jy1,jy2,jy3,kz1,kz2,kz3
         integer ix,jy,kz
 
-        integer ipa,jpa,kpa
-        integer ipb,jpb,kpb
-        integer ipc,jpc,kpc
-        integer ipd,jpd,kpd
+        integer ip2a,jp2a,kp2a
+        integer ip2b,jp2b,kp2b
+        integer ip2c,jp2c,kp2c
+        integer ip2d,jp2d,kp2d
 
         real*8 x0,y0,z0,rho0,q
-        real*8 xpa,xpb,xpc,xpd
-        real*8 ypa,ypb,ypc,ypd
-        real*8 zpa,zpb,zpc,zpd
+        real*8 xp2a,xp2b,xp2c,xp2d
+        real*8 yp2a,yp2b,yp2c,yp2d
+        real*8 zp2a,zp2b,zp2c,zp2d
 
         real*8 xp1,yp1,zp1
         real*8 xp2,yp2,zp2
@@ -710,6 +753,7 @@ c-------------------------------------------------------------------------------
         real*8 fourthord_extrap
 
         real*8 firstord_func_radextrap
+        real*8 secondord_func_radextrap
 
         real*8 dp1p2
 
@@ -955,6 +999,160 @@ c-------------------------------------------------------------------------------
             end if !closes condition on bdy_extrap_order.eq.1
 
 
+            if (bdy_extrap_order.eq.2) then
+
+
+                      quasiset_tt(lind)=
+     &                   secondord_func_radextrap(
+     &                  quasiset_tt_ll,
+     &                  quasiset_tt_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+                      quasiset_tchi(lind)=
+     &                   secondord_func_radextrap(
+     &                  quasiset_tchi_ll,
+     &                  quasiset_tchi_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+                      quasiset_txi(lind)=
+     &                   secondord_func_radextrap(
+     &                  quasiset_txi_ll,
+     &                  quasiset_txi_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+                      quasiset_chichi(lind)=
+     &                   secondord_func_radextrap(
+     &                  quasiset_chichi_ll,
+     &                  quasiset_chichi_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+                      quasiset_chixi(lind)=
+     &                   secondord_func_radextrap(
+     &                  quasiset_chixi_ll,
+     &                  quasiset_chixi_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+                      quasiset_xixi(lind)=
+     &                   secondord_func_radextrap(
+     &                  quasiset_xixi_ll,
+     &                  quasiset_xixi_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+
+                      quasiset_trace(lind)=
+     &                      secondord_func_radextrap(
+     &                  quasiset_tracell,
+     &                  quasiset_trace_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+!                       quasiset_trace(lind)=
+!     &                  (
+!     &                  gamma0sphbdy_uu_tt*quasiset_tt(lind)
+!     &              +2*gamma0sphbdy_uu_tchi*quasiset_tchi(lind)
+!     &              +2*gamma0sphbdy_uu_txi*quasiset_txi(lind)
+!     &                +gamma0sphbdy_uu_chichi*quasiset_chichi(lind)
+!     &               +2*gamma0sphbdy_uu_chixi*quasiset_chixi(lind)
+!     &                 +gamma0sphbdy_uu_xixi*quasiset_xixi(lind)
+!     &                         )
+
+
+                      quasiset_massdensity(lind)=
+     &                      secondord_func_radextrap(
+     &                  quasiset_massdensityll,
+     &                  quasiset_massdensity_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+                      quasiset_angmomdensityx(lind)=
+     &                      secondord_func_radextrap(
+     &                  quasiset_angmomdensityxll,
+     &                  quasiset_angmomdensityx_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+                      quasiset_angmomdensityy(lind)=
+     &                      secondord_func_radextrap(
+     &                  quasiset_angmomdensityyll,
+     &                  quasiset_angmomdensityy_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+                      quasiset_angmomdensityz(lind)=
+     &                      secondord_func_radextrap(
+     &                  quasiset_angmomdensityzll,
+     &                  quasiset_angmomdensityz_p1,
+     &                  lind,
+     &                  i,j,k,
+     &                  xp1,yp1,zp1,
+     &                  rhop1,chip1,xip1,
+     &                  xex,yex,zex,
+     &                  rhoex,chiex,xiex,
+     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz)
+
+
+!                  quasiset_tt(lind)=quasiset_tt_p1  !TEST
+!              write(*,*) "lind-1,xp1,yp1,zp1",lind-1,xp1,yp1,zp1
+!             write(*,*) "quasiset_tt(lind)=",quasiset_tt(lind)
+
+            end if !closes condition on bdy_extrap_order.eq.2
+
+
 
            end if !closes condition on chrbdy(i,j,k).ne.ex
 
@@ -965,6 +1163,34 @@ c-------------------------------------------------------------------------------
          end do
         end do
 
+
+        return
+        end
+c--------------------------------------------------------------------------------------
+
+
+c----------------------------------------------------------------------
+c bilinear interpolation on a plane using values 
+c Tp2a at (xp2a,yp2a), Tp2b at (xp2b,yp2b), Tp2c at (xp2c,yp2c), Tp2d at (xp2d,yp2d)  
+c to obtain the value at (xp0,yp0) 
+c----------------------------------------------------------------------
+        real*8 function bilinear_interp(Tp2a,Tp2b,Tp2c,Tp2d,
+     &                                  xp2a,xp2b,xp2c,xp2d,
+     &                                  yp2a,yp2b,yp2c,yp2d,
+     &                                  xp0,yp0)
+        implicit none
+        real*8 Tp2a,Tp2b,Tp2c,Tp2d
+        real*8 xp2a,xp2b,xp2c,xp2d
+        real*8 yp2a,yp2b,yp2c,yp2d
+        real*8 xp0,yp0
+
+        !--------------------------------------------------------------
+
+        bilinear_interp=(1/((xp2c-xp2a)*(yp2c-yp2a)))*
+     &    (Tp2a*(xp2c-xp0)*(yp2c-yp0)+
+     &     Tp2b*(xp2c-xp0)*(yp0-yp2a)+
+     &     Tp2c*(xp0-xp2a)*(yp0-yp2a)+
+     &     Tp2d*(xp0-xp2a)*(yp2c-yp0))
 
         return
         end
