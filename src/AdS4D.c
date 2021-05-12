@@ -3565,7 +3565,7 @@ void AdS4D_pre_io_calc(void)
                 		//routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                 		if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -3820,7 +3820,7 @@ void AdS4D_pre_io_calc(void)
                 	{
                 		if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset1,&numbdypoints_freepts_extraporder1_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -3841,7 +3841,7 @@ void AdS4D_pre_io_calc(void)
                         //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                         if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder2_paramset1*.txt files");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -4096,7 +4096,7 @@ void AdS4D_pre_io_calc(void)
                     {
                     	if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder2_paramset1*.txt files");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -4363,7 +4363,7 @@ void AdS4D_pre_io_calc(void)
                         //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                     	if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
+                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -4619,7 +4619,7 @@ void AdS4D_pre_io_calc(void)
                     {
                     	if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
+                			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset2,&numbdypoints_freepts_extraporder1_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -4640,7 +4640,7 @@ void AdS4D_pre_io_calc(void)
                         //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                         if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder2_paramset2*.txt files");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -4893,7 +4893,7 @@ void AdS4D_pre_io_calc(void)
                     {
                     	if (rad_extrap)
                 		{
-                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder2_paramset2*.txt files");
                 			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 		}
                 		else
@@ -16240,7 +16240,7 @@ void AdS4D_post_tstep(int L)
                 			//routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                 			if (rad_extrap)
                 			{
-                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files");
                 				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 			}
                 			else
@@ -16491,7 +16491,7 @@ void AdS4D_post_tstep(int L)
                 		{
                 			if (rad_extrap)
 	                		{
-    	            			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+    	            			if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files");
         	        			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset1,&numbdypoints_freepts_extraporder1_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
             	    		}
                 			else
@@ -16509,7 +16509,7 @@ void AdS4D_post_tstep(int L)
                         	//routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                         	if (rad_extrap)
 	                		{
-    	            			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+    	            			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder2_paramset1*.txt files");
         	        			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
             	    		}
                 			else
@@ -16760,7 +16760,7 @@ void AdS4D_post_tstep(int L)
                     	{
                     		if (rad_extrap)
 	                		{
-    	            			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder1_paramset1*.txt files\n");
+    	            			if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset1 parameters - saved in freepts_extraporder2_paramset1*.txt files");
         	        			nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset1,&numbdypoints_freepts_extraporder2_paramset1,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset1,&half_steps_from_bdy_int_paramset1,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
             	    		}
                 			else
@@ -17025,7 +17025,7 @@ void AdS4D_post_tstep(int L)
                             //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                             if (rad_extrap)
                 			{
-                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
+                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files");
                 				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 			}
                 			else
@@ -17276,7 +17276,7 @@ void AdS4D_post_tstep(int L)
                         {
                         	if (rad_extrap)
                 			{
-                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
+                				if (my_rank==0) printf("\nFirst order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files");
                 				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder1_paramset2,&numbdypoints_freepts_extraporder1_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 			}
                 			else
@@ -17294,7 +17294,7 @@ void AdS4D_post_tstep(int L)
                             //routine that sets a mask for near bdy points. We will call these "nexttobdypoints". The number of nexttobdypoints is also the number of points at the boundary where we will extrapolate the stress-energy tensor in AdS4D_pre_tstep and AdS4D_post_tstep. We call this number numbdypoints.
                             if (rad_extrap)
                 			{
-                				if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
+                				if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder2_paramset2*.txt files");
                 				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_tmp,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 			}
                 			else
@@ -17545,7 +17545,7 @@ void AdS4D_post_tstep(int L)
                         {
                         	if (rad_extrap)
                 			{
-                				if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder1_paramset2*.txt files\n");
+                				if (my_rank==0) printf("\nSecond order radial extrapolation of boundary quantities using paramset2 parameters - saved in freepts_extraporder2_paramset2*.txt files");
                 				nexttobdypoints_radextrap_(chrbdy_freepts_extraporder2_paramset2,&numbdypoints_freepts_extraporder2_paramset2,&bdy_extrap_order,&currentres_ratio_Lhighres_Llowres,&half_steps_from_bdy_ext_paramset2,&half_steps_from_bdy_int_paramset2,x,y,z,chr,&AdS_L,&AMRD_ex,&Nx,&Ny,&Nz,phys_bdy,ghost_width);
                 			}
                 			else
