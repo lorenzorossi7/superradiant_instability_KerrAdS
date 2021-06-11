@@ -2699,7 +2699,7 @@ void AdS4D_var_post_init(char *pfile)
         }
         else //if we start from bh initial data and AH finder is not off
         {
-			printf("\n ... AH finder is on: initial range of sample sphere radius set to [min_Kerr_AdS_horizon_radius,max_Kerr_AdS_horizon_radius]\n");        	
+			if (my_rank==0)   printf("\n ... AH finder is on: initial range of sample sphere radius set to [min_Kerr_AdS_horizon_radius,max_Kerr_AdS_horizon_radius]\n");        	
             AH_r0[0]=min_AH_R0;
             AH_r1[0]=max_AH_R0;
         }
