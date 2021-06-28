@@ -431,6 +431,7 @@ c----------------------------------------------------------------------
               end if
  
             end if
+
            end do
           end do
         end do
@@ -928,6 +929,7 @@ c-----------------------------------------------------------------------
      &                    AH_g0_xx,AH_g0_xy,AH_g0_xz,
      &                    AH_g0_yy,AH_g0_yz,AH_g0_zz,
      &                    AH_g0_chichi,AH_g0_chiphi,AH_g0_phiphi,
+     &                    AH_relkretsch,
      &                    AH_ahr,AH_dch,AH_dph,
      &                    AH_da0,AH_dcq,AH_dcp,AH_dcp2,
      &                    gb_tt_np1,gb_tt_n,gb_tt_nm1,
@@ -940,6 +942,7 @@ c-----------------------------------------------------------------------
      &                    gb_yy_np1,gb_yy_n,gb_yy_nm1,
      &                    gb_yz_np1,gb_yz_n,gb_yz_nm1,
      &                    gb_zz_np1,gb_zz_n,gb_zz_nm1,
+     &                    relkretsch_n,
      &                    L,x,y,z,dt,chr,ex,do_ex,
      &                    Nx,Ny,Nz,axisym,
      &                    ief_bh_r0,a_rot,kerrads_background)
@@ -966,6 +969,7 @@ c-----------------------------------------------------------------------
         real*8 AH_g0_chichi(AH_Nchi,AH_Nphi)
         real*8 AH_g0_chiphi(AH_Nchi,AH_Nphi)
         real*8 AH_g0_phiphi(AH_Nchi,AH_Nphi)
+        real*8 AH_relkretsch(AH_Nchi,AH_Nphi)
         real*8 AH_ahr(AH_Nchi,AH_Nphi)
         real*8 AH_dch(AH_Nchi,AH_Nphi)
         real*8 AH_dph(AH_Nchi,AH_Nphi)
@@ -986,6 +990,7 @@ c-----------------------------------------------------------------------
         real*8 gb_yy_np1(Nx,Ny,Nz),gb_yy_n(Nx,Ny,Nz),gb_yy_nm1(Nx,Ny,Nz)
         real*8 gb_yz_np1(Nx,Ny,Nz),gb_yz_n(Nx,Ny,Nz),gb_yz_nm1(Nx,Ny,Nz)
         real*8 gb_zz_np1(Nx,Ny,Nz),gb_zz_n(Nx,Ny,Nz),gb_zz_nm1(Nx,Ny,Nz)
+        real*8 relkretsch_n(Nx,Ny,Nz)
 
         real*8 cosx(Nx),cosy(Ny),cosz(Nz)
         real*8 sinx(Nx),siny(Ny),sinz(Nz)
@@ -1312,20 +1317,20 @@ c-----------------------------------------------------------------------
      &                    (  fx)*(  fy)*(  fz)  *gb_yz_n(i+1,j+1,k+1)
 
           AH_gb_zz(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *gb_zz_n(i,j,k)+
-     &                     (  fx)*(1-fy)*(1-fz)  *gb_zz_n(i+1,j,k)+
-     &                     (1-fx)*(  fy)*(1-fz)  *gb_zz_n(i,j+1,k)+
-     &                     (  fx)*(  fy)*(1-fz)  *gb_zz_n(i+1,j+1,k)+
-     &                     (1-fx)*(1-fy)*(  fz)  *gb_zz_n(i,j,k+1)+
-     &                     (  fx)*(1-fy)*(  fz)  *gb_zz_n(i+1,j,k+1)+
-     &                     (1-fx)*(  fy)*(  fz)  *gb_zz_n(i,j+1,k+1)+
-     &                     (  fx)*(  fy)*(  fz)  *gb_zz_n(i+1,j+1,k+1)
+     &                    (  fx)*(1-fy)*(1-fz)  *gb_zz_n(i+1,j,k)+
+     &                    (1-fx)*(  fy)*(1-fz)  *gb_zz_n(i,j+1,k)+
+     &                    (  fx)*(  fy)*(1-fz)  *gb_zz_n(i+1,j+1,k)+
+     &                    (1-fx)*(1-fy)*(  fz)  *gb_zz_n(i,j,k+1)+
+     &                    (  fx)*(1-fy)*(  fz)  *gb_zz_n(i+1,j,k+1)+
+     &                    (1-fx)*(  fy)*(  fz)  *gb_zz_n(i,j+1,k+1)+
+     &                    (  fx)*(  fy)*(  fz)  *gb_zz_n(i+1,j+1,k+1)
 
          AH_g0_xx(i0,j0)  = g0_xx_ads0  + AH_gb_xx(i0,j0)
          AH_g0_xy(i0,j0)  = g0_xy_ads0  + AH_gb_xy(i0,j0)
          AH_g0_xz(i0,j0)  = g0_xz_ads0  + AH_gb_xz(i0,j0)
          AH_g0_yy(i0,j0)  = g0_yy_ads0  + AH_gb_yy(i0,j0)
          AH_g0_yz(i0,j0)  = g0_yz_ads0  + AH_gb_yz(i0,j0)
-         AH_g0_zz(i0,j0) = g0_zz_ads0 + AH_gb_zz(i0,j0)
+         AH_g0_zz(i0,j0)  = g0_zz_ads0  + AH_gb_zz(i0,j0)
 
 
 !         write (*,*) "i0,j0=",i0,j0
@@ -1335,6 +1340,16 @@ c-----------------------------------------------------------------------
 !         write (*,*) "AH_g0_yy(i0,j0)=",AH_g0_yy(i0,j0)
 !         write (*,*) "AH_g0_yz(i0,j0)=",AH_g0_yz(i0,j0)
 !         write (*,*) "AH_g0_zz(i0,j0)=",AH_g0_zz(i0,j0)
+
+          AH_relkretsch(i0,j0)=
+     &           (1-fx)*(1-fy)*(1-fz)  *relkretsch_n(i,j,k)+
+     &           (  fx)*(1-fy)*(1-fz)  *relkretsch_n(i+1,j,k)+
+     &           (1-fx)*(  fy)*(1-fz)  *relkretsch_n(i,j+1,k)+
+     &           (  fx)*(  fy)*(1-fz)  *relkretsch_n(i+1,j+1,k)+
+     &           (1-fx)*(1-fy)*(  fz)  *relkretsch_n(i,j,k+1)+
+     &           (  fx)*(1-fy)*(  fz)  *relkretsch_n(i+1,j,k+1)+
+     &           (1-fx)*(  fy)*(  fz)  *relkretsch_n(i,j+1,k+1)+
+     &           (  fx)*(  fy)*(  fz)  *relkretsch_n(i+1,j+1,k+1)
 
         !--------------------------------------------------------------
         ! proper area element
