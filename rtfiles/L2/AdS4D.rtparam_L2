@@ -27,20 +27,29 @@ a_rot0 := 0.0
 #ief_bh_r0 := 0.5566
 #a_rot0 := 0.208723
 
+#------------ Scalar and vector spherical harmonic perturbations ---------------#
+
+add_perturb_t0 := 1
+add_perturb_postt0 := 1
+#interval of time between time steps at which we add perturbations
+perturb_deltat := 0.03
+#final time at which we add perturbations 
+perturb_finalt := 1.0
+
 #spherical harmonic perturbation amplitudes
 #Parameters of arXiv:1801.09711 (Chesler,Lowe)
 #amp_Y := -0.1333333333333
 #amp_V := -0.1
 
-#amp_Y := 0.01
-#amp_V := 0.01
+amp_Y := 0.01
+amp_V := 0.01
 
-#AH-finder#
+#------ AH-finder ---------
 AH_Lmin := 1
 #AH_Lmax := 2
 AH_rsteps := 10
 AH_eps := 0.0
-AH_max_iter := 1000
+AH_max_iter := 000
 AH_lambda := 0.0001
 AH_tol := 1e-2
 AH_r0 := 0.1
@@ -162,7 +171,7 @@ max_resolution_degree := 4
 #reduction_factor is the factor by which we need to reduce the number points of the lowest resolution used for convergence (i.e. the resolution with degree 1) so that we only select points that are present also in the resolutions with degree 2 and 3. To get the exact same points in higher resolutions, we need to reduce by a factor (reduction_factor**(max_resolution_degree-1))*((ratio_Lhighres_Llowres)**(resolution_degree-1)). ratio_Lhighres_Llowres and reduction_factor must be chosen so that this factor is an integer for all resolutions
 reduction_factor := 2
 
-base_shape := [65 65 65]
+base_shape := [33 33 33]
 max_lev := 1
 lambda := 0.2
 rho_sp := 2
@@ -263,7 +272,7 @@ cp_restore_fname := "cp_L2_A"
 
 #------- solution related -------------------------------------------------
 
-steps := 2
+steps := 10
 evo_max_iter := 25
 evo_min_iter := 1
 evo_tol := 1.0e-6

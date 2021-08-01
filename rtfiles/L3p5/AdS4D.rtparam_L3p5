@@ -24,8 +24,17 @@ stype := 0
 #a_rot0 := 0.2
 
 #Parameters of arXiv:1801.09711 (Chesler,Lowe)
-ief_bh_r0 := 0.5566
-a_rot0 := 0.208723
+#ief_bh_r0 := 0.5566
+#a_rot0 := 0.208723
+
+#------------ Scalar and vector spherical harmonic perturbations ---------------#
+
+add_perturb_t0 := 1
+add_perturb_postt0 := 1
+#interval of time between time steps at which we add perturbations
+perturb_deltat := 0.03
+#final time at which we add perturbations 
+perturb_finalt := 1.0
 
 #spherical harmonic perturbation amplitudes
 #Parameters of arXiv:1801.09711 (Chesler,Lowe)
@@ -35,7 +44,7 @@ a_rot0 := 0.208723
 amp_Y := 0.01
 amp_V := 0.01
 
-#AH-finder#
+#------ AH-finder ---------
 AH_Lmin := 1
 AH_rsteps := 10
 AH_eps := 0.0

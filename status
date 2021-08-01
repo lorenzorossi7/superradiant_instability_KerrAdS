@@ -5,6 +5,7 @@ Implemented analytic Kerr-AdS (and Schwarzschild-AdS) initial data in Kerr-Schil
 Implemented the option to use Kerr-AdS (or Schwarzschild-AdS) in Kerr-Schil
 d Cartesian coordinates non-rotating at the boundary as background metric.
 Implemented spherical harmonics perturbations with l=2,m=2 that follow the ones used in arXiv:1801.09711 (Chesler,Lowe). Adding these to initial data makes them constraint-violating!!
+Implemented the possibility of adding these perturbations at later times during the evolution.
 
 Implemented AH-shaped excision and spherical excision with radius given by the minimum of the AH radius (times (1-ex_rbuf)).
 

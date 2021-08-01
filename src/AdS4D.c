@@ -50,7 +50,10 @@ real phi1_amp_1,phi1_B_1,phi1_C_1,phi1_r0_1,phi1_delta_1,phi1_x0_1[3],phi1_ecc_1
 real phi1_amp_2,phi1_B_2,phi1_C_2,phi1_r0_2,phi1_delta_2,phi1_x0_2[3],phi1_ecc_2[3];
 
 //parameters for perturbations
+int add_perturb_t0, add_perturb_postt0;
+real perturb_deltat, perturb_finalt;
 real amp_Y,amp_V;
+int count_perturb_tsteps;
 
 // if > 0, initialize with exact BH
 real ief_bh_r0,a_rot0;
@@ -2300,8 +2303,12 @@ void AdS4D_var_post_init(char *pfile)
     AMRD_real_param(pfile,"phi1_x0_2",phi1_x0_2,AMRD_dim);
     AMRD_real_param(pfile,"phi1_ecc_2",phi1_ecc_2,AMRD_dim);  
 
-    AMRD_real_param(pfile,"amp_Y",&amp_Y,1);
-    AMRD_real_param(pfile,"amp_V",&amp_V,1);
+    add_perturb_t0=0; AMRD_int_param(pfile,"add_perturb_t0",&add_perturb_t0,1);
+    add_perturb_postt0=0; AMRD_int_param(pfile,"add_perturb_postt0",&add_perturb_postt0,1); 
+    perturb_deltat=0.0; AMRD_real_param(pfile,"perturb_deltat",&perturb_deltat,1);
+    perturb_finalt=0.0; AMRD_real_param(pfile,"perturb_finalt",&perturb_finalt,1);
+    amp_Y=0.0; AMRD_real_param(pfile,"amp_Y",&amp_Y,1);
+    amp_V=0.0; AMRD_real_param(pfile,"amp_V",&amp_V,1);
 
     kerrads_background=0; AMRD_int_param(pfile,"kerrads_background",&kerrads_background,1);  
 
@@ -2995,9 +3002,10 @@ void AdS4D_t0_cnst_data(void)
                     //       }  
                     //      } 
                     //   }   
-	        if ((!AMRD_cp_restart)&&((fabs(amp_Y)>pow(10.0,-10))||(fabs(amp_V)>pow(10.0,-10))))
+	        if ((add_perturb_t0)&&(perturb_finalt>pow(10.0,-10))&&(!AMRD_cp_restart)&&((fabs(amp_Y)>pow(10.0,-10))||(fabs(amp_V)>pow(10.0,-10))))
 	        {
 	
+				count_perturb_tsteps=1;
 	        	if (my_rank==0) 
 	        	{
 	        		printf("Adding l=2,m=2 spherical harmonics perturbations to initial gbs\n"
@@ -3105,9 +3113,9 @@ void AdS4D_t0_cnst_data(void)
                             x,y,z,&dt,chr_mg,&AMRD_ex,&Nx,&Ny,&Nz,&regtype,&kerrads_background);
         	}
 
-	        if ((!AMRD_cp_restart)&&((fabs(amp_Y)>pow(10.0,-10))||(fabs(amp_V)>pow(10.0,-10))))
+	        if ((add_perturb_t0)&&(perturb_finalt>pow(10.0,-10))&&(!AMRD_cp_restart)&&((fabs(amp_Y)>pow(10.0,-10))||(fabs(amp_V)>pow(10.0,-10))))
 	        {
-	
+				count_perturb_tsteps=1;
 	        	if (my_rank==0) 
 	        	{
 	        		printf("Adding l=2,m=2 spherical harmonics perturbations to initial gbs\n"
@@ -3244,15 +3252,18 @@ void AdS4D_t0_cnst_data(void)
 //       }    
 //      }   
 //   } 
-	        if (my_rank==0) 
-	       	{
-	       		printf("Adding l=2,m=2 spherical harmonics perturbations to initial gbs\n"
-	       			   "WARNING: constraint-violating initial data\n");
-	       		printf("Amplitudes\n");
-	       		printf("amp_Y=%lf,amp_V=%lf\n",amp_Y,amp_V);
-	       	}
+            if ((add_perturb_t0)&&(perturb_finalt>pow(10.0,-10))&&(!AMRD_cp_restart)&&((fabs(amp_Y)>pow(10.0,-10))||(fabs(amp_V)>pow(10.0,-10))))
+	        {
+	        	count_perturb_tsteps=1;
+	        	if (my_rank==0) 
+	       		{
+	       			printf("Adding l=2,m=2 spherical harmonics perturbations to initial gbs\n"
+	       				   "WARNING: constraint-violating initial data\n");
+	       			printf("Amplitudes\n");
+	       			printf("amp_Y=%lf,amp_V=%lf\n",amp_Y,amp_V);
+	       		}
 	
-        	sph_harm_perturb_(phi1,
+        		sph_harm_perturb_(phi1,
 	        				gb_tt,
 	                        gb_tx,
 	                        gb_ty,
@@ -3288,7 +3299,8 @@ void AdS4D_t0_cnst_data(void)
 	//
 	//        	    MPI_Barrier(MPI_COMM_WORLD);
 	//    if (my_rank==0) {printf("POST-boost_perturb\n"); fflush(stdout); }
-	
+
+        	}
         }   
     }   
     // initialize hbars 
@@ -3490,7 +3502,66 @@ void AdS4D_pre_io_calc(void)
     if (ct!=0)
     {
         //(NOTE: for t>t0, have cycled time sequence np1,n,nm1 to time sequence n,nm1,np1,
-        // so here, time level n is the most advanced time level)   
+        // so here, time level n is the most advanced time level)  
+
+    	if ((add_perturb_postt0)&&(ct<=perturb_finalt)&&((fabs(amp_Y)>pow(10.0,-10))||(fabs(amp_V)>pow(10.0,-10))))
+	    {
+	    	if (floor(ct/perturb_deltat)>floor((ct-dt)/perturb_deltat))
+	    	{
+	    		if (add_perturb_t0) {count_perturb_tsteps=floor(ct/perturb_deltat)+1;}
+	    		if (!add_perturb_t0) {count_perturb_tsteps=floor(ct/perturb_deltat);}
+	
+        		if (my_rank==0) 
+        		{
+        			printf("At time T=%lf - before saving output and moving to the next time step\n"
+        				   "Adding l=2,m=2 spherical harmonics perturbations to gb_n's\n"
+        				   "for the %i-th time\n"
+        			   	   "WARNING: adding constraint-violating perturbations\n",ct,count_perturb_tsteps);
+        			printf("Amplitudes\n");
+        			printf("amp_Y=%lf,amp_V=%lf\n",amp_Y,amp_V);
+        			printf("===============================================================\n\n");
+        		}
+	
+        		sph_harm_perturb_(phi1_n,
+        				gb_tt_n,
+                        gb_tx_n,
+                        gb_ty_n,
+                        gb_tz_n,
+                        gb_xx_n,
+                        gb_xy_n,
+                        gb_xz_n,
+                        gb_yy_n,
+                        gb_yz_n,
+                        gb_zz_n,
+                        &amp_Y,&amp_V,
+                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz);
+	
+//					for (i=0; i<Nx; i++)
+//					{    
+//						for (j=0; j<Ny; j++)
+//						{ 
+//						   	for (k=0; k<Nz; k++)
+//						    {  
+//								if (sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k])<0.4)
+//							    {   
+//									ind=i+Nx*(j+Ny*k);
+//									printf("POST-boost_perturb\n");
+//									printf("i=%i,j=%i,k=%i,Nx=%i,Ny=%i,Nz=%i,x[i]=%lf,y[j]=%lf,z[k]=%lf,rho=%lf\n"
+//									       ,i,j,k,Nx,Ny,Nz,x[i],y[j],z[k],sqrt(x[i]*x[i]+y[j]*y[j]+z[k]*z[k]));
+//									printf("phi1_nm1[ind]=%lf,phi1_n[ind]=%lf,phi1_np1[ind]=%lf\n",phi1_nm1[ind],phi1_n[ind],phi1_np1[ind]);
+//									printf("phi1_t_n[ind]=%lf\n",phi1_t_n[ind]);
+//									printf("gb_tt_nm1[ind]=%lf,gb_tt_n[ind]=%lf,gb_tt_np1[ind]=%lf\n",gb_tt_nm1[ind],gb_tt_n[ind],gb_tt_np1[ind]);
+//								}
+//						    }
+//						}
+//					} 
+//
+//        	    MPI_Barrier(MPI_COMM_WORLD);
+//    if (my_rank==0) {printf("POST-boost_perturb\n"); fflush(stdout); }
+	
+	    	}
+	    }
+
         // output independent residual
         if (output_ires)
         {   
