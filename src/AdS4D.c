@@ -16049,7 +16049,7 @@ void AdS4D_pre_tstep(int L)
 				   	    {
 	                   	//format: t,chi,phi,R,x0,y0,z0,ind (values on horizon)
 	                   	fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
-	                   		ct,j*dchi,k*dphi,AH_R[l][j+AH_Nchi[l]*k],AH_x0[l][j+AH_Nchi[l]*k],AH_y0[l][j+AH_Nchi[l]*k],AH_z0[l][j+AH_Nchi[l]*k],j+AH_Nchi[l]*k); 
+	                   		ct,j*dchi,k*dphi,AH_R[l][j+AH_Nchi[l]*k],AH_x0[l][j+AH_Nchi[l]*k],AH_y0[l][j+AH_Nchi[l]*k],AH_z0[l][j+AH_Nchi[l]*k],k+AH_Nphi[l]*j); 
 	                   	}
 				    }
 	                fclose(fp);
@@ -16064,7 +16064,7 @@ void AdS4D_pre_tstep(int L)
 					   	    {
 	                	   	//format: t,theta,ind (values on horizon)
 	                   		fprintf(fp,"%24.16e %24.16e %i \n",
-	                   			ct,AH_theta[l][j+AH_Nchi[l]*k],j+AH_Nchi[l]*k); 
+	                   			ct,AH_theta[l][j+AH_Nchi[l]*k],k+AH_Nphi[l]*j); 
 	                   		}
 				    	}
 	            	    fclose(fp);
@@ -16080,7 +16080,7 @@ void AdS4D_pre_tstep(int L)
 					   	    {
 	                	   	//format: t,g0_xx,g0_xy,g0_xz,g0_yy,g0_yz,g0_zz,ind (values on horizon)
 	                   		fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
-	                   			ct,AH_g0_xx[l][j+AH_Nchi[l]*k],AH_g0_xy[l][j+AH_Nchi[l]*k],AH_g0_xz[l][j+AH_Nchi[l]*k],AH_g0_yy[l][j+AH_Nchi[l]*k],AH_g0_yz[l][j+AH_Nchi[l]*k],AH_g0_zz[l][j+AH_Nchi[l]*k],j+AH_Nchi[l]*k); 
+	                   			ct,AH_g0_xx[l][j+AH_Nchi[l]*k],AH_g0_xy[l][j+AH_Nchi[l]*k],AH_g0_xz[l][j+AH_Nchi[l]*k],AH_g0_yy[l][j+AH_Nchi[l]*k],AH_g0_yz[l][j+AH_Nchi[l]*k],AH_g0_zz[l][j+AH_Nchi[l]*k],k+AH_Nphi[l]*j); 
 	                   		}
 				    	}
 	            	    fclose(fp);
@@ -16096,7 +16096,7 @@ void AdS4D_pre_tstep(int L)
 					   	    {
 	                	   	//format: t,g0_chichi,g0_chiphi,g0_phiphi,ind (values on horizon)
 	                   		fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
-	                   			ct,AH_g0_chichi[l][j+AH_Nchi[l]*k],AH_g0_chiphi[l][j+AH_Nchi[l]*k],AH_g0_phiphi[l][j+AH_Nchi[l]*k],j+AH_Nchi[l]*k); 
+	                   			ct,AH_g0_chichi[l][j+AH_Nchi[l]*k],AH_g0_chiphi[l][j+AH_Nchi[l]*k],AH_g0_phiphi[l][j+AH_Nchi[l]*k],k+AH_Nphi[l]*j); 
 	                   		}
 				    	}
 	            	    fclose(fp);
@@ -16112,7 +16112,7 @@ void AdS4D_pre_tstep(int L)
 					   	    {
 	                	   	//format: t,AH_relkretsch,ind (values on horizon)
 	                   		fprintf(fp,"%24.16e %24.16e %i \n",
-	                   			ct,AH_relkretsch[l][j+AH_Nchi[l]*k],j+AH_Nchi[l]*k); 
+	                   			ct,AH_relkretsch[l][j+AH_Nchi[l]*k],k+AH_Nphi[l]*j); 
 	                   		}
 				    	}
 	            	    fclose(fp);
@@ -16128,7 +16128,7 @@ void AdS4D_pre_tstep(int L)
 					   	    {
 	                	   	//format: t,ahr,ahr_dch,ahr_dph,da,d_ceq,d_cp,d_cp2,ind (values on horizon)
 	                   		fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
-	                   			ct,AH_ahr[l][j+AH_Nchi[l]*k],AH_dch[l][j+AH_Nchi[l]*k],AH_dph[l][j+AH_Nchi[l]*k],AH_da0[l][j+AH_Nchi[l]*k],AH_dcq[l][j+AH_Nchi[l]*k],AH_dcp[l][j+AH_Nchi[l]*k],AH_dcp2[l][j+AH_Nchi[l]*k],j+AH_Nchi[l]*k); 
+	                   			ct,AH_ahr[l][j+AH_Nchi[l]*k],AH_dch[l][j+AH_Nchi[l]*k],AH_dph[l][j+AH_Nchi[l]*k],AH_da0[l][j+AH_Nchi[l]*k],AH_dcq[l][j+AH_Nchi[l]*k],AH_dcp[l][j+AH_Nchi[l]*k],AH_dcp2[l][j+AH_Nchi[l]*k],k+AH_Nphi[l]*j); 
 	                   		}
 				    	}
 	            	    fclose(fp);
