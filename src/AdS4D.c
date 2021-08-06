@@ -7504,7 +7504,7 @@ void AdS4D_pre_tstep(int L)
     real M,J,area,c_equat,c_polar,c_polar2;
     real AH_bbox[4],AH_min_resid0,AH_min_resid1,AH_min_resid2;
     real ex_r0[3],ex_xc0[3],dt; 
-    real ct;
+    real ct,coarse_t;
     real new_rbuf;
     real tol_save;      
     int omt;    
@@ -7520,6 +7520,7 @@ void AdS4D_pre_tstep(int L)
     ct=PAMR_get_time(L);    
     Lf=PAMR_get_max_lev(PAMR_AMRH);
     Lc=PAMR_get_min_lev(PAMR_AMRH);  
+    coarse_t=PAMR_get_time(Lc);   
     int lsteps=AMRD_lsteps[Lc-1];
     int ivecNt=AMRD_steps/AMRD_save_ivec0[3]+1; //+1 to include t=0
 
@@ -15983,7 +15984,7 @@ void AdS4D_pre_tstep(int L)
             // if never found AH
             if (!(found_AH[l])) for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) AH_R[l][i]=AH_r0[l];    
             // save AH grid functions if this time found AH
-            if (AH[l]) 
+            if ((AH[l])&&(fabs(coarse_t-ct)<pow(10,-10))) 
             {
                 AH_shape[0]=AH_Nchi[l];
                 AH_shape[1]=AH_Nphi[l];

@@ -30,7 +30,7 @@ a_rot0 := 0.0
 #------------ Scalar and vector spherical harmonic perturbations ---------------#
 
 add_perturb_t0 := 1
-add_perturb_postt0 := 1
+add_perturb_postt0 := 0
 #interval of time between time steps at which we add perturbations
 perturb_deltat := 0.03
 #final time at which we add perturbations 
@@ -41,8 +41,8 @@ perturb_finalt := 1.0
 #amp_Y := -0.1333333333333
 #amp_V := -0.1
 
-amp_Y := 0.01
-amp_V := 0.01
+#amp_Y := 0.01
+#amp_V := 0.01
 
 #------ AH-finder ---------
 AH_Lmin := 1
@@ -62,7 +62,7 @@ AH_freq_aft := 1
 #excision_type=0: no internal excision - excision_type=1: spherical excised region - excision_type=2: elliptic excised region - excision_type=3: AH-shaped excised region
 excision_type := 2
 #excision buffer, i.e. how wide the region to evolve within the AH (or the AdS boundary if there is no BH) is
-ex_rbuf := 0.4
+ex_rbuf := 0.1
 AH_reset_scale := 1.1
 AH_max_iter_2 := 0
 AH_max_iter_3 := 0
@@ -272,7 +272,7 @@ cp_restore_fname := "cp_L2_A"
 
 #------- solution related -------------------------------------------------
 
-steps := 10
+steps := 2
 evo_max_iter := 25
 evo_min_iter := 1
 evo_tol := 1.0e-6
@@ -304,9 +304,9 @@ max_t_interp_order := 3
 num_save_1_vars := 0
 #save_1_vars := [ "iresall" "gb_res" "kg_ires" "chr" ]
 
-num_save_2_vars := 0
+num_save_2_vars := 2
 #save_2_vars := [ "gb_tt" "gb_xx" "gb_zz" "Hb_x" "phi1" "relkretsch" "relriemanncube" ]
-#save_2_vars := [ "gb_xx" "relkretsch" ]
+save_2_vars := [ "gb_xx" "relkretsch" ]
 
 num_save_3_vars := 0
 save_3_vars := [ ]
