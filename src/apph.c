@@ -583,11 +583,11 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
          AH_bbox[3]=2*M_PI;
          rank=2; 
    
-//         sprintf(name,"%sAH_%i_R_iter",AMRD_save_tag,c_AH+1);
-//         gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_R[c_AH]);
-//
-//         sprintf(name,"%sAH_%i_theta_iter",AMRD_save_tag,c_AH+1);
-//         gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_theta0);
+         sprintf(name,"%sAH_%i_R_iter",AMRD_save_tag,c_AH+1);
+         gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_R[c_AH]);
+
+         sprintf(name,"%sAH_%i_theta_iter",AMRD_save_tag,c_AH+1);
+         gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_theta0);
 
 
          //sprintf(name,"%sAH_%i_g0_xx_iter",AMRD_save_tag,c_AH+1);
