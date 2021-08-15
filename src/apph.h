@@ -28,6 +28,7 @@ extern real *AH_g0_zz[MAX_BHS];
 extern real *AH_g0_chichi[MAX_BHS];
 extern real *AH_g0_chiphi[MAX_BHS];
 extern real *AH_g0_phiphi[MAX_BHS];
+extern real *AH_kretsch[MAX_BHS];
 extern real *AH_relkretsch[MAX_BHS];
 extern real *AH_ahr[MAX_BHS],*AH_dph[MAX_BHS],*AH_dch[MAX_BHS];
 extern real *AH_da0[MAX_BHS],*AH_dcq[MAX_BHS],*AH_dcp[MAX_BHS],*AH_dcp2[MAX_BHS];
@@ -42,9 +43,9 @@ extern int found_count_AH[MAX_BHS];
 //-----------------------------------------------------------------------------
 
 int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *c_polar2s, int use_R_ic, real *AH_min_resid, 
-    int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_relkretschAH_sdf, 
+    int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_kretschAH_sdf, int output_relkretschAH_sdf,
     int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, 
-    int output_metricAH_sph_ascii, int output_relkretschAH_ascii, int output_diagnosticAH_ascii,
+    int output_metricAH_sph_ascii, int output_kretschAH_ascii, int output_relkretschAH_ascii, int output_diagnosticAH_ascii,
     real *ief_bh_r0,real *a_rot0,int *kerrads_background);
 
 //-----------------------------------------------------------------------------
@@ -68,6 +69,7 @@ void calc_exp_metric0_(real *AH_R, real *AH_xc, real *AH_theta, int *i0, int *j0
                 real *AH_g0_xx,real *AH_g0_xy,real *AH_g0_xz,
                 real *AH_g0_yy,real *AH_g0_yz,real *AH_g0_zz,
                 real *AH_g0_chichi, real *AH_g0_chiphi, real *AH_g0_phiphi, 
+                real *AH_kretsch,
                 real *AH_relkretsch,
                 real *AH_ahr,real *AH_dch,real *AH_dph,
                 real *AH_da0, real *AH_dcq, real *AH_dcp, real *AH_dcp2,
@@ -81,6 +83,7 @@ void calc_exp_metric0_(real *AH_R, real *AH_xc, real *AH_theta, int *i0, int *j0
                 real *gb_yy_np1, real *gb_yy_n, real *gb_yy_nm1,
                 real *gb_yz_np1, real *gb_yz_n, real *gb_yz_nm1,
                 real *gb_zz_np1, real *gb_zz_n, real *gb_zz_nm1,
+                real *kretsch_n,
                 real *relkretsch_n,
                 real *AdS_L, real *x, real *y, real *z, real *dt, real *chr, 
                 real *ex, int *do_ex, int *Nx, int *Ny, int *Nz, int *axisym,

@@ -120,7 +120,10 @@ extern real *gb_xz,*gb_xz_n,*gb_xz_np1,*gb_xz_nm1;
 extern real *gb_yy,*gb_yy_n,*gb_yy_np1,*gb_yy_nm1; 
 extern real *gb_yz,*gb_yz_n,*gb_yz_np1,*gb_yz_nm1;
 extern real *gb_zz,*gb_zz_n,*gb_zz_np1,*gb_zz_nm1; 
+extern real *kretsch,*kretsch_n,*kretsch_np1,*kretsch_nm1;
 extern real *relkretsch,*relkretsch_n,*relkretsch_np1,*relkretsch_nm1;
+extern real *riemanncube,*riemanncube_n,*riemanncube_np1,*riemanncube_nm1;
+extern real *relriemanncube,*relriemanncube_n,*relriemanncube_np1,*relriemanncube_nm1;
 
 extern real *Hb_t,*Hb_t_n,*Hb_t_np1,*Hb_t_nm1;
 extern real *Hb_x,*Hb_x_n,*Hb_x_np1,*Hb_x_nm1;
@@ -406,8 +409,11 @@ void ires_(real *efe_all_ires,
            real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width,
            real *ief_bh_r0,real *a_rot0,int *kerrads_background);
 
-void kretsch_(real *relkretsch_n,
-           real *relkretschcentregrid,
+void kretsch_riemanncube_(real *kretsch_n,
+           real *relkretsch_n,
+           real *kretschcentregrid,
+           real *riemanncube_n,
+           real *relriemanncube_n,
            real *gb_tt_np1, real *gb_tt_n, real *gb_tt_nm1,
            real *gb_tx_np1, real *gb_tx_n, real *gb_tx_nm1,
            real *gb_ty_np1, real *gb_ty_n, real *gb_ty_nm1,
@@ -425,27 +431,8 @@ void kretsch_(real *relkretsch_n,
            real *phi1_np1, real *phi1_n, real *phi1_nm1,
            real *x, real *y, real *z, real *dt, real *chr,
            real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width,
-           real *ief_bh_r0,real *a_rot0,int *kerrads_background);
-
-void riemanncube_(real *relriemanncube_n,
-           real *gb_tt_np1, real *gb_tt_n, real *gb_tt_nm1,
-           real *gb_tx_np1, real *gb_tx_n, real *gb_tx_nm1,
-           real *gb_ty_np1, real *gb_ty_n, real *gb_ty_nm1,
-           real *gb_tz_np1, real *gb_tz_n, real *gb_tz_nm1,
-           real *gb_xx_np1, real *gb_xx_n, real *gb_xx_nm1,
-           real *gb_xy_np1, real *gb_xy_n, real *gb_xy_nm1,
-           real *gb_xz_np1, real *gb_xz_n, real *gb_xz_nm1,
-           real *gb_yy_np1, real *gb_yy_n, real *gb_yy_nm1,
-           real *gb_yz_np1, real *gb_yz_n, real *gb_yz_nm1,
-           real *gb_zz_np1, real *gb_zz_n, real *gb_zz_nm1,
-           real *Hb_t_np1, real *Hb_t_n, real *Hb_t_nm1,
-           real *Hb_x_np1, real *Hb_x_n, real *Hb_x_nm1,
-           real *Hb_y_np1, real *Hb_y_n, real *Hb_y_nm1,
-           real *Hb_z_np1, real *Hb_z_n, real *Hb_z_nm1,
-           real *phi1_np1, real *phi1_n, real *phi1_nm1,
-           real *x, real *y, real *z, real *dt, real *chr,
-           real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width,
-           real *ief_bh_r0,real *a_rot0,int *kerrads_background);
+           real *ief_bh_r0,real *a_rot0,int *kerrads_background,
+           int *output_kretsch,int *output_relkretsch,int *output_riemanncube,int *output_relriemanncube);
 
 void gu_calc_(real *gb_tt, real *gb_tx, real *gb_ty, real *gb_xx, 
               real *gb_xy, real *gb_yy, real *gb_zz, 

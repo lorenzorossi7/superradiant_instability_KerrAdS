@@ -4876,6 +4876,7 @@ c----------------------------------------------------------------------
      &               +gamma_ull(a,c,e)*gamma_ull(e,b,d)
      &               -gamma_ull(a,d,e)*gamma_ull(e,b,c)
                 end do
+
               end do
             end do
           end do
