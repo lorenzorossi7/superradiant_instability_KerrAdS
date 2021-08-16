@@ -558,10 +558,8 @@ c calculate Kretschmann scalar, Kretschmann scalar relative to the background,
 c Riemann cube scalar and Riemann cube scalar relative to the background
 c-----------------------------------------------------------------------
         subroutine kretsch_riemanncube(kretsch_n,
-     &                  relkretsch_n,
      &                  kretschcentregrid,
      &                  riemanncube_n,
-     &                  relriemanncube_n,
      &                  gb_tt_np1,gb_tt_n,gb_tt_nm1,
      &                  gb_tx_np1,gb_tx_n,gb_tx_nm1,
      &                  gb_ty_np1,gb_ty_n,gb_ty_nm1,
@@ -579,14 +577,14 @@ c-----------------------------------------------------------------------
      &                  phi1_np1,phi1_n,phi1_nm1,
      &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,phys_bdy,ghost_width,
      &                  ief_bh_r0,a_rot,kerrads_background,
-     &                  output_kretsch,output_relkretsch,
-     &                  output_riemanncube,output_relriemanncube)
+     &                  output_kretsch,
+     &                  output_riemanncube)
 
         implicit none
         real*8 ief_bh_r0,a_rot
         integer kerrads_background
-        integer output_kretsch,output_relkretsch
-        integer output_riemanncube,output_relriemanncube
+        integer output_kretsch
+        integer output_riemanncube
         integer Nx,Ny,Nz
         integer i,j,k
         integer phys_bdy(6),ghost_width(6)
@@ -680,9 +678,9 @@ c-----------------------------------------------------------------------
 
         real*8 theta(Nx,Ny,Nz)
 
-        real*8 kretsch_n(Nx,Ny,Nz),relkretsch_n(Nx,Ny,Nz)
+        real*8 kretsch_n(Nx,Ny,Nz)
         real*8 kretschcentregrid
-        real*8 riemanncube_n(Nx,Ny,Nz),relriemanncube_n(Nx,Ny,Nz)
+        real*8 riemanncube_n(Nx,Ny,Nz)
 
 !!!!!!!DEBUGGING!!!!!!
         integer max_i,max_j,max_k
@@ -802,8 +800,7 @@ c-----------------------------------------------------------------------
                      riemann_llll(a,b,c,d)=
      &                     riemann_llll(a,b,c,d)
      &                     +riemann_ulll(e,b,c,d)*g0_ll(e,a)
-                     if ((output_riemanncube.eq.1)
-     &                  .or.(output_relriemanncube.eq.1)) then
+                     if (output_riemanncube.eq.1) then
                       riemann_uull(a,b,c,d)=riemann_uull(a,b,c,d)
      &                             +riemann_ulll(a,e,c,d)*g0_uu(e,b)
                      end if
@@ -826,23 +823,19 @@ c-----------------------------------------------------------------------
                kretsch_n(i,j,k)=0.0d0
                riemanncube_n(i,j,k)=0.0d0
                if ((output_kretsch.eq.1)
-     &           .or.(output_relkretsch.eq.1)
-     &           .or.(output_riemanncube.eq.1)
-     &           .or.(output_relriemanncube.eq.1)) then
+     &          .or.(output_riemanncube.eq.1)) then
                do a=1,4
                 do b=1,4
                  do c=1,4
                   do d=1,4
-                    if ((output_kretsch.eq.1)
-     &               .or.(output_relkretsch.eq.1)) then
+                    if (output_kretsch.eq.1) then
                        kretsch_n(i,j,k)=
      &                         kretsch_n(i,j,k)
      &                         +riemann_uuuu(a,b,c,d)
      &                         *riemann_llll(a,b,c,d)
                     end if
 
-                    if ((output_riemanncube.eq.1)
-     &               .or.(output_relriemanncube.eq.1)) then
+                    if (output_riemanncube.eq.1) then
                      do e=1,4
                       do f=1,4
                        riemanncube_n(i,j,k)=
@@ -862,141 +855,9 @@ c-----------------------------------------------------------------------
                end if
 
 
-               !BACKGROUND QUANTITIES at point i,j
-               if ((output_relkretsch.eq.1)
-     &          .or.(output_relriemanncube.eq.1)) then
-
-
-              ! give values to the Christoffel symbols
-               do a=1,4
-                 do b=1,4
-                   do c=1,4
-                     gammaads_ull(a,b,c)=0
-                     do d=1,4
-                       gammaads_ull(a,b,c)=
-     &                  gammaads_ull(a,b,c)
-     &                         +0.5d0*gads_uu(a,d)
-     &                             *(gads_ll_x(c,d,b)
-     &                               -gads_ll_x(b,c,d)
-     &                               +gads_ll_x(d,b,c))
-                     end do
-                   end do
-                 end do
-               end do
-
-               do a=1,4
-                 do b=1,4
-                   do c=1,4
-                     do e=1,4
-                       gammaads_ull_x(a,b,c,e)=0
-                       do d=1,4
-                         gammaads_ull_x(a,b,c,e)=gammaads_ull_x(a,b,c,e)
-     &                     +0.5d0*gads_uu_x(a,d,e)*(gads_ll_x(b,d,c)+
-     &                        gads_ll_x(c,d,b)-gads_ll_x(b,c,d))
-     &                     +0.5d0*gads_uu(a,d)*(gads_ll_xx(b,d,c,e)+
-     &                        gads_ll_xx(c,d,b,e)-gads_ll_xx(b,c,d,e))
-                       end do
-                     end do
-                   end do
-                 end do
-               end do
-
-               ! calculate riemann tensor at point i,j
-               !(R^a_bcd =gamma^a_bd,c - gamma^a_bc,d
-               !          +gamma^a_ce gamma^e_bd - gamma^a_de gamma^e_bc)
-               do a=1,4
-                 do b=1,4
-                   do c=1,4
-                     do d=1,4
-
-                       riemannads_ulll(a,b,c,d)=
-     &                   gammaads_ull_x(a,b,d,c)-gammaads_ull_x(a,b,c,d)
-                       do e=1,4
-                          riemannads_ulll(a,b,c,d)=
-     &                     riemannads_ulll(a,b,c,d)
-     &                      +gammaads_ull(a,c,e)*gammaads_ull(e,b,d)
-     &                      -gammaads_ull(a,d,e)*gammaads_ull(e,b,c)
-                       end do
-
-                     end do
-                   end do
-                 end do
-               end do
-
-
-               ! calculate Riemann_abcd, Riemann^ab_cd and Riemann^abcd at point i,j for background solution
-               do a=1,4
-                do b=1,4
-                 do c=1,4
-                  do d=1,4
-                   riemannads_llll(a,b,c,d)=0.0d0
-                   riemannads_uuuu(a,b,c,d)=0.0d0
-                   riemannads_uull(a,b,c,d)=0.0d0
-                   do e=1,4
-                     riemannads_llll(a,b,c,d)=riemannads_llll(a,b,c,d)
-     &                      +riemannads_ulll(e,b,c,d)*gads_ll(e,a)
-                     if (output_relriemanncube.eq.1) then
-                      riemannads_uull(a,b,c,d)=riemannads_uull(a,b,c,d)
-     &                     +riemannads_ulll(a,e,c,d)*gads_uu(e,b)
-                     end if
-                    do f=1,4
-                     do g=1,4
-                     riemannads_uuuu(a,b,c,d)=riemannads_uuuu(a,b,c,d)
-     &                         +riemannads_ulll(a,e,f,g)*gads_uu(e,b)
-     &                            *gads_uu(f,c)*gads_uu(g,d)
-                     end do
-                    end do
-                   end do
-
-                  end do
-                 end do
-                end do
-               end do
-
-               ! calculate Kretschmann and Riemann cube scalar at point i,j
-               !K=Riemann_abcd*Riemann^abcd
-               !Riemanncube=Riemann^abcd*Riemann_cdef*Riemann^ef_ab
-               kretschads=0.0d0
-               riemanncubeads=0.0d0
-               do a=1,4
-                do b=1,4
-                 do c=1,4
-                  do d=1,4
-                   if (output_relkretsch.eq.1) then
-                    kretschads=kretschads
-     &               +riemannads_llll(a,b,c,d)*riemannads_uuuu(a,b,c,d)
-                   end if
-
-                   if (output_relriemanncube.eq.1) then
-                   do e=1,4
-                    do f=1,4
-                     riemanncubeads=riemanncubeads
-     &                +riemannads_uuuu(a,b,c,d)
-     &                     *riemannads_llll(c,d,e,f)
-     &                     *riemannads_uull(e,f,a,b)
-                    end do
-                   end do
-                   end if
-
-                  end do
-                 end do
-                end do
-               end do
-
-
-               relkretsch_n(i,j,k)=
-     &          (kretsch_n(i,j,k))/kretschads-1.0d0
-               relriemanncube_n(i,j,k)=
-     &          (riemanncube_n(i,j,k))/riemanncubeads-1.0d0
-
-
-               end if
-
             else
                kretsch_n(i,j,k)=0.0d0
-               relkretsch_n(i,j,k)=0.0d0
                riemanncube_n(i,j,k)=0.0d0
-               relriemanncube_n(i,j,k)=0.0d0
             end if
 
 !find the indices denoting the point at the centre of the grid. Needed to compute kretschcentregrid

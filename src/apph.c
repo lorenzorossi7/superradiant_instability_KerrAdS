@@ -94,8 +94,8 @@ int fill_own(int Lmax, int ltrace, int *first)
 #define USE_SMOOTH_A 0 //HB//
 #define MAX_TRACE 5000
 real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat, real *c_polar, real *c_polar2, int *is_ex,
-                        int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_kretschAH_sdf, int output_relkretschAH_sdf,
-                        int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, int output_metricAH_sph_ascii, int output_kretschAH_ascii, int output_relkretschAH_ascii, int output_diagnosticAH_ascii,
+                        int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_kretschAH_sdf, int output_riemanncubeAH_sdf,
+                        int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, int output_metricAH_sph_ascii, int output_kretschAH_ascii, int output_riemanncubeAH_ascii, int output_diagnosticAH_ascii,
                         real *ief_bh_r0,real *a_rot0, int *kerrads_background)
 {
    int i,j,np,valid,dvtrace=0,i0,j0,is_int;
@@ -132,7 +132,7 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
       AH_g0_chiphi[c_AH][i]=0;
       AH_g0_phiphi[c_AH][i]=0;
       AH_kretsch[c_AH][i]=0;
-      AH_relkretsch[c_AH][i]=0;
+      AH_riemanncube[c_AH][i]=0;
       AH_ahr[c_AH][i]=0;
       AH_dch[c_AH][i]=0;
       AH_dph[c_AH][i]=0;
@@ -164,7 +164,7 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
                          AH_g0_yy[c_AH],AH_g0_yz[c_AH],AH_g0_zz[c_AH],
                          AH_g0_chichi[c_AH],AH_g0_chiphi[c_AH],AH_g0_phiphi[c_AH],
                          AH_kretsch[c_AH],
-                         AH_relkretsch[c_AH],
+                         AH_riemanncube[c_AH],
                          AH_ahr[c_AH],AH_dch[c_AH],AH_dph[c_AH],
                          AH_da0[c_AH],AH_dcq[c_AH],AH_dcp[c_AH],AH_dcp2[c_AH],
                          gb_tt_n,gb_tt_nm1,gb_tt_np1,
@@ -178,7 +178,7 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
                          gb_yz_n,gb_yz_nm1,gb_yz_np1,
                          gb_zz_n,gb_zz_nm1,gb_zz_np1,
                          kretsch_n,
-                         relkretsch_n,
+                         riemanncube_n,
                          &AdS_L,x,y,z,&dt,chr,&AMRD_ex,&AMRD_do_ex,&Nx,&Ny,&Nz,&axisym,
                          ief_bh_r0,a_rot0,kerrads_background);
 
@@ -280,12 +280,12 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
         for (i=0; i<np; i++) {AH_kretsch[c_AH][i]=AH_w3[c_AH][i]+AH_w4[c_AH][i];}
       }
 
-      if (output_relkretschAH_sdf||output_relkretschAH_ascii)
+      if (output_riemanncubeAH_sdf||output_riemanncubeAH_ascii)
       {
         // save relative Kretschmann scalar on the horizon, accounting for all processors
-        MPI_Allreduce(AH_relkretsch[c_AH],AH_w3[c_AH],np,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-        MPI_Allreduce(AH_relkretsch[c_AH],AH_w4[c_AH],np,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
-        for (i=0; i<np; i++) {AH_relkretsch[c_AH][i]=AH_w3[c_AH][i]+AH_w4[c_AH][i];}
+        MPI_Allreduce(AH_riemanncube[c_AH],AH_w3[c_AH],np,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+        MPI_Allreduce(AH_riemanncube[c_AH],AH_w4[c_AH],np,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
+        for (i=0; i<np; i++) {AH_riemanncube[c_AH][i]=AH_w3[c_AH][i]+AH_w4[c_AH][i];}
       }
 
       if (output_diagnosticAH_ascii)
@@ -345,9 +345,9 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
     {
       reg_ah_r_(AH_kretsch[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
     }
-    if (output_relkretschAH_sdf||output_relkretschAH_ascii)
+    if (output_riemanncubeAH_sdf||output_riemanncubeAH_ascii)
     {
-      reg_ah_r_(AH_relkretsch[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
+      reg_ah_r_(AH_riemanncube[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
     }
   }
 
@@ -378,9 +378,9 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
           {
             smooth_ah_r_(AH_kretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
           }
-          if (output_relkretschAH_sdf||output_relkretschAH_ascii)
+          if (output_riemanncubeAH_sdf||output_riemanncubeAH_ascii)
           {
-            smooth_ah_r_(AH_relkretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
+            smooth_ah_r_(AH_riemanncube[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
           }
         }
       }
@@ -408,9 +408,9 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
           {
             smooth_ah_r_b_(AH_kretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
           }
-          if (output_relkretschAH_sdf||output_relkretschAH_ascii)
+          if (output_riemanncubeAH_sdf||output_riemanncubeAH_ascii)
           {
-            smooth_ah_r_b_(AH_relkretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
+            smooth_ah_r_b_(AH_riemanncube[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
           }
         }
       }
@@ -442,9 +442,9 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
           {
             smooth_ah_r_(AH_kretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
           }
-          if (output_relkretschAH_sdf||output_relkretschAH_ascii)
+          if (output_riemanncubeAH_sdf||output_riemanncubeAH_ascii)
           {
-            smooth_ah_r_(AH_relkretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
+            smooth_ah_r_(AH_riemanncube[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
           }
         }
       }
@@ -524,13 +524,13 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
             smooth_ah_r_(AH_kretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
             reg_ah_r_(AH_kretsch[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]);  
           }
-          if (output_relkretschAH_sdf||output_relkretschAH_ascii)
+          if (output_riemanncubeAH_sdf||output_riemanncubeAH_ascii)
           {
-            smooth_ah_r_b_(AH_relkretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
-            smooth_ah_r_(AH_relkretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
-            reg_ah_r_(AH_relkretsch[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]); 
-            smooth_ah_r_(AH_relkretsch[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
-            reg_ah_r_(AH_relkretsch[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]);  
+            smooth_ah_r_b_(AH_riemanncube[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
+            smooth_ah_r_(AH_riemanncube[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
+            reg_ah_r_(AH_riemanncube[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]); 
+            smooth_ah_r_(AH_riemanncube[c_AH],AH_w1[c_AH],&eps0,&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
+            reg_ah_r_(AH_riemanncube[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]);  
           }
         }
 
@@ -560,9 +560,9 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
       {
         reg_ah_r_(AH_kretsch[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
       }
-      if (output_relkretschAH_sdf||output_relkretschAH_ascii)
+      if (output_riemanncubeAH_sdf||output_riemanncubeAH_ascii)
       {
-        reg_ah_r_(AH_relkretsch[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
+        reg_ah_r_(AH_riemanncube[c_AH],&AH_Nchi[c_AH],&AH_Nphi[c_AH]);
       }
     }
 
@@ -625,9 +625,9 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
 #define SMOOTH_R 0
 #define SMOOTH_R_AFT 1
 int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *c_polar2, int use_R_ic, real *AH_min_resid, 
-              int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_kretschAH_sdf, int output_relkretschAH_sdf,
+              int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_kretschAH_sdf, int output_riemanncubeAH_sdf,
               int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, 
-              int output_metricAH_sph_ascii, int output_kretschAH_ascii, int output_relkretschAH_ascii, int output_diagnosticAH_ascii,
+              int output_metricAH_sph_ascii, int output_kretschAH_ascii, int output_riemanncubeAH_ascii, int output_diagnosticAH_ascii,
               real *ief_bh_r0,real *a_rot0, int *kerrads_background)
 {
    int iter,i,j,l,np,Lmax,Lmax_AH,is_ex;
@@ -680,9 +680,9 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
             // compute initial theta values
             if (!fill_own(Lmax,ltrace,&first)) return 0;
             resid=fill_theta_ahmetric(AH_theta[c_AH],eps0,area,c_equat,c_polar,c_polar2,&is_ex,
-                                      output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,output_kretschAH_sdf,output_relkretschAH_sdf,
+                                      output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,output_kretschAH_sdf,output_riemanncubeAH_sdf,
                                       output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,
-                                      output_metricAH_sph_ascii,output_kretschAH_ascii,output_relkretschAH_ascii,output_diagnosticAH_ascii,
+                                      output_metricAH_sph_ascii,output_kretschAH_ascii,output_riemanncubeAH_ascii,output_diagnosticAH_ascii,
                                       ief_bh_r0,a_rot0,kerrads_background);
 
             if (is_ex)
@@ -743,9 +743,9 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
       
          // compute theta values (and metric components at AH, OPTIONAL)
          resid=fill_theta_ahmetric(AH_theta[c_AH],eps0,area,c_equat,c_polar,c_polar2,&is_ex,
-                                      output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,output_kretschAH_sdf,output_relkretschAH_sdf,
+                                      output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,output_kretschAH_sdf,output_riemanncubeAH_sdf,
                                       output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,
-                                      output_metricAH_sph_ascii,output_kretschAH_ascii,output_relkretschAH_ascii,output_diagnosticAH_ascii,
+                                      output_metricAH_sph_ascii,output_kretschAH_ascii,output_riemanncubeAH_ascii,output_diagnosticAH_ascii,
                                       ief_bh_r0,a_rot0,kerrads_background);
       
 //         if (my_rank==0)
