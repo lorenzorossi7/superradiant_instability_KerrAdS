@@ -95,6 +95,19 @@ extern int out1_freq;
 
 extern int AH_count[MAX_BHS],found_AH[MAX_BHS],freq0[MAX_BHS];
 
+extern int output_moreAHquant_sdf;
+extern int output_metricAH_cart_sdf;
+extern int output_metricAH_sph_sdf;
+extern int output_kretschAH_sdf;
+extern int output_riemanncubeAH_sdf;
+extern int output_moreAHquant_ascii;
+extern int output_AHtheta_ascii;
+extern int output_metricAH_cart_ascii;
+extern int output_metricAH_sph_ascii;
+extern int output_kretschAH_ascii;
+extern int output_riemanncubeAH_ascii;
+extern int output_diagnosticAH_ascii;
+
 
 
 #define ADS5D_CP_VERSION 1
@@ -639,7 +652,7 @@ void quasiset_radextrap_(real *quasiset_tt, real *quasiset_tchi, real *quasiset_
                    int *extrap_order,
                    real *x, real *y, real *z, real *dt, real *chr, real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width);
 
-void extrap_quasiset_fixedpts_(    real *quasiset_tt, real *quasiset_tchi, real *quasiset_txi, real *quasiset_chichi, real *quasiset_chixi,
+void extrap_quasiset_fixedpts_(real *quasiset_tt, real *quasiset_tchi, real *quasiset_txi, real *quasiset_chichi, real *quasiset_chixi,
                    real *quasiset_xixi,
                    real *quasiset_trace,
                    real *quasiset_massdensity,

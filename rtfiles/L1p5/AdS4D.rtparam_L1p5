@@ -99,6 +99,12 @@ prev_run_ex_r_4 := [0.0 0.0 0.0]
 background := 0
 skip_constraints := 1
 output_ires := 1
+output_kretsch := 1
+#setting output_kretschcentregrid to 1 will output relative Kretschmann at the centre of the grid only if output_kretsch is enabled
+output_kretschcentregrid := 0
+output_riemanncube := 1
+
+#------ Boundary extrapolation ---------
 output_bdyquantities := 1
 #if rad_extrap=1 we use boundary extrapolation along radial direction (output saved in the freepts txt files)
 #if rad_extrap=0 we extrapolate along Cartesian directions
@@ -125,17 +131,10 @@ output_bdyangmomdens     := 1
 #Notice: AdS_mass calculation involves a double integral on the boundary sphere. 
 #This calculation is reliable only when using 1 core
 output_AdS_mass := 0
-output_kretsch := 1
-#setting output_kretschcentregrid to 1 will output relative Kretschmann at the centre of the grid only if output_kretsch is enabled
-output_kretschcentregrid := 0
-output_riemanncube := 1
 reduced_ascii := 0
 reduction_factor_ascii := 24
 alltimes_ascii := 0
 timestep_ascii := 1
-#Option to remove repeated boundary points that could appear from different outermost bulk points in different processes that have the same corresponding extrapolated point
-#WARNING: if we use many processes removing repeated points can take loop will take a long time. In that case it's better to eliminate repeated points in post-processing
-remove_repeated_bdypoints := 0
 
 #------ interpolation parameters (0:off,1:xy2pt,2:rho2pt,3:rho3pt) ---------
 

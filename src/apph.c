@@ -94,13 +94,12 @@ int fill_own(int Lmax, int ltrace, int *first)
 #define USE_SMOOTH_A 0 //HB//
 #define MAX_TRACE 5000
 real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat, real *c_polar, real *c_polar2, int *is_ex,
-                        int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_kretschAH_sdf, int output_riemanncubeAH_sdf,
-                        int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, int output_metricAH_sph_ascii, int output_kretschAH_ascii, int output_riemanncubeAH_ascii, int output_diagnosticAH_ascii,
-                        real *ief_bh_r0,real *a_rot0, int *kerrads_background)
+                        real *ief_bh_r0,real *a_rot0, int *kerrads_background, real *ct)
 {
    int i,j,np,valid,dvtrace=0,i0,j0,is_int;
    static int num_trace=0;
-   char name[256];
+   int size_name;
+   char *name;
    int AH_shape[3],rank;
    real AH_bbox[6],resid,da[4],area_owned[4],area_global[4];  // elements 2,3,4 for circumferences.
 
@@ -109,7 +108,7 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
    real tmp=1.0;
 
    // outputs AH_*_iter gfns
-   dvtrace=1;
+   dvtrace=0;
 
    np=AH_Nchi[c_AH]*AH_Nphi[c_AH];
 
@@ -153,10 +152,12 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
             {
                ldptr(); 
 
-               // compute full theta 
-               //(NOTE: in _post_tstep, have cycled time sequence np1,n,nm1 to time sequence n,nm1,np1,
-               // so here, time level n is the most advanced time level)
-               calc_exp_metric0_(AH_R[c_AH],AH_xc[c_AH],AH_theta0,
+               // compute full theta
+               if ((*ct)!=0)
+               {
+                  //(NOTE: for t>t0, have cycled time sequence np1,n,nm1 to time sequence n,nm1,np1,
+                  // so here, time level n is the most advanced time level)   
+                  calc_exp_metric0_(AH_R[c_AH],AH_xc[c_AH],AH_theta0,
                          &i0,&j0,&AH_Nchi[c_AH],
                          &AH_Nphi[c_AH],theta,f,&da[0],&da[1],&da[2],&da[3],
                          AH_x0[c_AH],AH_y0[c_AH],AH_z0[c_AH],
@@ -181,6 +182,37 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
                          riemanncube_n,
                          &AdS_L,x,y,z,&dt,chr,&AMRD_ex,&AMRD_do_ex,&Nx,&Ny,&Nz,&axisym,
                          ief_bh_r0,a_rot0,kerrads_background);
+               }
+               else
+               {
+                  //(NOTE: for t=t0, have *not* cycled time sequence, so still np1,n,nm1,
+                  // so here, time level np1 is the most advanced time level) 
+                  calc_exp_metric0_(AH_R[c_AH],AH_xc[c_AH],AH_theta0,
+                         &i0,&j0,&AH_Nchi[c_AH],
+                         &AH_Nphi[c_AH],theta,f,&da[0],&da[1],&da[2],&da[3],
+                         AH_x0[c_AH],AH_y0[c_AH],AH_z0[c_AH],
+                         AH_g0_xx[c_AH],AH_g0_xy[c_AH],AH_g0_xz[c_AH],
+                         AH_g0_yy[c_AH],AH_g0_yz[c_AH],AH_g0_zz[c_AH],
+                         AH_g0_chichi[c_AH],AH_g0_chiphi[c_AH],AH_g0_phiphi[c_AH],
+                         AH_kretsch[c_AH],
+                         AH_riemanncube[c_AH],
+                         AH_ahr[c_AH],AH_dch[c_AH],AH_dph[c_AH],
+                         AH_da0[c_AH],AH_dcq[c_AH],AH_dcp[c_AH],AH_dcp2[c_AH],
+                         gb_tt_np1,gb_tt_n,gb_tt_nm1,
+                         gb_tx_np1,gb_tx_n,gb_tx_nm1,
+                         gb_ty_np1,gb_ty_n,gb_ty_nm1,
+                         gb_tz_np1,gb_tz_n,gb_tz_nm1,
+                         gb_xx_np1,gb_xx_n,gb_xx_nm1,
+                         gb_xy_np1,gb_xy_n,gb_xy_nm1,
+                         gb_xz_np1,gb_xz_n,gb_xz_nm1,
+                         gb_yy_np1,gb_yy_n,gb_yy_nm1,
+                         gb_yz_np1,gb_yz_n,gb_yz_nm1,
+                         gb_zz_np1,gb_zz_n,gb_zz_nm1,
+                         kretsch_np1,
+                         riemanncube_np1,
+                         &AdS_L,x,y,z,&dt,chr,&AMRD_ex,&AMRD_do_ex,&Nx,&Ny,&Nz,&axisym,
+                         ief_bh_r0,a_rot0,kerrads_background);
+               }
 
                area_owned[0]+=da[0];
                area_owned[1]+=da[1];
@@ -583,11 +615,17 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
          AH_bbox[3]=2*M_PI;
          rank=2; 
    
+         size_name = snprintf(NULL, 0, "%sAH_%i_R_iter",AMRD_save_tag,c_AH+1) + 1;
+         name = malloc(size_name); 
          sprintf(name,"%sAH_%i_R_iter",AMRD_save_tag,c_AH+1);
          gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_R[c_AH]);
+         free(name);
 
+         size_name = snprintf(NULL, 0, "%sAH_%i_theta_iter",AMRD_save_tag,c_AH+1) + 1;
+         name = malloc(size_name); 
          sprintf(name,"%sAH_%i_theta_iter",AMRD_save_tag,c_AH+1);
          gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_theta0);
+         free(name);
 
 
          //sprintf(name,"%sAH_%i_g0_xx_iter",AMRD_save_tag,c_AH+1);
@@ -625,10 +663,7 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
 #define SMOOTH_R 0
 #define SMOOTH_R_AFT 1
 int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *c_polar2, int use_R_ic, real *AH_min_resid, 
-              int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_kretschAH_sdf, int output_riemanncubeAH_sdf,
-              int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, 
-              int output_metricAH_sph_ascii, int output_kretschAH_ascii, int output_riemanncubeAH_ascii, int output_diagnosticAH_ascii,
-              real *ief_bh_r0,real *a_rot0, int *kerrads_background)
+              real *ief_bh_r0,real *a_rot0, int *kerrads_background, real *ct)
 {
    int iter,i,j,l,np,Lmax,Lmax_AH,is_ex;
    real resid,prev_resid,min_resid,min_R,c_R;
@@ -640,7 +675,6 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
 
    *M=*J=0;
    *AH_min_resid=1e10;
-
 
    if (first_c) { for (l=0; l<MAX_BHS; l++) AH_ct[l]=0; first_c=0; }
 
@@ -680,10 +714,7 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
             // compute initial theta values
             if (!fill_own(Lmax,ltrace,&first)) return 0;
             resid=fill_theta_ahmetric(AH_theta[c_AH],eps0,area,c_equat,c_polar,c_polar2,&is_ex,
-                                      output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,output_kretschAH_sdf,output_riemanncubeAH_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,
-                                      output_metricAH_sph_ascii,output_kretschAH_ascii,output_riemanncubeAH_ascii,output_diagnosticAH_ascii,
-                                      ief_bh_r0,a_rot0,kerrads_background);
+                                      ief_bh_r0,a_rot0,kerrads_background,ct);
 
             if (is_ex)
             {
@@ -743,10 +774,7 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
       
          // compute theta values (and metric components at AH, OPTIONAL)
          resid=fill_theta_ahmetric(AH_theta[c_AH],eps0,area,c_equat,c_polar,c_polar2,&is_ex,
-                                      output_moreAHquant_sdf,output_metricAH_cart_sdf,output_metricAH_sph_sdf,output_kretschAH_sdf,output_riemanncubeAH_sdf,
-                                      output_moreAHquant_ascii,output_AHtheta_ascii,output_metricAH_cart_ascii,
-                                      output_metricAH_sph_ascii,output_kretschAH_ascii,output_riemanncubeAH_ascii,output_diagnosticAH_ascii,
-                                      ief_bh_r0,a_rot0,kerrads_background);
+                                      ief_bh_r0,a_rot0,kerrads_background,ct);
       
 //         if (my_rank==0)
 //         {

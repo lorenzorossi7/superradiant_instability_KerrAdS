@@ -43,10 +43,7 @@ extern int found_count_AH[MAX_BHS];
 //-----------------------------------------------------------------------------
 
 int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *c_polar2s, int use_R_ic, real *AH_min_resid, 
-    int output_moreAHquant_sdf, int output_metricAH_cart_sdf, int output_metricAH_sph_sdf, int output_kretschAH_sdf, int output_riemanncubeAH_sdf,
-    int output_moreAHquant_ascii, int output_AHtheta_ascii, int output_metricAH_cart_ascii, 
-    int output_metricAH_sph_ascii, int output_kretschAH_ascii, int output_riemanncubeAH_ascii, int output_diagnosticAH_ascii,
-    real *ief_bh_r0,real *a_rot0,int *kerrads_background);
+    real *ief_bh_r0,real *a_rot0,int *kerrads_background, real *ct);
 
 //-----------------------------------------------------------------------------
 // related fotran routines

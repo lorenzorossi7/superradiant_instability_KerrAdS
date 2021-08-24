@@ -4508,50 +4508,43 @@ c Extrapolation at fixed points for all resolutions
 c-------------------------------------------------------------------------------------
 
         subroutine extrap_quasiset_fixedpts(
-     &                  quasiset_tt,quasiset_tchi,quasiset_txi,
-     &                  quasiset_chichi,quasiset_chixi,
-     &                  quasiset_xixi,
-     &                  quasiset_trace,
-     &                  quasiset_massdensity,
-     &                  quasiset_tt_ll,quasiset_tchi_ll,quasiset_txi_ll,
-     &                  quasiset_chichi_ll,quasiset_chixi_ll,
-     &                  quasiset_xixi_ll,
-     &                  quasiset_tracell,
-     &                  quasiset_massdensityll,
-     &                  quasiset_angmomdensityxll,
-     &                  quasiset_angmomdensityyll,
-     &                  quasiset_angmomdensityzll,
-     &                  xpbdy,ypbdy,zpbdy,
-     &                  chrbdy,numbdypoints,
-     &                  bdy_extrap_order,
-     &                  ind_distance_fixedpts,
-     &                  x,y,z,dt,chr,L,ex,Nx,Ny,Nz,phys_bdy,ghost_width)
+     &          quasiset_tt,quasiset_tchi,quasiset_txi,
+     &          quasiset_chichi,quasiset_chixi,
+     &          quasiset_xixi,
+     &          quasiset_trace,
+     &          quasiset_massdensity,
+     &          quasiset_angmomdensityx,
+     &          quasiset_angmomdensityy,
+     &          quasiset_angmomdensityz,
+     &          quasiset_tt_ll,quasiset_tchi_ll,quasiset_txi_ll,
+     &          quasiset_chichi_ll,quasiset_chixi_ll,
+     &          quasiset_xixi_ll,
+     &          quasiset_tracell,
+     &          quasiset_massdensityll,
+     &          quasiset_angmomdensityxll,
+     &          quasiset_angmomdensityyll,
+     &          quasiset_angmomdensityzll,
+     &          xpbdy,ypbdy,zpbdy,
+     &          chrbdy,numbdypoints,
+     &          bdy_extrap_order,
+     &          ind_distance_fixedpts,
+     &          x,y,z,dt,chr,L,ex,Nx,Ny,Nz,phys_bdy,ghost_width)
 
 !----------------------------------------------------------------------
 
-       implicit none
-
-       integer Nx,Ny,Nz
-       integer phys_bdy(6),ghost_width(6)
-       integer numbdypoints
-       integer bdy_extrap_order
-       real*8 chrbdy(Nx,Ny,Nz)
-       real*8 gb_tt_np1(Nx,Ny,Nz),gb_tt_n(Nx,Ny,Nz),gb_tt_nm1(Nx,Ny,Nz)
-       real*8 gb_tx_np1(Nx,Ny,Nz),gb_tx_n(Nx,Ny,Nz),gb_tx_nm1(Nx,Ny,Nz)
-       real*8 gb_ty_np1(Nx,Ny,Nz),gb_ty_n(Nx,Ny,Nz),gb_ty_nm1(Nx,Ny,Nz)
-       real*8 gb_tz_np1(Nx,Ny,Nz),gb_tz_n(Nx,Ny,Nz),gb_tz_nm1(Nx,Ny,Nz)
-       real*8 gb_xx_np1(Nx,Ny,Nz),gb_xx_n(Nx,Ny,Nz),gb_xx_nm1(Nx,Ny,Nz)
-       real*8 gb_xy_np1(Nx,Ny,Nz),gb_xy_n(Nx,Ny,Nz),gb_xy_nm1(Nx,Ny,Nz)
-       real*8 gb_xz_np1(Nx,Ny,Nz),gb_xz_n(Nx,Ny,Nz),gb_xz_nm1(Nx,Ny,Nz)
-       real*8 gb_yy_np1(Nx,Ny,Nz),gb_yy_n(Nx,Ny,Nz),gb_yy_nm1(Nx,Ny,Nz)
-       real*8 gb_yz_np1(Nx,Ny,Nz),gb_yz_n(Nx,Ny,Nz),gb_yz_nm1(Nx,Ny,Nz)
-       real*8 gb_zz_np1(Nx,Ny,Nz),gb_zz_n(Nx,Ny,Nz),gb_zz_nm1(Nx,Ny,Nz)
-       real*8 L
-       real*8 x(Nx),y(Ny),z(Nz),dt,chr(Nx,Ny,Nz),ex
-       real*8 dx,dy,dz
-
-       real*8 PI
-       parameter (PI=3.141592653589793d0)
+        implicit none
+ 
+        integer Nx,Ny,Nz
+        integer phys_bdy(6),ghost_width(6)
+        integer numbdypoints
+        integer bdy_extrap_order
+        real*8 chrbdy(Nx,Ny,Nz)
+        real*8 L
+        real*8 x(Nx),y(Ny),z(Nz),dt,chr(Nx,Ny,Nz),ex
+        real*8 dx,dy,dz
+ 
+        real*8 PI
+        parameter (PI=3.141592653589793d0)
 
         real*8 quasiset_tt_ll(Nx,Ny,Nz),quasiset_tchi_ll(Nx,Ny,Nz)
         real*8 quasiset_txi_ll(Nx,Ny,Nz),quasiset_chichi_ll(Nx,Ny,Nz)
@@ -4662,9 +4655,9 @@ c-------------------------------------------------------------------------------
 
 !----------------------------------------------------------------------
 
-       dx=x(2)-x(1)
-       dy=y(2)-y(1)
-       dz=z(2)-z(1)
+       dx=(x(2)-x(1))
+       dy=(y(2)-y(1))
+       dz=(z(2)-z(1))
 
 
        ! set index bounds for main loop
