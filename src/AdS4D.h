@@ -63,7 +63,7 @@ extern real AH_xc[MAX_BHS][3],AH_max_tol_inc[MAX_BHS],AH_tmin[MAX_BHS],AH_omt_sc
 extern int use_AH_new_smooth,use_AH_new;
 extern int c_AH;
 
-extern real *AH_theta[MAX_BHS],*AH_R[MAX_BHS],*AH_w1[MAX_BHS],*AH_w2[MAX_BHS],*AH_w3[MAX_BHS];
+extern real *AH_theta[MAX_BHS],*AH_R[MAX_BHS],*AH_w1[MAX_BHS],*AH_w2[MAX_BHS],*AH_w3[MAX_BHS],*AH_w4[MAX_BHS];
 extern real *AH_g0_tt[MAX_BHS];
 extern real *AH_g0_tx[MAX_BHS];
 extern real *AH_g0_ty[MAX_BHS];

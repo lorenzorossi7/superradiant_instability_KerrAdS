@@ -5,12 +5,12 @@
 // global variables and prototypes for AH-finder
 //-----------------------------------------------------------------------------
 
-extern int AH_Nchi[MAX_BHS],AH_Nphi[MAX_BHS],AH_Lmin[MAX_BHS],AH_Lmax[MAX_BHS];
+extern int AH_Nchi[MAX_BHS],AH_Nphi[MAX_BHS],AH_Lmin[MAX_BHS],AH_Lmax[MAX_BHS],AH_find_best_fit[MAX_BHS];
 extern int AH_max_iter[MAX_BHS],AH_freq[MAX_BHS],AH_freq_aft[MAX_BHS],AH_rsteps[MAX_BHS],AH_maxinc[MAX_BHS];
 extern real AH_tol[MAX_BHS],AH_tol_aft[MAX_BHS],AH_r0[MAX_BHS],AH_r1[MAX_BHS],AH_lambda[MAX_BHS],AH_lambda_min[MAX_BHS];
-extern real AH_eps[MAX_BHS];
-extern real AH_tmin[MAX_BHS];
-extern real AH_xc[MAX_BHS][3];
+extern real AH_eps[MAX_BHS],AH_tol_scale[MAX_BHS],AH_reset_scale[MAX_BHS];
+extern real AH_xc[MAX_BHS][3],AH_max_tol_inc[MAX_BHS],AH_tmin[MAX_BHS],AH_omt_scale[MAX_BHS];
+extern int use_AH_new_smooth,use_AH_new;
 extern int c_AH;
 
 extern real *AH_theta[MAX_BHS],*AH_R[MAX_BHS],*AH_w1[MAX_BHS],*AH_w2[MAX_BHS],*AH_w3[MAX_BHS],*AH_w4[MAX_BHS];

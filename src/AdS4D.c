@@ -133,8 +133,8 @@ real ex_rbuf_a[MAX_BHS];
 
 // AH parameters
 real rh,rhoh,M0,E,J0,Xi;
-int AH_Nchi[MAX_BHS],AH_Nphi[MAX_BHS],AH_Lmin[MAX_BHS],AH_Lmax[MAX_BHS],AH_find_best_fit[MAX_BHS];
 int np;
+int AH_Nchi[MAX_BHS],AH_Nphi[MAX_BHS],AH_Lmin[MAX_BHS],AH_Lmax[MAX_BHS],AH_find_best_fit[MAX_BHS];
 int AH_max_iter[MAX_BHS],AH_freq[MAX_BHS],AH_freq_aft[MAX_BHS],AH_rsteps[MAX_BHS],AH_maxinc[MAX_BHS];
 real AH_tol[MAX_BHS],AH_tol_aft[MAX_BHS],AH_r0[MAX_BHS],AH_lambda[MAX_BHS],AH_lambda_min[MAX_BHS];
 real AH_eps[MAX_BHS],AH_r1[MAX_BHS],AH_tol_scale[MAX_BHS],AH_reset_scale[MAX_BHS];
@@ -2403,16 +2403,19 @@ void AdS4D_var_post_init(char *pfile)
     half_steps_from_bdy_ext_paramset2=1; AMRD_int_param(pfile,"half_steps_from_bdy_ext_paramset2",&half_steps_from_bdy_ext_paramset2,1);
     half_steps_from_bdy_int_paramset1=1; AMRD_int_param(pfile,"half_steps_from_bdy_int_paramset1",&half_steps_from_bdy_int_paramset1,1);
     half_steps_from_bdy_int_paramset2=1; AMRD_int_param(pfile,"half_steps_from_bdy_int_paramset2",&half_steps_from_bdy_int_paramset2,1);
-    remove_repeated_bdypoints=0; AMRD_int_param(pfile,"remove_repeated_bdypoints",&remove_repeated_bdypoints,1);
 
     //allocate memory for relative Kretschmann scalar at the centre of the grid
     if (output_bdyquantities||output_kretschcentregrid) {MPI_Comm_size(MPI_COMM_WORLD,&uniSize);} 
     if (output_kretschcentregrid)
     {
-        lkretschcentregrid0= malloc(sizeof(real));
-        maxkretschcentregrid0= malloc(sizeof(real));
-        minkretschcentregrid0= malloc(sizeof(real));
-        kretschcentregrid0= malloc(sizeof(real));
+        //(lkretschcentregrid0)= malloc(sizeof(real));
+        //maxkretschcentregrid0= malloc(sizeof(real));
+        //minkretschcentregrid0= malloc(sizeof(real));
+        //kretschcentregrid0= malloc(sizeof(real));
+        if ( (lkretschcentregrid0= malloc(sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        if ( (maxkretschcentregrid0= malloc(sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        if ( (minkretschcentregrid0= malloc(sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        if ( (kretschcentregrid0= malloc(sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
     }   
     if (output_bdyquantities)
     {
@@ -2423,7 +2426,8 @@ void AdS4D_var_post_init(char *pfile)
         {
             ind_distance_fixedpts=round(currentres_reduction_factor*currentres_ratio_Lhighres_Llowres);
             num_fixed_coords=round(((AMRD_base_shape[0]-1)/(ind_distance_fixedpts)+1));
-            fixed_coords= malloc(num_fixed_coords*sizeof(real));   
+            //fixed_coords= malloc(num_fixed_coords*sizeof(real));
+            if ( (fixed_coords= malloc(num_fixed_coords*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
             init_fixed_coords=0; 
         }
     }   
@@ -2454,7 +2458,7 @@ void AdS4D_var_post_init(char *pfile)
         // because the AH shape is saved, we can't currently change that upon a restart (unless we haven't yet found one)
         if (!AMRD_cp_restart || !found_AH[l])
         {
-            if (AMRD_cp_restart) free(AH_R[l]);
+            if (AMRD_cp_restart&&(AH_R[l]!=NULL)) {free(AH_R[l]); AH_R[l]=NULL;}
             if (l==0) { AH_Nchi[l]=17; sprintf(buf,"AH_Nchi"); }
             else { AH_Nchi[l]=AH_Nchi[0]; sprintf(buf,"AH_Nchi_%i",l+1); }
             AMRD_int_param(pfile,buf,&AH_Nchi[l],1);    
@@ -2467,6 +2471,7 @@ void AdS4D_var_post_init(char *pfile)
             printf("\n\n\n\n\n WARNING: SMOOTHING AND REGULARIZATION IN AH ROUTINES ASSUME\n"
                     " AN ODD NUMBER OF POINTS IN AH_Nchi,AH_Nphi\n\n\n\n\n");
             }
+            if ( (AH_R[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
         }
 
         if (MAX_AH_Nchi_AH_Nphi_AH_FINDER < AH_Nchi[l]*AH_Nphi[l]) AMRD_stop("the resolution of the AH finder must be smaller than MAX_AH_Nchi_AH_Nphi_AH_FINDER\n",""); 
@@ -2545,36 +2550,70 @@ void AdS4D_var_post_init(char *pfile)
 		}
  
         if (AH_rsteps[l]<1) AMRD_stop("error ... AH_rsteps<1\n","");    
-        AH_theta[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)); 
-        AH_x0[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-       	AH_y0[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-       	AH_z0[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_g0_xx[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_g0_xy[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_g0_xz[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_g0_yy[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_g0_yz[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_g0_zz[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_g0_chichi[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_g0_chiphi[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_g0_phiphi[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_kretsch[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_riemanncube[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_ahr[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_dch[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-      	AH_dph[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-   		AH_da0[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-   		AH_dcq[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-   		AH_dcp[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-   		AH_dcp2[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        if (!AMRD_cp_restart || !found_AH[l]) AH_R[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_w1[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));      
-        AH_w2[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_w3[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_w4[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_theta_ads[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
-        AH_own[l]=(int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int));
-        AH_lev[l]=(int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int)); 
+        //AH_theta[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_x0[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+       	//AH_y0[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+       	//AH_z0[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_g0_xx[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_g0_xy[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_g0_xz[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_g0_yy[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_g0_yz[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_g0_zz[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_g0_chichi[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_g0_chiphi[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_g0_phiphi[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_kretsch[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_riemanncube[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_ahr[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_dch[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+      	//AH_dph[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+   		//AH_da0[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+   		//AH_dcq[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+   		//AH_dcp[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+   		//AH_dcp2[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //if (!AMRD_cp_restart || !found_AH[l]) AH_R[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_w1[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));      
+        //AH_w2[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_w3[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_w4[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_theta_ads[l]=(real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real));
+        //AH_own[l]=(int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int));
+        //AH_lev[l]=(int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int));
+
+        //if ( (AH_theta[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_x0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_y0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_z0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_g0_xx[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_g0_xy[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_g0_xz[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_g0_yy[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_g0_yz[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_g0_zz[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_g0_chichi[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_g0_chiphi[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_g0_phiphi[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_kretsch[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_riemanncube[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_ahr[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_dch[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_dph[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_da0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_dcq[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_dcp[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_dcp2[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if (!AMRD_cp_restart || !found_AH[l]) 
+        //{
+        //	if ( (AH_R[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //}
+        //if ( (AH_w1[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_w2[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_w3[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_w4[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_theta_ads[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_own[l]= (int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
+        //if ( (AH_lev[l]= (int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
     }  
     ex_max_repop=0; AMRD_int_param(pfile,"ex_max_repop",&ex_max_repop,1);
     ex_repop_buf=1; AMRD_int_param(pfile,"ex_repop_buf",&ex_repop_buf,1);
@@ -2587,6 +2626,7 @@ void AdS4D_var_post_init(char *pfile)
     // ief_bh_r0 is BH radius parameter, i.e., M=2*ief_bh_r0, ex_r is excision radius
     int ah_finder_is_off=1; 
     for (l=0; l<MAX_BHS; l++) {if (AH_max_iter[l]!=0) ah_finder_is_off=0;}
+
     //Considering only one AH, generalize later
     if ((ief_bh_r0>0)&&(a_rot0<pow(10,-10)))
     { 
@@ -2864,10 +2904,8 @@ void AdS4D_free_data(void)
     AdS4D_AMRH_var_clear(); // constrained variables are set post-MG    
     zero_f(phi1_t_n); // holds initial time derivatives for ID  
     gauss3d_(phi1_n,&phi1_amp_1,&phi1_B_1,&phi1_C_1,&phi1_r0_1,&phi1_delta_1,&phi1_x0_1[0],&phi1_x0_1[1],&phi1_x0_1[2],
-
             &phi1_ecc_1[0],&phi1_ecc_1[1],&phi1_ecc_1[2],&AdS_L,x,y,z,&Nx,&Ny,&Nz,&rhoc,&rhod,&stype);  
     gauss3d_(w1,&phi1_amp_2,&phi1_B_2,&phi1_C_2,&phi1_r0_2,&phi1_delta_2,&phi1_x0_2[0],&phi1_x0_2[1],&phi1_x0_2[2],
-
             &phi1_ecc_2[0],&phi1_ecc_2[1],&phi1_ecc_2[2],&AdS_L,x,y,z,&Nx,&Ny,&Nz,&rhoc,&rhod,&stype);  
     for (i=0; i<size; i++) phi1_n[i]+=w1[i];    
 
@@ -20531,6 +20569,37 @@ void AdS4D_pre_tstep(int L)
     for (l=0; l<MAX_BHS; l++)
     {
 
+    	//allocate memory for AH quantities - AH_R has been allocated in post_init
+    	if ( (AH_theta[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_x0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_y0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_z0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_g0_xx[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_g0_xy[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_g0_xz[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_g0_yy[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_g0_yz[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_g0_zz[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_g0_chichi[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_g0_chiphi[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_g0_phiphi[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_kretsch[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_riemanncube[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_ahr[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_dch[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_dph[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_da0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_dcq[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_dcp[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_dcp2[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_w1[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_w2[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_w3[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_w4[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_theta_ads[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_own[l]= (int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+        if ( (AH_lev[l]= (int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int)) )==NULL) AMRD_stop("app_pre_tstep...out of memory","");
+
         real prev_AH_R[AH_Nchi[l]*AH_Nphi[l]];
         real prev_AH_xc[3];
         for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) {prev_AH_R[i]=AH_R[l][i];} 
@@ -20875,11 +20944,38 @@ void AdS4D_pre_tstep(int L)
 	            	    fclose(fp);
 	            	    free(name);
                 	}
+				} 
+            }
 
-
-				}   
-                  
-            }   
+            free(AH_theta[l]); AH_theta[l]=NULL;
+            free(AH_x0[l]); AH_x0[l]=NULL;
+            free(AH_y0[l]); AH_y0[l]=NULL;
+            free(AH_z0[l]); AH_z0[l]=NULL;
+			free(AH_g0_xx[l]); AH_g0_xx[l]=NULL;
+			free(AH_g0_xy[l]); AH_g0_xy[l]=NULL;
+			free(AH_g0_xz[l]); AH_g0_xz[l]=NULL;
+			free(AH_g0_yy[l]); AH_g0_yy[l]=NULL;
+			free(AH_g0_yz[l]); AH_g0_yz[l]=NULL;
+			free(AH_g0_zz[l]); AH_g0_zz[l]=NULL;
+			free(AH_g0_chichi[l]); AH_g0_chichi[l]=NULL;
+			free(AH_g0_chiphi[l]); AH_g0_chiphi[l]=NULL;
+			free(AH_g0_phiphi[l]); AH_g0_phiphi[l]=NULL;
+			free(AH_kretsch[l]); AH_kretsch[l]=NULL;
+			free(AH_riemanncube[l]); AH_riemanncube[l]=NULL;
+			free(AH_ahr[l]); AH_ahr[l]=NULL;
+			free(AH_dch[l]); AH_dch[l]=NULL;
+			free(AH_dph[l]); AH_dph[l]=NULL;
+			free(AH_da0[l]); AH_da0[l]=NULL;
+			free(AH_dcq[l]); AH_dcq[l]=NULL;
+			free(AH_dcp[l]); AH_dcp[l]=NULL;
+			free(AH_dcp2[l]); AH_dcp2[l]=NULL;
+			free(AH_w1[l]); AH_w1[l]=NULL;
+			free(AH_w2[l]); AH_w2[l]=NULL;
+			free(AH_w3[l]); AH_w3[l]=NULL;
+			free(AH_w4[l]); AH_w4[l]=NULL;
+			free(AH_theta_ads[l]); AH_theta_ads[l]=NULL;
+			free(AH_own[l]); AH_own[l]=NULL;
+			free(AH_lev[l]); AH_lev[l]=NULL;
 
 
 
@@ -21047,6 +21143,37 @@ void AdS4D_post_tstep(int L)
     do_repop=do_reinit_ex=got_an_AH=0;  
     for (l=0; l<MAX_BHS; l++)
     {
+
+    	//allocate memory for AH quantities - AH_R has been allocated in post_init
+    	if ( (AH_theta[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_x0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_y0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_z0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_g0_xx[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_g0_xy[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_g0_xz[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_g0_yy[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_g0_yz[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_g0_zz[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_g0_chichi[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_g0_chiphi[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_g0_phiphi[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_kretsch[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_riemanncube[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_ahr[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_dch[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_dph[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_da0[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_dcq[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_dcp[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_dcp2[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_w1[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_w2[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_w3[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_w4[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_theta_ads[l]= (real *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(real)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_own[l]= (int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
+        if ( (AH_lev[l]= (int *)malloc(AH_Nchi[l]*AH_Nphi[l]*sizeof(int)) )==NULL) AMRD_stop("app_post_tstep...out of memory","");
 
         real prev_AH_R[AH_Nchi[l]*AH_Nphi[l]];
         real prev_AH_xc[3];
@@ -21396,6 +21523,37 @@ void AdS4D_post_tstep(int L)
 				}   
                   
             }   
+
+
+            free(AH_theta[l]); AH_theta[l]=NULL;
+            free(AH_x0[l]); AH_x0[l]=NULL;
+            free(AH_y0[l]); AH_y0[l]=NULL;
+            free(AH_z0[l]); AH_z0[l]=NULL;
+			free(AH_g0_xx[l]); AH_g0_xx[l]=NULL;
+			free(AH_g0_xy[l]); AH_g0_xy[l]=NULL;
+			free(AH_g0_xz[l]); AH_g0_xz[l]=NULL;
+			free(AH_g0_yy[l]); AH_g0_yy[l]=NULL;
+			free(AH_g0_yz[l]); AH_g0_yz[l]=NULL;
+			free(AH_g0_zz[l]); AH_g0_zz[l]=NULL;
+			free(AH_g0_chichi[l]); AH_g0_chichi[l]=NULL;
+			free(AH_g0_chiphi[l]); AH_g0_chiphi[l]=NULL;
+			free(AH_g0_phiphi[l]); AH_g0_phiphi[l]=NULL;
+			free(AH_kretsch[l]); AH_kretsch[l]=NULL;
+			free(AH_riemanncube[l]); AH_riemanncube[l]=NULL;
+			free(AH_ahr[l]); AH_ahr[l]=NULL;
+			free(AH_dch[l]); AH_dch[l]=NULL;
+			free(AH_dph[l]); AH_dph[l]=NULL;
+			free(AH_da0[l]); AH_da0[l]=NULL;
+			free(AH_dcq[l]); AH_dcq[l]=NULL;
+			free(AH_dcp[l]); AH_dcp[l]=NULL;
+			free(AH_dcp2[l]); AH_dcp2[l]=NULL;
+			free(AH_w1[l]); AH_w1[l]=NULL;
+			free(AH_w2[l]); AH_w2[l]=NULL;
+			free(AH_w3[l]); AH_w3[l]=NULL;
+			free(AH_w4[l]); AH_w4[l]=NULL;
+			free(AH_theta_ads[l]); AH_theta_ads[l]=NULL;
+			free(AH_own[l]); AH_own[l]=NULL;
+			free(AH_lev[l]); AH_lev[l]=NULL;
 
 
 

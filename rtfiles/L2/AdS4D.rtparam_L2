@@ -106,7 +106,7 @@ output_kretschcentregrid := 1
 output_riemanncube := 1
 
 #------ Boundary extrapolation ---------
-output_bdyquantities := 0
+output_bdyquantities := 1
 bdy_L := 2
 #if rad_extrap=1 we use boundary extrapolation along radial direction (output saved in the freepts txt files)
 #if rad_extrap=0 we extrapolate along Cartesian directions
