@@ -619,13 +619,13 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
          name = malloc(size_name); 
          sprintf(name,"%sAH_%i_R_iter",AMRD_save_tag,c_AH+1);
          gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_R[c_AH]);
-         free(name);
+         free(name); name=NULL;
 
          size_name = snprintf(NULL, 0, "%sAH_%i_theta_iter",AMRD_save_tag,c_AH+1) + 1;
          name = malloc(size_name); 
          sprintf(name,"%sAH_%i_theta_iter",AMRD_save_tag,c_AH+1);
          gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_theta0);
-         free(name);
+         free(name); name=NULL;
 
 
          //sprintf(name,"%sAH_%i_g0_xx_iter",AMRD_save_tag,c_AH+1);
