@@ -2759,15 +2759,15 @@ void AdS4D_var_post_init(char *pfile)
     {
 		l=0;
 
-	    	if (excision_type==0) printf("No internal excision\n");
+	    	if (excision_type==0) printf("\nNo internal excision\n");
 		    if ((excision_type==1)&&(min_AH_R0<1)) 
 		    {
-		    	printf("Spherical excised region with radius min_AH_R*(1-ex_rbuf[l])=%lf\n",min_AH_R0*(1-ex_rbuf[l]));
+		    	printf("\nSpherical excised region with radius min_AH_R*(1-ex_rbuf[l])=%lf\n",min_AH_R0*(1-ex_rbuf[l]));
 		    	if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
 		    }
 	    	if ((excision_type==2)&&(min_AH_R0<1))
 	    	{
-	    		printf("Excision ellipse semiaxes: (ex_r0[0]*(1-ex_rbuf[l]),ex_r0[1]*(1-ex_rbuf[l]),ex_r0[2]*(1-ex_rbuf[l]))=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
+	    		printf("\nExcision ellipse semiaxes: (ex_r0[0]*(1-ex_rbuf[l]),ex_r0[1]*(1-ex_rbuf[l]),ex_r0[2]*(1-ex_rbuf[l]))=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
 	    		if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
 	        	{     
 					if (prev_run_ex_r[l][0])
