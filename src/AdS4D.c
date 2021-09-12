@@ -20529,8 +20529,11 @@ void AdS4D_pre_tstep(int L)
         for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) {prev_AH_R[i]=AH_R[l][i];} 
         for (i=0; i<3; i++) {prev_AH_xc[i]=AH_xc[l][i];}
         c_AH=l;
-    	AH_Lmin[l]=Lf; //look for AH only in the finest grid
-        if (AH_max_iter[l]>0 && L==AH_Lmin[l] && ct>=AH_tmin[l])
+    	AH_Lmin[l]=Lc+1;
+	AH_Lmax[l]=Lf;
+
+
+        if (AH_max_iter[l]>0 && L>=AH_Lmin[l] && L<=AH_Lmax[l] && ct>=AH_tmin[l])
         {
           if ((lsteps==0)||(AMRD_cp_restart && (AH_count[l]==0) ))
           {
@@ -20638,7 +20641,7 @@ void AdS4D_pre_tstep(int L)
             // if never found AH
             if (!(found_AH[l])) for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) AH_R[l][i]=AH_r0[l];    
             // save AH grid functions if this time found AH
-            if (AH[l]&&(lsteps==0)) 
+            if ((AH[l])&&(lsteps==0)&&(L==AH_Lmax[l])) 
             {
                 AH_shape[0]=AH_Nchi[l];
                 AH_shape[1]=AH_Nphi[l];
@@ -20985,8 +20988,11 @@ void AdS4D_post_tstep(int L)
         for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) {prev_AH_R[i]=AH_R[l][i];} 
         for (i=0; i<3; i++) {prev_AH_xc[i]=AH_xc[l][i];}
         c_AH=l;
-    	AH_Lmin[l]=Lf; //look for AH only in the finest grid
-        if (AH_max_iter[l]>0 && L==AH_Lmin[l] && ct>=AH_tmin[l] &&(fabs(coarse_t-ct)<pow(10,-10)))
+        AH_Lmin[l]=Lc+1;
+        AH_Lmax[l]=Lf;
+
+
+        if (AH_max_iter[l]>0 && L>=AH_Lmin[l] && L<=AH_Lmax[l] && ct>=AH_tmin[l] &&(fabs(coarse_t-ct)<pow(10,-10)))
         {
             if (AH_count[l]<0) { AH[l]=1; if (AMRD_state==AMRD_STATE_EVOLVE) M=J=0;}
             else if (!(AH_count[l] % freq0[l]) && !(c_AH==3 && ct==0)) // for fourth BH, do not search at t=0
@@ -21092,7 +21098,7 @@ void AdS4D_post_tstep(int L)
             // if never found AH
             if (!(found_AH[l])) for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) AH_R[l][i]=AH_r0[l];    
             // save AH grid functions if this time found AH
-            if (AH[l]) 
+            if ((AH[l])&&(L==AH_Lmax[l])) 
             {
                 AH_shape[0]=AH_Nchi[l];
                 AH_shape[1]=AH_Nphi[l];
@@ -21389,12 +21395,12 @@ void AdS4D_post_tstep(int L)
 	    	if (excision_type==0) printf("No internal excision\n");
 		    if ((excision_type==1)&&(min_AH_R0<1)) 
 		    {
-		    	printf("Spherical excised region with radius min_AH_R*(1-ex_rbuf[l])=%lf\n",min_AH_R0*(1-ex_rbuf[l]));
+		    	printf("\nSpherical excised region with radius min_AH_R*(1-ex_rbuf[l])=%lf\n",min_AH_R0*(1-ex_rbuf[l]));
 		    	if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
 		    }
 	    	if ((excision_type==2)&&(min_AH_R0<1))
 	    	{
-	    		printf("Excision ellipse semiaxes: (ex_r0[0]*(1-ex_rbuf[l]),ex_r0[1]*(1-ex_rbuf[l]),ex_r0[2]*(1-ex_rbuf[l]))=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
+	    		printf("\nExcision ellipse semiaxes: (ex_r0[0]*(1-ex_rbuf[l]),ex_r0[1]*(1-ex_rbuf[l]),ex_r0[2]*(1-ex_rbuf[l]))=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
 	    		if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
 	        	{    
 					if (prev_run_ex_r[l][0])
@@ -21410,7 +21416,7 @@ void AdS4D_post_tstep(int L)
 			}
 	   		if ((excision_type==3)&&(min_AH_R0<1)) 
 	   		{
-	   			printf("AH-shaped excised region: minimum and maximum of AH radius: min_AH_R=%lf, max_AH_R=%lf\n",min_AH_R0,max_AH_R0);
+	   			printf("\nAH-shaped excised region: minimum and maximum of AH radius: min_AH_R=%lf, max_AH_R=%lf\n",min_AH_R0,max_AH_R0);
 	   			if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
 	   		}
    		}
