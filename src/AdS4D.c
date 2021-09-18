@@ -2726,7 +2726,7 @@ void AdS4D_var_post_init(char *pfile)
         }
         else //if we start from bh initial data and AH finder is not off
         {
-        	printf("\n ... AH finder is on\n");
+        	if (my_rank==0) printf("\n ... AH finder is on\n");
 			if ((my_rank==0)&&(AH_reset_r_sample==0)) printf("\nusing initial range of sample sphere radius specified in parameter file\n");
 			else if (my_rank==0)
 			{
