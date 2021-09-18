@@ -53,6 +53,7 @@ AH_lambda := 0.001
 AH_tol := 1e-2
 AH_r0 := 0.2
 AH_r1 := 0.5
+AH_reset_r_sample := 1
 AH_xc := [0.0 0.0 0.0]
 AH_Nchi := 17
 AH_Nphi := 33

@@ -141,6 +141,7 @@ real AH_eps[MAX_BHS],AH_r1[MAX_BHS],AH_tol_scale[MAX_BHS],AH_reset_scale[MAX_BHS
 real AH_xc[MAX_BHS][3],AH_max_tol_inc[MAX_BHS],AH_tmin[MAX_BHS],AH_omt_scale[MAX_BHS];
 int use_AH_new_smooth,use_AH_new;
 int c_AH;
+int AH_reset_r_sample;
 
 //=============================================================================
 // some convenient, "local" global variables
@@ -2508,6 +2509,7 @@ void AdS4D_var_post_init(char *pfile)
         if (l==0) { AH_r1[l]=0.2; sprintf(buf,"AH_r1"); }
         else { AH_r1[l]=AH_r1[0]; sprintf(buf,"AH_r1_%i",l+1); }
         AMRD_real_param(pfile,buf,&AH_r1[l],1); 
+        AH_reset_r_sample==0; AMRD_int_param(pfile,"AH_reset_r_sample",&AH_reset_r_sample,1); 
         if (l==0) { AH_lambda[l]=0.1; sprintf(buf,"AH_lambda"); }
         else { AH_lambda[l]=AH_lambda[0]; sprintf(buf,"AH_lambda_%i",l+1); }
         AMRD_real_param(pfile,buf,&AH_lambda[l],1); 
@@ -2615,7 +2617,7 @@ void AdS4D_var_post_init(char *pfile)
         	for (j0=0;j0<AH_Nphi[0];j0++)
         	{
         		ind0=i0+AH_Nchi[0]*j0;
-        		AH_R[0][ind0]=rhoh; 
+        		AH_R[0][ind0]=rhoh;
         		AH_R_for_ex_mask[0][ind0]=AH_R[0][ind0];
         	}
         }
@@ -2725,10 +2727,14 @@ void AdS4D_var_post_init(char *pfile)
         }
         else //if we start from bh initial data and AH finder is not off
         {
-			if (my_rank==0)   printf("\n ... AH finder is on: initial range of sample sphere radius set to [min_Kerr_AdS_horizon_radius,max_Kerr_AdS_horizon_radius]\n");        	
-            AH_r0[0]=min_AH_R0;
-            AH_r1[0]=max_AH_R0;
-        }
+        	printf("\n ... AH finder is on\n");
+			if ((my_rank==0)&&(AH_reset_r_sample==0)) printf("\nusing initial range of sample sphere radius specified in parameter file\n");
+			else if (my_rank==0)
+			{
+				printf("\ninitial range of sample sphere radius set to [min_Kerr_AdS_horizon_radius,max_Kerr_AdS_horizon_radius]\n");        	
+            	AH_r0[0]=min_AH_R0;
+            	AH_r1[0]=max_AH_R0;
+			} 
 
     }
     else
