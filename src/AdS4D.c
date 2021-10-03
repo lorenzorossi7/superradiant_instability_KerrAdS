@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include <pamr.h>
 #include <amrd.h>
 #include <math.h>
@@ -573,7 +574,7 @@ real *x_outermostpt_fixedpts_extraporder3_paramset2;
 real *y_outermostpt_fixedpts_extraporder3_paramset2;
 real *z_outermostpt_fixedpts_extraporder3_paramset2;
 
-real *kretschcentregrid, *lkretschcentregrid0, *maxkretschcentregrid0,*minkretschcentregrid0,*kretschcentregrid0;
+real *kretschcentregrid, lkretschcentregrid0, maxkretschcentregrid0,minkretschcentregrid0,kretschcentregrid0;
 
 real *tfunction,*test1,*test2,*test3,*test4;
 real *iresall,*irestt,*irestx,*iresty,*iresxx,*iresxy,*iresyy,*ireszz;
@@ -2406,14 +2407,7 @@ void AdS4D_var_post_init(char *pfile)
     half_steps_from_bdy_int_paramset2=1; AMRD_int_param(pfile,"half_steps_from_bdy_int_paramset2",&half_steps_from_bdy_int_paramset2,1);
 
     //allocate memory for relative Kretschmann scalar at the centre of the grid
-    if (output_bdyquantities||output_kretschcentregrid) {MPI_Comm_size(MPI_COMM_WORLD,&uniSize);} 
-    if (output_kretschcentregrid)
-    {
-        if ( (lkretschcentregrid0= malloc(sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
-        if ( (maxkretschcentregrid0= malloc(sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
-        if ( (minkretschcentregrid0= malloc(sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
-        if ( (kretschcentregrid0= malloc(sizeof(real)) )==NULL) AMRD_stop("app_var_post_init...out of memory","");
-    }   
+    if (output_bdyquantities||output_kretschcentregrid) {MPI_Comm_size(MPI_COMM_WORLD,&uniSize);}   
     if (output_bdyquantities)
     {
     	//allocate memory for fixed_coords, i.e. the values (fixed for all resolutions) of coordinates of points that we use for use boundary extrapolation
@@ -3593,32 +3587,35 @@ void AdS4D_pre_io_calc(void)
 			//we save here the values of the Kretschmann scalar at the centre of the grid at times greater than 0, computed at the end of g_evo_opt //The value of the Kretschmann scalar at the centre of the grid at t=0 is saved in pre_io_calc.  
 		    if (output_kretschcentregrid)
 		    {
-		        *lkretschcentregrid0= *kretschcentregrid;
+		        lkretschcentregrid0= *kretschcentregrid;
 		    }
 	
 		    if ((lc_steps%AMRD_save_ivec0[3]==0)&&(lc_steps!=0))
 	   		{
 	            if (output_kretsch && output_kretschcentregrid)
 	            {
-	                MPI_Allreduce((lkretschcentregrid0),(maxkretschcentregrid0),1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-	                MPI_Allreduce((lkretschcentregrid0),(minkretschcentregrid0),1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
+
+	                MPI_Allreduce((&lkretschcentregrid0),(&maxkretschcentregrid0),1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+	                MPI_Allreduce((&lkretschcentregrid0),(&minkretschcentregrid0),1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
+	                
 	                if (uniSize>1)
 	                {
-	                    *kretschcentregrid0=*maxkretschcentregrid0+*minkretschcentregrid0;
+	                    kretschcentregrid0=maxkretschcentregrid0+minkretschcentregrid0;
 	                }
 	                else
 	                {
-	                    *kretschcentregrid0=*maxkretschcentregrid0;
+	                    kretschcentregrid0=maxkretschcentregrid0;
 	                }
+
 	                if (my_rank==0)
 	                {
 	                    // save kretschcentregrid as ascii
-	                    FILE *fp;
 	                    size_name = snprintf(NULL, 0, "%st_kretschcentregrid.txt",AMRD_save_tag) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                    sprintf(name,"%st_kretschcentregrid.txt",AMRD_save_tag);
-	                    fp = fopen(name, "a+");
-	                    fprintf(fp,"%24.16e %24.16e \n",ct,*kretschcentregrid0);
+	                    if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
+	                    //printf("%24.16e %24.16e \n",ct,kretschcentregrid0);
+	                    fprintf(fp,"%24.16e %24.16e \n",ct,kretschcentregrid0);
 	                    fclose(fp);
 	                    free(name); name=NULL;
 	                }
@@ -4008,9 +4005,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder1_paramset1[j],ypbdy0_freepts_extraporder1_paramset1[j],zpbdy0_freepts_extraporder1_paramset1[j],j);
@@ -4022,9 +4019,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
@@ -4044,9 +4041,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder1_paramset1[j],y_outermostpt0_freepts_extraporder1_paramset1[j],z_outermostpt0_freepts_extraporder1_paramset1[j],j);
@@ -4057,9 +4054,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    	{
@@ -4079,9 +4076,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder1_paramset1[j],j);
@@ -4091,9 +4088,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
@@ -4110,9 +4107,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -4125,9 +4122,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
@@ -4153,9 +4150,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -4168,9 +4165,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -4189,9 +4186,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -4204,9 +4201,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -4226,9 +4223,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -4241,9 +4238,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
@@ -4280,9 +4277,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder1_paramset1,quasiset_massdensity0_freepts_extraporder1_paramset1,xpbdy0_freepts_extraporder1_paramset1,ypbdy0_freepts_extraporder1_paramset1,zpbdy0_freepts_extraporder1_paramset1,&basenumbdypoints_freepts_extraporder1_paramset1,rhobdy0_freepts_extraporder1_paramset1,chibdy0_freepts_extraporder1_paramset1,xibdy0_freepts_extraporder1_paramset1,&basebdy_Nchi_freepts_extraporder1_paramset1,&basebdy_Nxi_freepts_extraporder1_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder1_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -4710,9 +4707,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder2_paramset1[j],ypbdy0_freepts_extraporder2_paramset1[j],zpbdy0_freepts_extraporder2_paramset1[j],j);
@@ -4724,9 +4721,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
@@ -4746,9 +4743,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder2_paramset1[j],y_outermostpt0_freepts_extraporder2_paramset1[j],z_outermostpt0_freepts_extraporder2_paramset1[j],j);
@@ -4759,9 +4756,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    	{
@@ -4781,9 +4778,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder2_paramset1[j],j);
@@ -4793,9 +4790,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
@@ -4812,9 +4809,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -4827,9 +4824,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
@@ -4855,9 +4852,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -4870,9 +4867,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -4891,9 +4888,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -4906,9 +4903,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -4928,9 +4925,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -4943,9 +4940,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
@@ -4982,9 +4979,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder2_paramset1,quasiset_massdensity0_freepts_extraporder2_paramset1,xpbdy0_freepts_extraporder2_paramset1,ypbdy0_freepts_extraporder2_paramset1,zpbdy0_freepts_extraporder2_paramset1,&basenumbdypoints_freepts_extraporder2_paramset1,rhobdy0_freepts_extraporder2_paramset1,chibdy0_freepts_extraporder2_paramset1,xibdy0_freepts_extraporder2_paramset1,&basebdy_Nchi_freepts_extraporder2_paramset1,&basebdy_Nxi_freepts_extraporder2_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder2_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -5358,9 +5355,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder3_paramset1[j],ypbdy0_freepts_extraporder3_paramset1[j],zpbdy0_freepts_extraporder3_paramset1[j],j);
@@ -5372,9 +5369,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
@@ -5394,9 +5391,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder3_paramset1[j],y_outermostpt0_freepts_extraporder3_paramset1[j],z_outermostpt0_freepts_extraporder3_paramset1[j],j);
@@ -5407,9 +5404,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    	{
@@ -5429,9 +5426,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder3_paramset1[j],j);
@@ -5441,9 +5438,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
@@ -5460,9 +5457,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -5475,9 +5472,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
@@ -5503,9 +5500,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -5518,9 +5515,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -5539,9 +5536,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -5554,9 +5551,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -5576,9 +5573,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -5591,9 +5588,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
@@ -5630,9 +5627,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder3_paramset1,quasiset_massdensity0_freepts_extraporder3_paramset1,xpbdy0_freepts_extraporder3_paramset1,ypbdy0_freepts_extraporder3_paramset1,zpbdy0_freepts_extraporder3_paramset1,&basenumbdypoints_freepts_extraporder3_paramset1,rhobdy0_freepts_extraporder3_paramset1,chibdy0_freepts_extraporder3_paramset1,xibdy0_freepts_extraporder3_paramset1,&basebdy_Nchi_freepts_extraporder3_paramset1,&basebdy_Nxi_freepts_extraporder3_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder3_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -6072,9 +6069,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder1_paramset2[j],ypbdy0_freepts_extraporder1_paramset2[j],zpbdy0_freepts_extraporder1_paramset2[j],j);
@@ -6086,9 +6083,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
@@ -6108,9 +6105,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder1_paramset2[j],y_outermostpt0_freepts_extraporder1_paramset2[j],z_outermostpt0_freepts_extraporder1_paramset2[j],j);
@@ -6121,9 +6118,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    	{
@@ -6143,9 +6140,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder1_paramset2[j],j);
@@ -6155,9 +6152,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
@@ -6174,9 +6171,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -6189,9 +6186,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
@@ -6217,9 +6214,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -6232,9 +6229,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -6253,9 +6250,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -6268,9 +6265,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -6290,9 +6287,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -6305,9 +6302,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
@@ -6344,9 +6341,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder1_paramset2,quasiset_massdensity0_freepts_extraporder1_paramset2,xpbdy0_freepts_extraporder1_paramset2,ypbdy0_freepts_extraporder1_paramset2,zpbdy0_freepts_extraporder1_paramset2,&basenumbdypoints_freepts_extraporder1_paramset2,rhobdy0_freepts_extraporder1_paramset2,chibdy0_freepts_extraporder1_paramset2,xibdy0_freepts_extraporder1_paramset2,&basebdy_Nchi_freepts_extraporder1_paramset2,&basebdy_Nxi_freepts_extraporder1_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder1_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -6774,9 +6771,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder2_paramset2[j],ypbdy0_freepts_extraporder2_paramset2[j],zpbdy0_freepts_extraporder2_paramset2[j],j);
@@ -6788,9 +6785,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
@@ -6810,9 +6807,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder2_paramset2[j],y_outermostpt0_freepts_extraporder2_paramset2[j],z_outermostpt0_freepts_extraporder2_paramset2[j],j);
@@ -6823,9 +6820,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    	{
@@ -6845,9 +6842,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder2_paramset2[j],j);
@@ -6857,9 +6854,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
@@ -6876,9 +6873,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -6891,9 +6888,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
@@ -6919,9 +6916,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -6934,9 +6931,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -6955,9 +6952,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -6970,9 +6967,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -6992,9 +6989,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -7007,9 +7004,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
@@ -7046,9 +7043,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder2_paramset2,quasiset_massdensity0_freepts_extraporder2_paramset2,xpbdy0_freepts_extraporder2_paramset2,ypbdy0_freepts_extraporder2_paramset2,zpbdy0_freepts_extraporder2_paramset2,&basenumbdypoints_freepts_extraporder2_paramset2,rhobdy0_freepts_extraporder2_paramset2,chibdy0_freepts_extraporder2_paramset2,xibdy0_freepts_extraporder2_paramset2,&basebdy_Nchi_freepts_extraporder2_paramset2,&basebdy_Nxi_freepts_extraporder2_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder2_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -7423,9 +7420,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder3_paramset2[j],ypbdy0_freepts_extraporder3_paramset2[j],zpbdy0_freepts_extraporder3_paramset2[j],j);
@@ -7437,9 +7434,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
@@ -7459,9 +7456,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder3_paramset2[j],y_outermostpt0_freepts_extraporder3_paramset2[j],z_outermostpt0_freepts_extraporder3_paramset2[j],j);
@@ -7472,9 +7469,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    	{
@@ -7494,9 +7491,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder3_paramset2[j],j);
@@ -7506,9 +7503,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
@@ -7525,9 +7522,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -7540,9 +7537,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
@@ -7568,9 +7565,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -7583,9 +7580,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -7604,9 +7601,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -7619,9 +7616,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -7641,9 +7638,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -7656,9 +7653,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
@@ -7695,9 +7692,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder3_paramset2,quasiset_massdensity0_freepts_extraporder3_paramset2,xpbdy0_freepts_extraporder3_paramset2,ypbdy0_freepts_extraporder3_paramset2,zpbdy0_freepts_extraporder3_paramset2,&basenumbdypoints_freepts_extraporder3_paramset2,rhobdy0_freepts_extraporder3_paramset2,chibdy0_freepts_extraporder3_paramset2,xibdy0_freepts_extraporder3_paramset2,&basebdy_Nchi_freepts_extraporder3_paramset2,&basebdy_Nxi_freepts_extraporder3_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder3_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -8100,9 +8097,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder1_paramset1[j],ypbdy0_fixedpts_extraporder1_paramset1[j],zpbdy0_fixedpts_extraporder1_paramset1[j],j);
@@ -8112,9 +8109,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
@@ -8130,9 +8127,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder1_paramset1[j],y_outermostpt0_fixedpts_extraporder1_paramset1[j],z_outermostpt0_fixedpts_extraporder1_paramset1[j],j);
@@ -8142,9 +8139,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    	{
@@ -8161,9 +8158,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder1_paramset1[j],j);
@@ -8173,9 +8170,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 		                                    {
@@ -8192,9 +8189,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -8207,9 +8204,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
@@ -8228,9 +8225,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -8243,9 +8240,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -8264,9 +8261,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -8279,9 +8276,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -8300,9 +8297,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -8315,9 +8312,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 		                                    {
@@ -8354,9 +8351,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder1_paramset1,quasiset_massdensity0_fixedpts_extraporder1_paramset1,xpbdy0_fixedpts_extraporder1_paramset1,ypbdy0_fixedpts_extraporder1_paramset1,zpbdy0_fixedpts_extraporder1_paramset1,&basenumbdypoints_fixedpts_extraporder1_paramset1,rhobdy0_fixedpts_extraporder1_paramset1,chibdy0_fixedpts_extraporder1_paramset1,xibdy0_fixedpts_extraporder1_paramset1,&basebdy_Nchi_fixedpts_extraporder1_paramset1,&basebdy_Nxi_fixedpts_extraporder1_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder1_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -8732,9 +8729,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder2_paramset1[j],ypbdy0_fixedpts_extraporder2_paramset1[j],zpbdy0_fixedpts_extraporder2_paramset1[j],j);
@@ -8744,9 +8741,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
@@ -8762,9 +8759,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder2_paramset1[j],y_outermostpt0_fixedpts_extraporder2_paramset1[j],z_outermostpt0_fixedpts_extraporder2_paramset1[j],j);
@@ -8774,9 +8771,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    	{
@@ -8793,9 +8790,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder2_paramset1[j],j);
@@ -8805,9 +8802,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 		                                    {
@@ -8824,9 +8821,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -8839,9 +8836,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
@@ -8860,9 +8857,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -8875,9 +8872,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -8896,9 +8893,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -8911,9 +8908,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -8932,9 +8929,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -8947,9 +8944,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 		                                    {
@@ -8986,9 +8983,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder2_paramset1,quasiset_massdensity0_fixedpts_extraporder2_paramset1,xpbdy0_fixedpts_extraporder2_paramset1,ypbdy0_fixedpts_extraporder2_paramset1,zpbdy0_fixedpts_extraporder2_paramset1,&basenumbdypoints_fixedpts_extraporder2_paramset1,rhobdy0_fixedpts_extraporder2_paramset1,chibdy0_fixedpts_extraporder2_paramset1,xibdy0_fixedpts_extraporder2_paramset1,&basebdy_Nchi_fixedpts_extraporder2_paramset1,&basebdy_Nxi_fixedpts_extraporder2_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder2_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -9364,9 +9361,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder3_paramset1[j],ypbdy0_fixedpts_extraporder3_paramset1[j],zpbdy0_fixedpts_extraporder3_paramset1[j],j);
@@ -9376,9 +9373,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
@@ -9394,9 +9391,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder3_paramset1[j],y_outermostpt0_fixedpts_extraporder3_paramset1[j],z_outermostpt0_fixedpts_extraporder3_paramset1[j],j);
@@ -9406,9 +9403,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    	{
@@ -9425,9 +9422,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder3_paramset1[j],j);
@@ -9437,9 +9434,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 		                                    {
@@ -9456,9 +9453,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -9471,9 +9468,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
@@ -9492,9 +9489,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -9507,9 +9504,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -9528,9 +9525,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -9543,9 +9540,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -9564,9 +9561,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -9579,9 +9576,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 		                                    {
@@ -9618,9 +9615,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder3_paramset1,quasiset_massdensity0_fixedpts_extraporder3_paramset1,xpbdy0_fixedpts_extraporder3_paramset1,ypbdy0_fixedpts_extraporder3_paramset1,zpbdy0_fixedpts_extraporder3_paramset1,&basenumbdypoints_fixedpts_extraporder3_paramset1,rhobdy0_fixedpts_extraporder3_paramset1,chibdy0_fixedpts_extraporder3_paramset1,xibdy0_fixedpts_extraporder3_paramset1,&basebdy_Nchi_fixedpts_extraporder3_paramset1,&basebdy_Nxi_fixedpts_extraporder3_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder3_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -9998,9 +9995,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder1_paramset2[j],ypbdy0_fixedpts_extraporder1_paramset2[j],zpbdy0_fixedpts_extraporder1_paramset2[j],j);
@@ -10010,9 +10007,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
@@ -10028,9 +10025,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder1_paramset2[j],y_outermostpt0_fixedpts_extraporder1_paramset2[j],z_outermostpt0_fixedpts_extraporder1_paramset2[j],j);
@@ -10040,9 +10037,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    	{
@@ -10059,9 +10056,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder1_paramset2[j],j);
@@ -10071,9 +10068,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 		                                    {
@@ -10090,9 +10087,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -10105,9 +10102,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
@@ -10126,9 +10123,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -10141,9 +10138,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -10162,9 +10159,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -10177,9 +10174,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -10198,9 +10195,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -10213,9 +10210,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 		                                    {
@@ -10252,9 +10249,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder1_paramset2,quasiset_massdensity0_fixedpts_extraporder1_paramset2,xpbdy0_fixedpts_extraporder1_paramset2,ypbdy0_fixedpts_extraporder1_paramset2,zpbdy0_fixedpts_extraporder1_paramset2,&basenumbdypoints_fixedpts_extraporder1_paramset2,rhobdy0_fixedpts_extraporder1_paramset2,chibdy0_fixedpts_extraporder1_paramset2,xibdy0_fixedpts_extraporder1_paramset2,&basebdy_Nchi_fixedpts_extraporder1_paramset2,&basebdy_Nxi_fixedpts_extraporder1_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder1_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -10630,9 +10627,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder2_paramset2[j],ypbdy0_fixedpts_extraporder2_paramset2[j],zpbdy0_fixedpts_extraporder2_paramset2[j],j);
@@ -10642,9 +10639,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
@@ -10660,9 +10657,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder2_paramset2[j],y_outermostpt0_fixedpts_extraporder2_paramset2[j],z_outermostpt0_fixedpts_extraporder2_paramset2[j],j);
@@ -10672,9 +10669,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    	{
@@ -10691,9 +10688,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder2_paramset2[j],j);
@@ -10703,9 +10700,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 		                                    {
@@ -10722,9 +10719,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -10737,9 +10734,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
@@ -10758,9 +10755,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -10773,9 +10770,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -10794,9 +10791,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -10809,9 +10806,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -10830,9 +10827,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -10845,9 +10842,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 		                                    {
@@ -10884,9 +10881,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder2_paramset2,quasiset_massdensity0_fixedpts_extraporder2_paramset2,xpbdy0_fixedpts_extraporder2_paramset2,ypbdy0_fixedpts_extraporder2_paramset2,zpbdy0_fixedpts_extraporder2_paramset2,&basenumbdypoints_fixedpts_extraporder2_paramset2,rhobdy0_fixedpts_extraporder2_paramset2,chibdy0_fixedpts_extraporder2_paramset2,xibdy0_fixedpts_extraporder2_paramset2,&basebdy_Nchi_fixedpts_extraporder2_paramset2,&basebdy_Nxi_fixedpts_extraporder2_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder2_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -11262,9 +11259,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder3_paramset2[j],ypbdy0_fixedpts_extraporder3_paramset2[j],zpbdy0_fixedpts_extraporder3_paramset2[j],j);
@@ -11274,9 +11271,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
@@ -11292,9 +11289,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder3_paramset2[j],y_outermostpt0_fixedpts_extraporder3_paramset2[j],z_outermostpt0_fixedpts_extraporder3_paramset2[j],j);
@@ -11304,9 +11301,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    	{
@@ -11323,9 +11320,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder3_paramset2[j],j);
@@ -11335,9 +11332,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 		                                    {
@@ -11354,9 +11351,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -11369,9 +11366,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
@@ -11390,9 +11387,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -11405,9 +11402,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -11426,9 +11423,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -11441,9 +11438,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -11462,9 +11459,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -11477,9 +11474,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 		                                    {
@@ -11516,9 +11513,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder3_paramset2,quasiset_massdensity0_fixedpts_extraporder3_paramset2,xpbdy0_fixedpts_extraporder3_paramset2,ypbdy0_fixedpts_extraporder3_paramset2,zpbdy0_fixedpts_extraporder3_paramset2,&basenumbdypoints_fixedpts_extraporder3_paramset2,rhobdy0_fixedpts_extraporder3_paramset2,chibdy0_fixedpts_extraporder3_paramset2,xibdy0_fixedpts_extraporder3_paramset2,&basebdy_Nchi_fixedpts_extraporder3_paramset2,&basebdy_Nxi_fixedpts_extraporder3_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder3_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -11668,33 +11665,34 @@ void AdS4D_pre_io_calc(void)
         	//we save here the values of the Kretschmann scalar at the centre of the grid at times greater than 0, computed at the end of g_evo_opt 
             if (output_kretschcentregrid)
             {
-                *lkretschcentregrid0= *kretschcentregrid;
+                lkretschcentregrid0= *kretschcentregrid;
             }
 
             if (lc_steps==0)
         	{   
             	if (output_kretsch && output_kretschcentregrid)
             	{
-					MPI_Allreduce((lkretschcentregrid0),(maxkretschcentregrid0),1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-	                MPI_Allreduce((lkretschcentregrid0),(minkretschcentregrid0),1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
+					MPI_Allreduce((&lkretschcentregrid0),(&maxkretschcentregrid0),1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+	                MPI_Allreduce((&lkretschcentregrid0),(&minkretschcentregrid0),1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
 	                if (uniSize>1)
 	                {
-	                    *kretschcentregrid0=*maxkretschcentregrid0+*minkretschcentregrid0;
+	                    kretschcentregrid0=maxkretschcentregrid0+minkretschcentregrid0;
 	                }
 	                else
 	                {
-	                    *kretschcentregrid0=*maxkretschcentregrid0;
+	                    kretschcentregrid0=maxkretschcentregrid0;
 	                }
 
+	                errno=0;
 	                if (my_rank==0)
 	                {
-	                    // save kretschcentregrid as ascii
-	                    
+	                    // save kretschcentregrid as ascii            
 	                    size_name = snprintf(NULL, 0, "%st_kretschcentregrid.txt",AMRD_save_tag) + 1;
-    					name = malloc(size_name); 
+	                    if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory","");
 	                    sprintf(name,"%st_kretschcentregrid.txt",AMRD_save_tag);
-	                    fp = fopen(name, "a+");
-	                    fprintf(fp,"%24.16e %24.16e \n",ct,*kretschcentregrid0);
+	                    if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
+	                    //printf("%24.16e %24.16e \n",ct,kretschcentregrid0);
+	                    fprintf(fp,"%24.16e %24.16e \n",ct,kretschcentregrid0);
 	                    fclose(fp);
 	                    free(name); name=NULL;
 	                }
@@ -12082,9 +12080,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder1_paramset1[j],ypbdy0_freepts_extraporder1_paramset1[j],zpbdy0_freepts_extraporder1_paramset1[j],j);
@@ -12096,9 +12094,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
@@ -12118,9 +12116,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder1_paramset1[j],y_outermostpt0_freepts_extraporder1_paramset1[j],z_outermostpt0_freepts_extraporder1_paramset1[j],j);
@@ -12131,9 +12129,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    	{
@@ -12153,9 +12151,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder1_paramset1[j],j);
@@ -12165,9 +12163,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
@@ -12184,9 +12182,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -12199,9 +12197,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
@@ -12227,9 +12225,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -12242,9 +12240,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -12263,9 +12261,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -12278,9 +12276,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -12300,9 +12298,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -12315,9 +12313,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset1; j++ )
 		                                    {
@@ -12354,9 +12352,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder1_paramset1,quasiset_massdensity0_freepts_extraporder1_paramset1,xpbdy0_freepts_extraporder1_paramset1,ypbdy0_freepts_extraporder1_paramset1,zpbdy0_freepts_extraporder1_paramset1,&basenumbdypoints_freepts_extraporder1_paramset1,rhobdy0_freepts_extraporder1_paramset1,chibdy0_freepts_extraporder1_paramset1,xibdy0_freepts_extraporder1_paramset1,&basebdy_Nchi_freepts_extraporder1_paramset1,&basebdy_Nxi_freepts_extraporder1_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder1_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder1_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -12784,9 +12782,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder2_paramset1[j],ypbdy0_freepts_extraporder2_paramset1[j],zpbdy0_freepts_extraporder2_paramset1[j],j);
@@ -12798,9 +12796,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
@@ -12820,9 +12818,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder2_paramset1[j],y_outermostpt0_freepts_extraporder2_paramset1[j],z_outermostpt0_freepts_extraporder2_paramset1[j],j);
@@ -12833,9 +12831,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    	{
@@ -12855,9 +12853,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder2_paramset1[j],j);
@@ -12867,9 +12865,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
@@ -12886,9 +12884,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -12901,9 +12899,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
@@ -12929,9 +12927,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -12944,9 +12942,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -12965,9 +12963,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -12980,9 +12978,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -13002,9 +13000,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -13017,9 +13015,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset1; j++ )
 		                                    {
@@ -13056,9 +13054,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder2_paramset1,quasiset_massdensity0_freepts_extraporder2_paramset1,xpbdy0_freepts_extraporder2_paramset1,ypbdy0_freepts_extraporder2_paramset1,zpbdy0_freepts_extraporder2_paramset1,&basenumbdypoints_freepts_extraporder2_paramset1,rhobdy0_freepts_extraporder2_paramset1,chibdy0_freepts_extraporder2_paramset1,xibdy0_freepts_extraporder2_paramset1,&basebdy_Nchi_freepts_extraporder2_paramset1,&basebdy_Nxi_freepts_extraporder2_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder2_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder2_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -13432,9 +13430,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder3_paramset1[j],ypbdy0_freepts_extraporder3_paramset1[j],zpbdy0_freepts_extraporder3_paramset1[j],j);
@@ -13446,9 +13444,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
@@ -13468,9 +13466,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder3_paramset1[j],y_outermostpt0_freepts_extraporder3_paramset1[j],z_outermostpt0_freepts_extraporder3_paramset1[j],j);
@@ -13481,9 +13479,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    	{
@@ -13503,9 +13501,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder3_paramset1[j],j);
@@ -13515,9 +13513,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
@@ -13534,9 +13532,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -13549,9 +13547,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
@@ -13577,9 +13575,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -13592,9 +13590,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -13613,9 +13611,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -13628,9 +13626,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -13650,9 +13648,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -13665,9 +13663,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset1; j++ )
 		                                    {
@@ -13704,9 +13702,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder3_paramset1,quasiset_massdensity0_freepts_extraporder3_paramset1,xpbdy0_freepts_extraporder3_paramset1,ypbdy0_freepts_extraporder3_paramset1,zpbdy0_freepts_extraporder3_paramset1,&basenumbdypoints_freepts_extraporder3_paramset1,rhobdy0_freepts_extraporder3_paramset1,chibdy0_freepts_extraporder3_paramset1,xibdy0_freepts_extraporder3_paramset1,&basebdy_Nchi_freepts_extraporder3_paramset1,&basebdy_Nxi_freepts_extraporder3_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder3_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder3_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -14146,9 +14144,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder1_paramset2[j],ypbdy0_freepts_extraporder1_paramset2[j],zpbdy0_freepts_extraporder1_paramset2[j],j);
@@ -14160,9 +14158,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
@@ -14182,9 +14180,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder1_paramset2[j],y_outermostpt0_freepts_extraporder1_paramset2[j],z_outermostpt0_freepts_extraporder1_paramset2[j],j);
@@ -14195,9 +14193,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    	{
@@ -14217,9 +14215,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder1_paramset2[j],j);
@@ -14229,9 +14227,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
@@ -14248,9 +14246,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -14263,9 +14261,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
@@ -14291,9 +14289,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -14306,9 +14304,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -14327,9 +14325,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -14342,9 +14340,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -14364,9 +14362,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -14379,9 +14377,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder1_paramset2; j++ )
 		                                    {
@@ -14418,9 +14416,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder1_paramset2,quasiset_massdensity0_freepts_extraporder1_paramset2,xpbdy0_freepts_extraporder1_paramset2,ypbdy0_freepts_extraporder1_paramset2,zpbdy0_freepts_extraporder1_paramset2,&basenumbdypoints_freepts_extraporder1_paramset2,rhobdy0_freepts_extraporder1_paramset2,chibdy0_freepts_extraporder1_paramset2,xibdy0_freepts_extraporder1_paramset2,&basebdy_Nchi_freepts_extraporder1_paramset2,&basebdy_Nxi_freepts_extraporder1_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder1_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder1_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder1_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -14848,9 +14846,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder2_paramset2[j],ypbdy0_freepts_extraporder2_paramset2[j],zpbdy0_freepts_extraporder2_paramset2[j],j);
@@ -14862,9 +14860,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
@@ -14884,9 +14882,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder2_paramset2[j],y_outermostpt0_freepts_extraporder2_paramset2[j],z_outermostpt0_freepts_extraporder2_paramset2[j],j);
@@ -14897,9 +14895,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    	{
@@ -14919,9 +14917,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder2_paramset2[j],j);
@@ -14931,9 +14929,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
@@ -14950,9 +14948,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -14965,9 +14963,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
@@ -14993,9 +14991,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -15008,9 +15006,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -15029,9 +15027,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -15044,9 +15042,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -15066,9 +15064,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -15081,9 +15079,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder2_paramset2; j++ )
 		                                    {
@@ -15120,9 +15118,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder2_paramset2,quasiset_massdensity0_freepts_extraporder2_paramset2,xpbdy0_freepts_extraporder2_paramset2,ypbdy0_freepts_extraporder2_paramset2,zpbdy0_freepts_extraporder2_paramset2,&basenumbdypoints_freepts_extraporder2_paramset2,rhobdy0_freepts_extraporder2_paramset2,chibdy0_freepts_extraporder2_paramset2,xibdy0_freepts_extraporder2_paramset2,&basebdy_Nchi_freepts_extraporder2_paramset2,&basebdy_Nxi_freepts_extraporder2_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder2_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder2_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder2_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -15497,9 +15495,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {     
 	                            			size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_freepts_extraporder3_paramset2[j],ypbdy0_freepts_extraporder3_paramset2[j],zpbdy0_freepts_extraporder3_paramset2[j],j);
@@ -15511,9 +15509,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
@@ -15533,9 +15531,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_freepts_extraporder3_paramset2[j],y_outermostpt0_freepts_extraporder3_paramset2[j],z_outermostpt0_freepts_extraporder3_paramset2[j],j);
@@ -15546,9 +15544,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    	{
@@ -15568,9 +15566,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_freepts_extraporder3_paramset2[j],j);
@@ -15580,9 +15578,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
@@ -15599,9 +15597,9 @@ void AdS4D_pre_io_calc(void)
 
 	                                    // save quasiset_ll as ascii
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -15614,9 +15612,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
@@ -15642,9 +15640,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -15657,9 +15655,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -15678,9 +15676,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {   
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -15693,9 +15691,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -15715,9 +15713,9 @@ void AdS4D_pre_io_calc(void)
 		                            {
 
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 			                            	sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -15730,9 +15728,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_freepts_extraporder3_paramset2; j++ )
 		                                    {
@@ -15769,9 +15767,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_freepts_extraporder3_paramset2,quasiset_massdensity0_freepts_extraporder3_paramset2,xpbdy0_freepts_extraporder3_paramset2,ypbdy0_freepts_extraporder3_paramset2,zpbdy0_freepts_extraporder3_paramset2,&basenumbdypoints_freepts_extraporder3_paramset2,rhobdy0_freepts_extraporder3_paramset2,chibdy0_freepts_extraporder3_paramset2,xibdy0_freepts_extraporder3_paramset2,&basebdy_Nchi_freepts_extraporder3_paramset2,&basebdy_Nxi_freepts_extraporder3_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_freepts_extraporder3_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_freepts_extraporder3_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_freepts_extraporder3_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL;
@@ -16178,9 +16176,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder1_paramset1[j],ypbdy0_fixedpts_extraporder1_paramset1[j],zpbdy0_fixedpts_extraporder1_paramset1[j],j);
@@ -16190,9 +16188,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
@@ -16208,9 +16206,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder1_paramset1[j],y_outermostpt0_fixedpts_extraporder1_paramset1[j],z_outermostpt0_fixedpts_extraporder1_paramset1[j],j);
@@ -16220,9 +16218,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    	{
@@ -16239,9 +16237,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder1_paramset1[j],j);
@@ -16251,9 +16249,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 		                                    {
@@ -16270,9 +16268,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -16285,9 +16283,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
@@ -16306,9 +16304,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -16321,9 +16319,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -16342,9 +16340,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -16357,9 +16355,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -16378,9 +16376,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -16393,9 +16391,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset1; j++ )
 		                                    {
@@ -16432,9 +16430,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder1_paramset1,quasiset_massdensity0_fixedpts_extraporder1_paramset1,xpbdy0_fixedpts_extraporder1_paramset1,ypbdy0_fixedpts_extraporder1_paramset1,zpbdy0_fixedpts_extraporder1_paramset1,&basenumbdypoints_fixedpts_extraporder1_paramset1,rhobdy0_fixedpts_extraporder1_paramset1,chibdy0_fixedpts_extraporder1_paramset1,xibdy0_fixedpts_extraporder1_paramset1,&basebdy_Nchi_fixedpts_extraporder1_paramset1,&basebdy_Nxi_fixedpts_extraporder1_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder1_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -16810,9 +16808,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder2_paramset1[j],ypbdy0_fixedpts_extraporder2_paramset1[j],zpbdy0_fixedpts_extraporder2_paramset1[j],j);
@@ -16822,9 +16820,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
@@ -16840,9 +16838,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder2_paramset1[j],y_outermostpt0_fixedpts_extraporder2_paramset1[j],z_outermostpt0_fixedpts_extraporder2_paramset1[j],j);
@@ -16852,9 +16850,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    	{
@@ -16871,9 +16869,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder2_paramset1[j],j);
@@ -16883,9 +16881,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 		                                    {
@@ -16902,9 +16900,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -16917,9 +16915,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
@@ -16938,9 +16936,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -16953,9 +16951,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -16974,9 +16972,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -16989,9 +16987,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -17010,9 +17008,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -17025,9 +17023,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset1; j++ )
 		                                    {
@@ -17064,9 +17062,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder2_paramset1,quasiset_massdensity0_fixedpts_extraporder2_paramset1,xpbdy0_fixedpts_extraporder2_paramset1,ypbdy0_fixedpts_extraporder2_paramset1,zpbdy0_fixedpts_extraporder2_paramset1,&basenumbdypoints_fixedpts_extraporder2_paramset1,rhobdy0_fixedpts_extraporder2_paramset1,chibdy0_fixedpts_extraporder2_paramset1,xibdy0_fixedpts_extraporder2_paramset1,&basebdy_Nchi_fixedpts_extraporder2_paramset1,&basebdy_Nxi_fixedpts_extraporder2_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder2_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -17442,9 +17440,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder3_paramset1[j],ypbdy0_fixedpts_extraporder3_paramset1[j],zpbdy0_fixedpts_extraporder3_paramset1[j],j);
@@ -17454,9 +17452,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
@@ -17472,9 +17470,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder3_paramset1[j],y_outermostpt0_fixedpts_extraporder3_paramset1[j],z_outermostpt0_fixedpts_extraporder3_paramset1[j],j);
@@ -17484,9 +17482,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    	{
@@ -17503,9 +17501,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder3_paramset1[j],j);
@@ -17515,9 +17513,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 		                                    {
@@ -17534,9 +17532,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -17549,9 +17547,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
@@ -17570,9 +17568,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -17585,9 +17583,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -17606,9 +17604,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -17621,9 +17619,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -17642,9 +17640,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -17657,9 +17655,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset1; j++ )
 		                                    {
@@ -17696,9 +17694,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder3_paramset1,quasiset_massdensity0_fixedpts_extraporder3_paramset1,xpbdy0_fixedpts_extraporder3_paramset1,ypbdy0_fixedpts_extraporder3_paramset1,zpbdy0_fixedpts_extraporder3_paramset1,&basenumbdypoints_fixedpts_extraporder3_paramset1,rhobdy0_fixedpts_extraporder3_paramset1,chibdy0_fixedpts_extraporder3_paramset1,xibdy0_fixedpts_extraporder3_paramset1,&basebdy_Nchi_fixedpts_extraporder3_paramset1,&basebdy_Nxi_fixedpts_extraporder3_paramset1);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset1_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset1_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder3_paramset1);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -18076,9 +18074,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder1_paramset2[j],ypbdy0_fixedpts_extraporder1_paramset2[j],zpbdy0_fixedpts_extraporder1_paramset2[j],j);
@@ -18088,9 +18086,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
@@ -18106,9 +18104,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder1_paramset2[j],y_outermostpt0_fixedpts_extraporder1_paramset2[j],z_outermostpt0_fixedpts_extraporder1_paramset2[j],j);
@@ -18118,9 +18116,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    	{
@@ -18137,9 +18135,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder1_paramset2[j],j);
@@ -18149,9 +18147,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 		                                    {
@@ -18168,9 +18166,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -18183,9 +18181,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
@@ -18204,9 +18202,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -18219,9 +18217,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -18240,9 +18238,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -18255,9 +18253,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -18276,9 +18274,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -18291,9 +18289,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder1_paramset2; j++ )
 		                                    {
@@ -18330,9 +18328,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder1_paramset2,quasiset_massdensity0_fixedpts_extraporder1_paramset2,xpbdy0_fixedpts_extraporder1_paramset2,ypbdy0_fixedpts_extraporder1_paramset2,zpbdy0_fixedpts_extraporder1_paramset2,&basenumbdypoints_fixedpts_extraporder1_paramset2,rhobdy0_fixedpts_extraporder1_paramset2,chibdy0_fixedpts_extraporder1_paramset2,xibdy0_fixedpts_extraporder1_paramset2,&basebdy_Nchi_fixedpts_extraporder1_paramset2,&basebdy_Nxi_fixedpts_extraporder1_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder1_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder1_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder1_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -18708,9 +18706,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder2_paramset2[j],ypbdy0_fixedpts_extraporder2_paramset2[j],zpbdy0_fixedpts_extraporder2_paramset2[j],j);
@@ -18720,9 +18718,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
@@ -18738,9 +18736,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder2_paramset2[j],y_outermostpt0_fixedpts_extraporder2_paramset2[j],z_outermostpt0_fixedpts_extraporder2_paramset2[j],j);
@@ -18750,9 +18748,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    	{
@@ -18769,9 +18767,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder2_paramset2[j],j);
@@ -18781,9 +18779,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 		                                    {
@@ -18800,9 +18798,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -18815,9 +18813,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
@@ -18836,9 +18834,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -18851,9 +18849,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -18872,9 +18870,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -18887,9 +18885,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -18908,9 +18906,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -18923,9 +18921,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder2_paramset2; j++ )
 		                                    {
@@ -18962,9 +18960,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder2_paramset2,quasiset_massdensity0_fixedpts_extraporder2_paramset2,xpbdy0_fixedpts_extraporder2_paramset2,ypbdy0_fixedpts_extraporder2_paramset2,zpbdy0_fixedpts_extraporder2_paramset2,&basenumbdypoints_fixedpts_extraporder2_paramset2,rhobdy0_fixedpts_extraporder2_paramset2,chibdy0_fixedpts_extraporder2_paramset2,xibdy0_fixedpts_extraporder2_paramset2,&basebdy_Nchi_fixedpts_extraporder2_paramset2,&basebdy_Nxi_fixedpts_extraporder2_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder2_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder2_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder2_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -19340,9 +19338,9 @@ void AdS4D_pre_io_calc(void)
 	                            if (timestep_ascii)
 	                            {
 	                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    								name = malloc(size_name); 
+    								if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,xpbdy0_fixedpts_extraporder3_paramset2[j],ypbdy0_fixedpts_extraporder3_paramset2[j],zpbdy0_fixedpts_extraporder3_paramset2[j],j);
@@ -19352,9 +19350,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_xext_yext_zext_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
@@ -19370,9 +19368,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_outermostpts)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",ct,x_outermostpt0_fixedpts_extraporder3_paramset2[j],y_outermostpt0_fixedpts_extraporder3_paramset2[j],z_outermostpt0_fixedpts_extraporder3_paramset2[j],j);
@@ -19382,9 +19380,9 @@ void AdS4D_pre_io_calc(void)
 	                                	if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                	{
 	                                		size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_xout_yout_zout_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    	fp = fopen(name, "w+");
+	                                    	if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    	j_red=0;
 	                                    	for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    	{
@@ -19401,9 +19399,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdyphi)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    									name = malloc(size_name); 
+    									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",ct,bdyphi0_fixedpts_extraporder3_paramset2[j],j);
@@ -19413,9 +19411,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-    										name = malloc(size_name); 
+    										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_bdyphi_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 		                                    {
@@ -19432,9 +19430,9 @@ void AdS4D_pre_io_calc(void)
 
                                     // save quasiset_ll as ascii
                                 	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
                                     sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-                                    fp = fopen(name, "w+");
+                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
                                     for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
                                     {
                                         fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %24.16e %i \n",
@@ -19447,9 +19445,9 @@ void AdS4D_pre_io_calc(void)
 	                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetll_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    j_red=0;
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
@@ -19468,9 +19466,9 @@ void AdS4D_pre_io_calc(void)
 	                                if(output_bdytrace)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -19483,9 +19481,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisettrace_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -19504,9 +19502,9 @@ void AdS4D_pre_io_calc(void)
 		                            if(output_bdymassdens)
 	                                {
 	                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %i \n",
@@ -19519,9 +19517,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetmassdensity_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 		                                    {
 		                                        if ((j%reduction_factor_ascii)==0)
@@ -19540,9 +19538,9 @@ void AdS4D_pre_io_calc(void)
 		                            if (output_bdyangmomdens)
 		                            {
 		                            	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   										name = malloc(size_name); 
+   										if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                            	sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-	                                    fp = fopen(name, "w+");
+	                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 	                                    {
 	                                        fprintf(fp,"%24.16e %24.16e %24.16e %24.16e %i \n",
@@ -19555,9 +19553,9 @@ void AdS4D_pre_io_calc(void)
 		                                if ((reduced_ascii) && (reduction_factor_ascii!=0))
 		                                {
 		                                	size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps) + 1;
-   											name = malloc(size_name); 
+   											if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 		                                    sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_reduced_%st_quasisetangmomdensityxyz_indbdypoint_tstep%d.txt",AMRD_save_tag,lc_steps);
-		                                    fp = fopen(name, "w+");
+		                                    if ( (fp = fopen(name, "w+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 		                                    j_red=0;
 		                                    for( j = 0; j < basenumbdypoints_fixedpts_extraporder3_paramset2; j++ )
 		                                    {
@@ -19594,9 +19592,9 @@ void AdS4D_pre_io_calc(void)
 	                                doubleintegralonsphere_(AdS_mass0_fixedpts_extraporder3_paramset2,quasiset_massdensity0_fixedpts_extraporder3_paramset2,xpbdy0_fixedpts_extraporder3_paramset2,ypbdy0_fixedpts_extraporder3_paramset2,zpbdy0_fixedpts_extraporder3_paramset2,&basenumbdypoints_fixedpts_extraporder3_paramset2,rhobdy0_fixedpts_extraporder3_paramset2,chibdy0_fixedpts_extraporder3_paramset2,xibdy0_fixedpts_extraporder3_paramset2,&basebdy_Nchi_fixedpts_extraporder3_paramset2,&basebdy_Nxi_fixedpts_extraporder3_paramset2);          
 	                                
 	                                size_name = snprintf(NULL, 0, "AdSbdy_fixedpts_extraporder3_paramset2_%st_AdSmass.txt",AMRD_save_tag) + 1;
-   									name = malloc(size_name); 
+   									if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_io_calc...out of memory",""); 
 	                                sprintf(name,"AdSbdy_fixedpts_extraporder3_paramset2_%st_AdSmass.txt",AMRD_save_tag);
-	                                fp = fopen(name, "a+");
+	                                if ( (fp = fopen(name, "a+") )==NULL) printf("ERROR opening file %s with error %d!\n",name,errno);
 	                                fprintf(fp,"%24.16e %24.16e \n",ct,*AdS_mass0_fixedpts_extraporder3_paramset2);
 	                                fclose(fp);
 	                                free(name); name=NULL; 
@@ -20169,8 +20167,8 @@ void AdS4D_evolve(int iter)
 void AdS4D_fill_ex_mask(real *mask, int dim, int *shape, real *bbox, real excised)
 {
 
-//	MPI_Barrier(MPI_COMM_WORLD);
-//    if (my_rank==0) {printf("beginning fill_ex_mask\n"); fflush(stdout);}
+	//MPI_Barrier(MPI_COMM_WORLD);
+	//if (my_rank==0) {printf("beginning fill_ex_mask\n"); fflush(stdout);}
 
     int i,j,k,ind,l;
     real x,y,z,dx,dy,dz,rho,xp,yp,zp,ex_r_xp,ex_r_yp,ex_r_zp,r; 
@@ -20490,6 +20488,7 @@ void AdS4D_pre_tstep(int L)
 {
     int size_name;
     char *name;
+    FILE *fp;
     int AH[MAX_BHS];
     int AH_shape[2],got_an_AH,do_reinit_ex,do_repop;
     real M,J,area,c_equat,c_polar,c_polar2;
@@ -20663,12 +20662,12 @@ void AdS4D_pre_tstep(int L)
 				if (my_rank==0)
                 {
                 	size_name = snprintf(NULL, 0, "%sAH_R_%i",AMRD_save_tag,l) + 1;
-    				name = malloc(size_name); 
+    				if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
             	    sprintf(name,"%sAH_R_%i",AMRD_save_tag,l);
                 	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_R[l]);
                 	free(name); name=NULL;
                 	size_name = snprintf(NULL, 0, "%sAH_theta_%i",AMRD_save_tag,l) + 1;
-    				name = malloc(size_name); 
+    				if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
                 	sprintf(name,"%sAH_theta_%i",AMRD_save_tag,l);
                 	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_theta[l]); 
                 	free(name); name=NULL;
@@ -20680,32 +20679,32 @@ void AdS4D_pre_tstep(int L)
 					{
 
                 		size_name = snprintf(NULL, 0, "%sAH_g0_xx_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 						sprintf(name,"%sAH_g0_xx_%i",AMRD_save_tag,l);
     	            	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_xx[l]);
     	            	free(name); name=NULL;
     	            	size_name = snprintf(NULL, 0, "%sAH_g0_xy_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	        	        sprintf(name,"%sAH_g0_xy_%i",AMRD_save_tag,l);
     	        	    gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_xy[l]);
     	        	    free(name); name=NULL;
     	        	    size_name = snprintf(NULL, 0, "%sAH_g0_xz_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
         	        	sprintf(name,"%sAH_g0_xz_%i",AMRD_save_tag,l);
 	        	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_xz[l]);
 	        	        free(name); name=NULL;
 	        	        size_name = snprintf(NULL, 0, "%sAH_g0_yy_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
     	        	    sprintf(name,"%sAH_g0_yy_%i",AMRD_save_tag,l);
         	        	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_yy[l]);
         	        	free(name); name=NULL;
         	        	size_name = snprintf(NULL, 0, "%sAH_g0_yz_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	            	    sprintf(name,"%sAH_g0_yz_%i",AMRD_save_tag,l);
     	            	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_yz[l]);
     	            	free(name); name=NULL;
     	            	size_name = snprintf(NULL, 0, "%sAH_g0_zz_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	    	            sprintf(name,"%sAH_g0_zz_%i",AMRD_save_tag,l);
     	    	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_zz[l]);
     	    	        free(name); name=NULL;
@@ -20714,17 +20713,17 @@ void AdS4D_pre_tstep(int L)
     	    	    if (output_metricAH_sph_sdf)
 					{
 						size_name = snprintf(NULL, 0, "%sAH_g0_chichi_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 						sprintf(name,"%sAH_g0_chichi_%i",AMRD_save_tag,l);
 	        	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_chichi[l]);
 	        	        free(name); name=NULL;
 	        	        size_name = snprintf(NULL, 0, "%sAH_g0_chiphi_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
     	        	    sprintf(name,"%sAH_g0_chiphi_%i",AMRD_save_tag,l);
         	        	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_chiphi[l]);
         	        	free(name); name=NULL;
         	        	size_name = snprintf(NULL, 0, "%sAH_g0_phiphi_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	        	        sprintf(name,"%sAH_g0_phiphi_%i",AMRD_save_tag,l);
     	        	    gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_phiphi[l]);
     	        	    free(name); name=NULL;
@@ -20732,7 +20731,7 @@ void AdS4D_pre_tstep(int L)
     	    	    if (output_kretschAH_sdf)
 					{
 						size_name = snprintf(NULL, 0, "%sAH_kretsch_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 						sprintf(name,"%sAH_kretsch_%i",AMRD_save_tag,l);
 	        	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_kretsch[l]);
 	        	        free(name); name=NULL;
@@ -20740,7 +20739,7 @@ void AdS4D_pre_tstep(int L)
     	    	    if (output_riemanncubeAH_sdf)
 					{
 						size_name = snprintf(NULL, 0, "%sAH_riemanncube_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 						sprintf(name,"%sAH_riemanncube_%i",AMRD_save_tag,l);
 	        	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_riemanncube[l]);
 	        	        free(name); name=NULL;
@@ -20752,9 +20751,8 @@ void AdS4D_pre_tstep(int L)
 					real dchi=M_PI/(AH_Nchi[l]-1);
 	            	real dphi=2*M_PI/(AH_Nphi[l]-1);
 	            	size_name = snprintf(NULL, 0, "%sAH_t_chi_phi_R_x0_y0_z0_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps) + 1;
-    				name = malloc(size_name); 
+    				if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	            	sprintf(name,"%sAH_t_chi_phi_R_x0_y0_z0_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps);
-	            	FILE * fp;
 	            	fp = fopen (name, "w+");
 	            	for( j = 0; j < AH_Nchi[l]; j++ )
 				    {
@@ -20771,7 +20769,7 @@ void AdS4D_pre_tstep(int L)
 	                if (output_AHtheta_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_theta_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_theta_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -20790,7 +20788,7 @@ void AdS4D_pre_tstep(int L)
                 	if (output_metricAH_cart_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_g0xx_g0xy_g0xz_g0yy_g0yz_g0zz_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_g0xx_g0xy_g0xz_g0yy_g0yz_g0zz_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -20809,7 +20807,7 @@ void AdS4D_pre_tstep(int L)
                 	if (output_metricAH_sph_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_g0chichi_g0chiphi_g0phiphi_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_g0chichi_g0chiphi_g0phiphi_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -20828,7 +20826,7 @@ void AdS4D_pre_tstep(int L)
                 	if (output_kretschAH_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_kretsch_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_kretsch_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -20847,7 +20845,7 @@ void AdS4D_pre_tstep(int L)
                 	if (output_riemanncubeAH_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_riemanncube_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_riemanncube_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -20866,7 +20864,7 @@ void AdS4D_pre_tstep(int L)
                 	if (output_diagnosticAH_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_ahr_ahrdchi_ahrdphi_da_dceq_dcp_dcp2_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_pre_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_ahr_ahrdchi_ahrdphi_da_dceq_dcp_dcp2_ind_%i_tstep%d.txt",AMRD_save_tag,l,lsteps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -20957,6 +20955,7 @@ void AdS4D_post_tstep(int L)
 
 	int size_name;
     char *name;
+	FILE *fp;
     int AH[MAX_BHS];
     int AH_shape[2],got_an_AH,do_reinit_ex,do_repop;
     real M,J,area,c_equat,c_polar,c_polar2;
@@ -21120,12 +21119,12 @@ void AdS4D_post_tstep(int L)
 				if (my_rank==0)
                 {
                 	size_name = snprintf(NULL, 0, "%sAH_R_%i",AMRD_save_tag,l) + 1;
-    				name = malloc(size_name); 
+    				if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
             	    sprintf(name,"%sAH_R_%i",AMRD_save_tag,l);
                 	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_R[l]);
                 	free(name); name=NULL;
                 	size_name = snprintf(NULL, 0, "%sAH_theta_%i",AMRD_save_tag,l) + 1;
-    				name = malloc(size_name); 
+    				if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
                 	sprintf(name,"%sAH_theta_%i",AMRD_save_tag,l);
                 	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_theta[l]); 
                 	free(name); name=NULL;
@@ -21137,32 +21136,32 @@ void AdS4D_post_tstep(int L)
 					{
 
                 		size_name = snprintf(NULL, 0, "%sAH_g0_xx_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 						sprintf(name,"%sAH_g0_xx_%i",AMRD_save_tag,l);
     	            	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_xx[l]);
     	            	free(name); name=NULL;
     	            	size_name = snprintf(NULL, 0, "%sAH_g0_xy_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	        	        sprintf(name,"%sAH_g0_xy_%i",AMRD_save_tag,l);
     	        	    gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_xy[l]);
     	        	    free(name); name=NULL;
     	        	    size_name = snprintf(NULL, 0, "%sAH_g0_xz_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
         	        	sprintf(name,"%sAH_g0_xz_%i",AMRD_save_tag,l);
 	        	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_xz[l]);
 	        	        free(name); name=NULL;
 	        	        size_name = snprintf(NULL, 0, "%sAH_g0_yy_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
     	        	    sprintf(name,"%sAH_g0_yy_%i",AMRD_save_tag,l);
         	        	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_yy[l]);
         	        	free(name); name=NULL;
         	        	size_name = snprintf(NULL, 0, "%sAH_g0_yz_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	            	    sprintf(name,"%sAH_g0_yz_%i",AMRD_save_tag,l);
     	            	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_yz[l]);
     	            	free(name); name=NULL;
     	            	size_name = snprintf(NULL, 0, "%sAH_g0_zz_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	    	            sprintf(name,"%sAH_g0_zz_%i",AMRD_save_tag,l);
     	    	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_zz[l]);
     	    	        free(name); name=NULL;
@@ -21171,17 +21170,17 @@ void AdS4D_post_tstep(int L)
     	    	    if (output_metricAH_sph_sdf)
 					{
 						size_name = snprintf(NULL, 0, "%sAH_g0_chichi_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 						sprintf(name,"%sAH_g0_chichi_%i",AMRD_save_tag,l);
 	        	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_chichi[l]);
 	        	        free(name); name=NULL;
 	        	        size_name = snprintf(NULL, 0, "%sAH_g0_chiphi_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
     	        	    sprintf(name,"%sAH_g0_chiphi_%i",AMRD_save_tag,l);
         	        	gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_chiphi[l]);
         	        	free(name); name=NULL;
         	        	size_name = snprintf(NULL, 0, "%sAH_g0_phiphi_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	        	        sprintf(name,"%sAH_g0_phiphi_%i",AMRD_save_tag,l);
     	        	    gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_g0_phiphi[l]);
     	        	    free(name); name=NULL;
@@ -21189,7 +21188,7 @@ void AdS4D_post_tstep(int L)
     	    	    if (output_kretschAH_sdf)
 					{
 						size_name = snprintf(NULL, 0, "%sAH_kretsch_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 						sprintf(name,"%sAH_kretsch_%i",AMRD_save_tag,l);
 	        	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_kretsch[l]);
 	        	        free(name); name=NULL;
@@ -21197,7 +21196,7 @@ void AdS4D_post_tstep(int L)
     	    	    if (output_riemanncubeAH_sdf)
 					{
 						size_name = snprintf(NULL, 0, "%sAH_riemanncube_%i",AMRD_save_tag,l) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 						sprintf(name,"%sAH_riemanncube_%i",AMRD_save_tag,l);
 	        	        gft_out_bbox(name,ct,AH_shape,rank,AH_bbox,AH_riemanncube[l]);
 	        	        free(name); name=NULL;
@@ -21210,9 +21209,8 @@ void AdS4D_post_tstep(int L)
 	            	real dphi=2*M_PI/(AH_Nphi[l]-1);
 	            	//char fname[256];
 	            	size_name = snprintf(NULL, 0, "%sAH_t_chi_phi_R_x0_y0_z0_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps) + 1;
-    				name = malloc(size_name); 
+    				if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	            	sprintf(name,"%sAH_t_chi_phi_R_x0_y0_z0_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps);
-	            	FILE * fp;
 	            	fp = fopen (name, "w+");
 	            	for( j = 0; j < AH_Nchi[l]; j++ )
 				    {
@@ -21229,7 +21227,7 @@ void AdS4D_post_tstep(int L)
 	                if (output_AHtheta_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_theta_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_theta_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -21248,7 +21246,7 @@ void AdS4D_post_tstep(int L)
                 	if (output_metricAH_cart_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_g0xx_g0xy_g0xz_g0yy_g0yz_g0zz_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_g0xx_g0xy_g0xz_g0yy_g0yz_g0zz_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -21267,7 +21265,7 @@ void AdS4D_post_tstep(int L)
                 	if (output_metricAH_sph_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_g0chichi_g0chiphi_g0phiphi_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_g0chichi_g0chiphi_g0phiphi_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -21286,7 +21284,7 @@ void AdS4D_post_tstep(int L)
                 	if (output_kretschAH_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_kretsch_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_kretsch_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -21305,7 +21303,7 @@ void AdS4D_post_tstep(int L)
                 	if (output_riemanncubeAH_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_riemanncube_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_riemanncube_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
@@ -21324,7 +21322,7 @@ void AdS4D_post_tstep(int L)
                 	if (output_diagnosticAH_ascii)
 	                {
 	                	size_name = snprintf(NULL, 0, "%sAH_t_ahr_ahrdchi_ahrdphi_da_dceq_dcp_dcp2_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps) + 1;
-    					name = malloc(size_name); 
+    					if ( (name = malloc(size_name) )==NULL) AMRD_stop("app_post_tstep...out of memory",""); 
 	                	sprintf(name,"%sAH_t_ahr_ahrdchi_ahrdphi_da_dceq_dcp_dcp2_ind_%i_tstep%d.txt",AMRD_save_tag,l,lc_steps);
 		            	fp = fopen (name, "w+");
 		            	for( j = 0; j < AH_Nchi[l]; j++ )
