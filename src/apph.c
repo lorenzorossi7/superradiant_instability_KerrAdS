@@ -108,7 +108,7 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
    real tmp=1.0;
 
    // outputs AH_*_iter gfns
-   dvtrace=0;
+   dvtrace=1;
 
    np=AH_Nchi[c_AH]*AH_Nphi[c_AH];
 
