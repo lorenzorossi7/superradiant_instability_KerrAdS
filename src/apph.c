@@ -616,13 +616,13 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
          rank=2; 
    
          size_name = snprintf(NULL, 0, "%sAH_%i_R_iter",AMRD_save_tag,c_AH+1) + 1;
-         name = malloc(size_name); 
+         if ( (name = malloc(size_name) )==NULL) AMRD_stop("fill_theta_ahmetric...out of memory",""); 
          sprintf(name,"%sAH_%i_R_iter",AMRD_save_tag,c_AH+1);
          gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_R[c_AH]);
          free(name); name=NULL;
 
          size_name = snprintf(NULL, 0, "%sAH_%i_theta_iter",AMRD_save_tag,c_AH+1) + 1;
-         name = malloc(size_name); 
+         if ( (name = malloc(size_name) )==NULL) AMRD_stop("fill_theta_ahmetric...out of memory",""); 
          sprintf(name,"%sAH_%i_theta_iter",AMRD_save_tag,c_AH+1);
          gft_out_bbox(name,AH_ct[c_AH],AH_shape,rank,AH_bbox,AH_theta0);
          free(name); name=NULL;

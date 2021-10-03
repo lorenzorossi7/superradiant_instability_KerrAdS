@@ -20538,7 +20538,7 @@ void AdS4D_pre_tstep(int L)
         for (i=0; i<3; i++) {prev_AH_xc[i]=AH_xc[l][i];}
         c_AH=l;
     	AH_Lmin[l]=Lc+1;
-	AH_Lmax[l]=Lf;
+		AH_Lmax[l]=Lf;
 
 
         if (AH_max_iter[l]>0 && L>=AH_Lmin[l] && L<=AH_Lmax[l] && ct>=AH_tmin[l])
