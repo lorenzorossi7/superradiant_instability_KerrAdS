@@ -2,7 +2,7 @@ dim := 3
 
 refsym := 0
 
-kerrads_background := 0
+kerrads_background := 1
 
 #------ Initial Data -------------------------------------------------------
 
@@ -29,7 +29,7 @@ a_rot0 := 0.208723
 
 #------------ Scalar and vector spherical harmonic perturbations ---------------#
 
-add_perturb_t0 := 0
+add_perturb_t0 := 1
 add_perturb_postt0 := 0
 #interval of time between time steps at which we add perturbations
 perturb_deltat := 0.03
@@ -41,8 +41,8 @@ perturb_finalt := 1.0
 #amp_Y := -0.1333333333333
 #amp_V := -0.1
 
-#amp_Y := 0.01
-#amp_V := 0.01
+amp_Y := 0.01
+amp_V := 0.01
 
 #------ AH-finder ---------
 AH_Lmin := 2

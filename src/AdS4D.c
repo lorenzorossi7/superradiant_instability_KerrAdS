@@ -2421,6 +2421,8 @@ void AdS4D_var_post_init(char *pfile)
             init_fixed_coords=0; 
         }
     }   
+    excision_type=0; AMRD_int_param(pfile,"excision_type",&excision_type,1);
+	excise_prev_run_ex_pts=0; if (AMRD_cp_restart) {AMRD_int_param(pfile,"excise_prev_run_ex_pts",&excise_prev_run_ex_pts,1);}
     // set fraction, 1-ex_rbuf, of AH radius to be excised
     for (l=0; l<MAX_BHS; l++)
     {
@@ -2529,8 +2531,6 @@ void AdS4D_var_post_init(char *pfile)
             else sprintf(buf,"AH_xc_%i",l+1);
             AMRD_real_param(pfile,buf,AH_xc[l],AMRD_dim);
         }
-        excision_type=0; AMRD_int_param(pfile,"excision_type",&excision_type,1);
-		excise_prev_run_ex_pts=0; if (AMRD_cp_restart) {AMRD_int_param(pfile,"excise_prev_run_ex_pts",&excise_prev_run_ex_pts,1);}
 		if (AMRD_cp_restart&&excise_prev_run_ex_pts)
 		{
 			for (i=0;i<AMRD_dim;i++) {prev_run_ex_r[l][i]=0.0;}
