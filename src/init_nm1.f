@@ -391,7 +391,7 @@ c----------------------------------------------------------------------
               gb_xz_t0=gb_xz_t_n(i,j,k)
               gb_yy_t0=gb_yy_t_n(i,j,k)
               gb_yz_t0=gb_yz_t_n(i,j,k)
-              gb_zz_t0  =gb_zz_t_n(i,j,k)
+              gb_zz_t0=gb_zz_t_n(i,j,k)
               Hb_t_t0 =Hb_t_t_n(i,j,k)*(1-rho0**2)
               Hb_x_t0 =Hb_x_t_n(i,j,k)*(1-rho0**2)
               Hb_y_t0 =Hb_y_t_n(i,j,k)*(1-rho0**2)

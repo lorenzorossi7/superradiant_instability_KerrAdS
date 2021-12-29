@@ -3124,7 +3124,6 @@ void AdS4D_t0_cnst_data(void)
                 Hb_y_np1[i]=Hb_y_nm1[i]=Hb_y_n[i];
                 Hb_z_np1[i]=Hb_z_nm1[i]=Hb_z_n[i];
             }
-
         }
     }
     else
