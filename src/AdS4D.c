@@ -68,6 +68,7 @@ real rho1_t,rho2_t,rho3_t,rho4_t,xi1_t,xi2_t,cbulk_t;
 real rho1_i,rho2_i,rho3_i,rho4_i,xi1_i,xi2_i,cbulk_i;
 real rhoa,rhob;
 real rhoc,rhod;
+real rhoamp_a,rhoamp_b;
 
 int cp_version; 
 
@@ -2316,7 +2317,11 @@ void AdS4D_var_post_init(char *pfile)
     perturb_finalt=0.0; AMRD_real_param(pfile,"perturb_finalt",&perturb_finalt,1);
     amp_Y=0.0; AMRD_real_param(pfile,"amp_Y",&amp_Y,1);
     amp_V=0.0; AMRD_real_param(pfile,"amp_V",&amp_V,1);
+    rhoamp_a=1; AMRD_real_param(pfile,"rhoamp_a",&rhoamp_a,1);
+    rhoamp_b=1; AMRD_real_param(pfile,"rhoamp_b",&rhoamp_b,1);  
 
+    ief_bh_r0=0.0; AMRD_real_param(pfile,"ief_bh_r0",&ief_bh_r0,1);
+    a_rot0=0.0; AMRD_real_param(pfile,"a_rot0",&a_rot0,1);
     kerrads_background=0; AMRD_int_param(pfile,"kerrads_background",&kerrads_background,1);  
 
     kappa_cd=0; AMRD_real_param(pfile,"kappa_cd",&kappa_cd,1);
@@ -2579,8 +2584,6 @@ void AdS4D_var_post_init(char *pfile)
     ex_repop_buf=1; AMRD_int_param(pfile,"ex_repop_buf",&ex_repop_buf,1);
     ex_repop_io=1; AMRD_int_param(pfile,"ex_repop_io",&ex_repop_io,1);
     if (abs(ex_repop_io)<1 || abs(ex_repop_io)>4) AMRD_stop("invalid |ex_repop_io| ... must be 1,2,3 or 4",""); 
-    ief_bh_r0=0; AMRD_real_param(pfile,"ief_bh_r0",&ief_bh_r0,1);
-    a_rot0=0; AMRD_real_param(pfile,"a_rot0",&a_rot0,1);
     // later have a proper routine to convert from AH to excision parameters.
     // rh is radius in uncompactified coordicates, rhoh in compactified,
     // ief_bh_r0 is BH radius parameter, i.e., M=2*ief_bh_r0, ex_r is excision radius
@@ -2977,7 +2980,8 @@ void AdS4D_t0_cnst_data(void)
 	                        gb_yz,
 	                        gb_zz,
 	                        &amp_Y,&amp_V,
-	                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz);
+	                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz,
+	                    	&rhoamp_a,&rhoamp_b);
         	}
 
         	for (i=0; i<size; i++)
@@ -3073,7 +3077,8 @@ void AdS4D_t0_cnst_data(void)
 	                        gb_yz,
 	                        gb_zz,
 	                        &amp_Y,&amp_V,
-	                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz);
+	                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz,
+	                    	&rhoamp_a,&rhoamp_b);
 
         	}
 
@@ -3350,7 +3355,8 @@ void AdS4D_pre_io_calc(void)
                         gb_yz_n,
                         gb_zz_n,
                         &amp_Y,&amp_V,
-                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz);
+                    	&AdS_L,x,y,z,&dt,chr,&AMRD_ex,&Nx,&Ny,&Nz,
+	                    &rhoamp_a,&rhoamp_b);
 	
 				//for (i=0; i<Nx; i++)
 				//{    

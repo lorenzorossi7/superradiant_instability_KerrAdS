@@ -24,6 +24,10 @@ stype := 0
 #a_rot0 := 0.0
 
 #Parameters of arXiv:1801.09711 (Chesler,Lowe)
+#ief_bh_r0 := 0.500153
+#a_rot0 := 0.228171
+
+#Parameters used in long test run
 ief_bh_r0 := 0.5566
 a_rot0 := 0.208723
 
@@ -41,8 +45,10 @@ perturb_finalt := 1.0
 #amp_Y := -0.1333333333333
 #amp_V := -0.1
 
-amp_Y := 0.01
-amp_V := 0.01
+amp_Y := 0.1
+amp_V := 0.1
+rhoamp_a := 0.3
+rhoamp_b := 0.6
 
 #------ AH-finder ---------
 AH_Lmin := 2
@@ -63,7 +69,7 @@ AH_freq_aft := 1
 #excision_type=0: no internal excision - excision_type=1: spherical excised region - excision_type=2: elliptic excised region - excision_type=3: AH-shaped excised region
 excision_type := 2
 #excision buffer, i.e. how wide the region to evolve within the AH (or the AdS boundary if there is no BH) is
-ex_rbuf := 0.4
+ex_rbuf := 0.2
 AH_reset_scale := 1.1
 AH_max_iter_2 := 0
 AH_max_iter_3 := 0
@@ -174,11 +180,12 @@ max_resolution_degree := 4
 #reduction_factor is the factor by which we need to reduce the number points of the lowest resolution used for convergence (i.e. the resolution with degree 1) so that we only select points that are present also in the resolutions with degree 2 and 3. To get the exact same points in higher resolutions, we need to reduce by a factor (reduction_factor**(max_resolution_degree-1))*((ratio_Lhighres_Llowres)**(resolution_degree-1)). ratio_Lhighres_Llowres and reduction_factor must be chosen so that this factor is an integer for all resolutions
 reduction_factor := 2
 
-base_shape := [11 11 11]
+#base_shape := [11 11 11]
 #base_shape := [19 19 19]
-#base_shape := [33 33 33]
+base_shape := [33 33 33]
 #base_shape := [65 65 65]
-max_lev := 2
+#base_shape := [129 129 129]
+max_lev := 1
 lambda := 0.2
 rho_sp := 2
 rho_tm := 2

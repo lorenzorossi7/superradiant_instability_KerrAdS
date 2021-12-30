@@ -699,6 +699,7 @@ void sph_harm_perturb_(       real *phi1,
                               real *gb_yz,
                               real *gb_zz,
                               real *amp_Y, real *amp_V,
-                              real *AdS_L, real *x, real *y, real *z, real *dt, real *chr,real *exc, int *Nx, int *Ny, int *Nz);
+                              real *AdS_L, real *x, real *y, real *z, real *dt, real *chr,real *exc, int *Nx, int *Ny, int *Nz,
+                              real *rhoamp_a, real *rhoamp_b);
 
 #endif

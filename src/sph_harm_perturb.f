@@ -15,7 +15,8 @@ c----------------------------------------------------------------------
      &                     gb_yz,
      &                     gb_zz,
      &                     amp_Y,amp_V,
-     &                     L,x,y,z,dt,chr,exc,Nx,Ny,Nz)
+     &                     L,x,y,z,dt,chr,exc,Nx,Ny,Nz,
+     &                     rhoamp_a,rhoamp_b)
 
 
         implicit none
@@ -26,6 +27,8 @@ c----------------------------------------------------------------------
         real*8 amp_Y,amp_V
         real*8 L
         real*8 chr(Nx,Ny,Nz),exc
+        real*8 rhoamp_a,rhoamp_b
+        real*8 f0,trans
 
         real*8 gb_tt(Nx,Ny,Nz)
         real*8 gb_tx(Nx,Ny,Nz)
@@ -52,9 +55,6 @@ c----------------------------------------------------------------------
         integer a,b,c,d
         real*8 r,x0,y0,z0,rho0,xi0,chi0,csr,xb,yb,zb
 
-
-        real*8 rhoc,rhod
-        real*8 f1,trans
 
         real*8 PI
         parameter (PI=3.141592653589793d0)
@@ -89,6 +89,8 @@ c----------------------------------------------------------------------
                 if (xi0.lt.0) xi0=xi0+1
               end if
 
+              f0=trans(rho0,rhoamp_a,rhoamp_b)
+
              !real part of scalar spherical harmonic with l=2,m=2 
               Re_Y_22=(1/4.0d0)*sqrt(15/(2*PI))
      &		         *cos(2*2*PI*xi0)*(sin(PI*chi0)**2)
@@ -111,18 +113,18 @@ c----------------------------------------------------------------------
 
      		pert_gbqssph_ll(1,1)=0
      		pert_gbqssph_ll(1,2)=0
-     		pert_gbqssph_ll(1,3)=16*PI/3*(1-rho0)*amp_V
+     		pert_gbqssph_ll(1,3)=f0*16*PI/3*(1-rho0)*amp_V
      &		         *(Re_V_122_chi+Re_V_222_chi)
-     		pert_gbqssph_ll(1,4)=16*PI/3*(1-rho0)*amp_V
+     		pert_gbqssph_ll(1,4)=f0*16*PI/3*(1-rho0)*amp_V
      &		         *(Re_V_122_xi+Re_V_222_xi)
-     		pert_gbqssph_ll(2,2)=(1.0d0/3.0d0)*(64*PI**3)
+     		pert_gbqssph_ll(2,2)=f0*(1.0d0/3.0d0)*(64*PI**3)
      &             /(8*PI**2)*(1-rho0)*amp_Y*Re_Y_22
      		pert_gbqssph_ll(2,3)=0
      		pert_gbqssph_ll(2,4)=0
-     		pert_gbqssph_ll(3,3)=(1.0d0/3.0d0)*(64*PI**3)
+     		pert_gbqssph_ll(3,3)=f0*(1.0d0/3.0d0)*(64*PI**3)
      &             /12*(1-rho0)*amp_Y*Re_Y_22
      		pert_gbqssph_ll(3,4)=0
-     		pert_gbqssph_ll(4,4)=(1.0d0/3.0d0)*64*PI**3*(sin(PI*chi0)**2)
+     		pert_gbqssph_ll(4,4)=f0*(1.0d0/3.0d0)*64*PI**3*(sin(PI*chi0)**2)
      &		         /3*(1-rho0)*amp_Y*Re_Y_22
 
      	      do a=1,3
