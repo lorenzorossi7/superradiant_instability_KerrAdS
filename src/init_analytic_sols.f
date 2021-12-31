@@ -298,7 +298,8 @@ c with radius parameter rbh=2*M0, where M0 is the BHmass (r0 has no physical mea
 c and rotation parameter a_rot.
 c----------------------------------------------------------------------
         subroutine set_kerrads4d_ahr(ief_bh_r0,a_rot,L,
-     &                         AH_R,min_AH_R,max_AH_R,
+     &                         AH_R,AH_xc,min_AH_R,max_AH_R,
+     &                         AH_semiax,
      &                         AH_Nchi,AH_Nphi)
 
         implicit none
@@ -309,12 +310,16 @@ c----------------------------------------------------------------------
         integer AH_Nchi,AH_Nphi
         real*8 ief_bh_r0,a_rot,M0,M0_min
         real*8 rblhor
-        real*8 AH_R(AH_Nchi,AH_Nphi)
+        real*8 AH_R(AH_Nchi,AH_Nphi),AH_xc(3),AH_semiax(3)
         real*8 min_AH_R,max_AH_R
         real*8 AH_chi,AH_phi
         real*8 yipshor(AH_Nchi,AH_Nphi),rhohor(AH_Nchi,AH_Nphi)
         real*8 L
         real*8 dahchi,dahphi
+        real*8 min_AH_x,max_AH_x
+        real*8 min_AH_y,max_AH_y
+        real*8 min_AH_z,max_AH_z
+        real*8 AH_x,AH_y,AH_z
 
 
         integer i,j,k
@@ -396,8 +401,15 @@ c----------------------------------------------------------------------
         dahchi=PI/(AH_Nchi-1)
         dahphi=2*PI/(AH_Nphi-1)
 
-        min_AH_R=1;
-        max_AH_R=0;
+        min_AH_R=1
+        max_AH_R=0
+
+        min_AH_x=1
+        max_AH_x=0
+        min_AH_y=1
+        max_AH_y=0
+        min_AH_z=1
+        max_AH_z=0
 
           do i=1,AH_Nchi
            do j=1,AH_Nphi
@@ -419,8 +431,25 @@ c----------------------------------------------------------------------
             AH_R(i,j)=rhohor(i,j)
 
             if (AH_R(i,j).gt.max_AH_R) max_AH_R=AH_R(i,j)
-
             if (AH_R(i,j).lt.min_AH_R) min_AH_R=AH_R(i,j)
+
+            AH_x=AH_R(i,j)*cos(AH_chi)+AH_xc(1)
+            AH_y=AH_R(i,j)*sin(AH_chi)*cos(AH_phi)+AH_xc(2)
+            AH_z=AH_R(i,j)*sin(AH_chi)*sin(AH_phi)+AH_xc(3)
+
+            min_AH_x=min(AH_x,min_AH_x)
+            min_AH_y=min(AH_y,min_AH_y)
+            min_AH_z=min(AH_z,min_AH_z)
+
+            max_AH_x=max(AH_x,max_AH_x)
+            max_AH_y=max(AH_y,max_AH_y)
+            max_AH_z=max(AH_z,max_AH_z)
+
+            !sets semi-axes of ellispoid approximation of AH:
+            !if the AH can be approximated by an ellipsoid with axes along the x,y,z axes, the following gives the semi-axes of this ellipsoid
+            AH_semiax(1)=(max_AH_x-min_AH_x)/2
+            AH_semiax(2)=(max_AH_y-min_AH_y)/2
+            AH_semiax(3)=(max_AH_z-min_AH_z)/2
 
            end do
           end do

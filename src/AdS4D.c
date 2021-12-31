@@ -698,6 +698,7 @@ int gu_xy_gfn,gu_xz_gfn,gu_yy_gfn,gu_yz_gfn,gu_zz_gfn,m_g_det_gfn;
 //=============================================================================
 real min_AH_R0=1;
 real max_AH_R0=1;
+real AH_semiax[3];
 
 real *AH_theta[MAX_BHS],*AH_R[MAX_BHS];
 real AH_R_for_ex_mask[MAX_BHS][MAX_AH_Nchi_AH_Nphi_AH_FINDER]={1.0};
@@ -2608,7 +2609,7 @@ void AdS4D_var_post_init(char *pfile)
                             "Mass M0 = r0/2 = rh*(1+rh^2/L^2)/2 = %lf\n"
                             "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
                             ,ief_bh_r0/AdS_L,rh/AdS_L,rhoh,M0,ex_rbuf[0]);
-        }     
+        }
         for (i0=0;i0<AH_Nchi[0];i0++)
         {
         	for (j0=0;j0<AH_Nphi[0];j0++)
@@ -2691,10 +2692,34 @@ void AdS4D_var_post_init(char *pfile)
                  2))/2.,0.3333333333333333))))/(2.*sqrt(3));
 
 
-		set_kerrads4d_ahr_(&ief_bh_r0,&a_rot0,&AdS_L,AH_R[0],&min_AH_R0,&max_AH_R0,&AH_Nchi[0],&AH_Nphi[0]);
-        ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
-        ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
-        ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
+		set_kerrads4d_ahr_(&ief_bh_r0,&a_rot0,&AdS_L,AH_R[0],AH_xc[0],&min_AH_R0,&max_AH_R0,AH_semiax,&AH_Nchi[0],&AH_Nphi[0]);
+        //ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
+        //ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
+        //ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
+
+        if (my_rank==0) 
+    	{
+            printf("\nKerr-AdS initial data\n"
+                   "r0/L=%lf, mass M = r0/2 = %lf, rotation parameter a/L= %lf\n"
+                   "energy (the one employed in the first law of BH thermodynamics) E=M/(1-a^2/L^2)^2=%lf, angular momentum J0= M a/(1-a^2/L^2)^2= %lf\n"
+                   "Initial BH radius in Boyer-Lindquist coordinates rotating at the boundary (not the ones used in the code)=%lf\n" 
+                   "Minimum and maximum BH radius in Kerr-Schild quasi-spherical compactified coordinates: rhomin=%lf, rhomax=%lf\n"
+                   "Semi-axes of elliptic approximation of BH in Kerr-Schild quasi-spherical compactified coordinates: AH_semiax[0]=%lf, AH_semiax[1]=%lf, AH_semiax[2]=%lf\n\n"
+                   "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
+                   ,ief_bh_r0/AdS_L,M0,a_rot0/AdS_L,E,J0,rh,min_AH_R0,max_AH_R0,AH_semiax[0],AH_semiax[1],AH_semiax[2],ex_rbuf[0]);
+        } 
+        if (excision_type==1)
+		{
+			ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
+        	ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
+        	ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
+		}
+		if (excision_type==2)
+		{
+			ex_r[0][0]=AH_semiax[0]*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
+        	ex_r[0][1]=AH_semiax[1]*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
+        	ex_r[0][2]=AH_semiax[2]*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
+		}
 		if (excision_type==3)
 		{
 	        for (i0=0;i0<AH_Nchi[0];i0++)
@@ -2706,16 +2731,6 @@ void AdS4D_var_post_init(char *pfile)
     	    	}
         	}
     	}
-        if (my_rank==0) 
-    	{
-            printf("\nKerr-AdS initial data\n"
-                   "r0/L=%lf, mass M = r0/2 = %lf, rotation parameter a/L= %lf\n"
-                   "energy (the one employed in the first law of BH thermodynamics) E=M/(1-a^2/L^2)^2=%lf, angular momentum J0= M a/(1-a^2/L^2)^2= %lf\n"
-                   "Initial BH radius in Boyer-Lindquist coordinates rotating at the boundary (not the ones used in the code)=%lf\n" 
-                   "Minimum and maximum BH radius in Kerr-Schild quasi-spherical compactified coordinates: rhomin=%lf, rhomax=%lf\n"
-                   "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
-                   ,ief_bh_r0/AdS_L,M0,a_rot0/AdS_L,E,J0,rh,min_AH_R0,max_AH_R0,ex_rbuf[0]);
-        } 
 
 		if (ah_finder_is_off) 
         {
@@ -2768,12 +2783,12 @@ void AdS4D_var_post_init(char *pfile)
 	    	if (excision_type==0) printf("\nNo internal excision\n");
 		    if ((excision_type==1)&&(min_AH_R0<1)) 
 		    {
-		    	printf("\nSpherical excised region with radius min_AH_R*(1-ex_rbuf[l])=%lf\n",min_AH_R0*(1-ex_rbuf[l]));
+		    	printf("\nSpherical excised region with radius min_AH_R0*(1-ex_rbuf[l])=%lf\n",min_AH_R0*(1-ex_rbuf[l]));
 		    	if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
 		    }
 	    	if ((excision_type==2)&&(min_AH_R0<1))
 	    	{
-	    		printf("\nExcision ellipse semiaxes: (ex_r0[0]*(1-ex_rbuf[l]),ex_r0[1]*(1-ex_rbuf[l]),ex_r0[2]*(1-ex_rbuf[l]))=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
+	    		printf("\nExcision ellipse semiaxes: (ex_r[l][0],ex_r[][1],ex_r[l][2])=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
 	    		if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
 	        	{     
 					if (prev_run_ex_r[l][0])
@@ -2789,7 +2804,7 @@ void AdS4D_var_post_init(char *pfile)
 			}
 	   		if ((excision_type==3)&&(min_AH_R0<1)) 
 	   		{
-	   			printf("AH-shaped excised region: minimum and maximum of AH radius: min_AH_R=%lf, max_AH_R=%lf\n",min_AH_R0,max_AH_R0);
+	   			printf("AH-shaped excised region: minimum and maximum of AH radius: min_AH_R0=%lf, max_AH_R0=%lf\n",min_AH_R0,max_AH_R0);
 	   			if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
 	   		}
    	}

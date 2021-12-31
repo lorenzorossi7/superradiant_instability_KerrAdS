@@ -672,7 +672,8 @@ void extrap_quasiset_fixedpts_(real *quasiset_tt, real *quasiset_tchi, real *qua
                    int *ind_distance_fixedpts,
                    real *x, real *y, real *z, real *dt, real *chr, real *AdS_L, real *ex, int *Nx, int *Ny, int *Nz, int *phys_bdy, int *ghost_width);
 
-void set_kerrads4d_ahr_(real *ief_bh_r0, real *a_rot, real *AdS_L, real *AH_R,real *min_AH_R,real *max_AH_R,int *AH_Nchi,int *AH_Nphi);
+void set_kerrads4d_ahr_(real *ief_bh_r0, real *a_rot, real *AdS_L, real *AH_R, real *AH_xc, 
+                        real *min_AH_R,real *max_AH_R, real *AH_semiax,int *AH_Nchi,int *AH_Nphi);
 
 void init_kerrads4d_bh_(real *ief_bh_r0, real *a_rot, real *AdS_L,
                             real *gb_tt,real *gb_tx,real *gb_ty,real *gb_tz,

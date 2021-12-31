@@ -245,10 +245,12 @@ c----------------------------------------------------------------------
 !             write(*,*) "i,j,k,x0,y0,z0,dx=",i,j,k,x0,y0,z0,dx
 !             write(*,*) "rho0=",rho0
 
-!        write(*,*) 'DEBUG from gauge.f'
-!        write(*,*) 'L,x0,y0,z0,rho0,dx=',L,x0,y0,z0,rho0,dx
+        write(*,*) 'DEBUG from gauge.f'
+        write(*,*) 'L,x0,y0,z0,rho0,dx=',L,x0,y0,z0,rho0,dx
 
                 Hb_t0=Hb_t_0(i,j,k)
+
+         write(*,*) 'Hb_t0=',Hb_t0
 
                 f0=trans(rho0,rho1,rho2)
                 f1=trans(rho0,rho3,rho4)
