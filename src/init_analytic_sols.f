@@ -445,7 +445,7 @@ c----------------------------------------------------------------------
             max_AH_y=max(AH_y,max_AH_y)
             max_AH_z=max(AH_z,max_AH_z)
 
-            !sets semi-axes of ellispoid approximation of AH:
+            !sets semi-axes of ellipsoid approximation of AH:
             !if the AH can be approximated by an ellipsoid with axes along the x,y,z axes, the following gives the semi-axes of this ellipsoid
             AH_semiax(1)=(max_AH_x-min_AH_x)/2
             AH_semiax(2)=(max_AH_y-min_AH_y)/2

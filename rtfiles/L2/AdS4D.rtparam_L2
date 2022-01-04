@@ -31,6 +31,15 @@ stype := 0
 ief_bh_r0 := 0.5566
 a_rot0 := 0.208723
 
+
+#Parameters with strongest longitudinal instability according to arXiv:1801.09711
+#ief_bh_r0 := 1.4684
+#a_rot0 := 0.58943
+
+#Parameters with strongest transverse instability according to arXiv:1801.09711
+#ief_bh_r0 := 0.824934
+#a_rot0 := 0.369957
+
 #------------ Scalar and vector spherical harmonic perturbations ---------------#
 
 add_perturb_t0 := 1
