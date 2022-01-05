@@ -2788,7 +2788,7 @@ void AdS4D_var_post_init(char *pfile)
 		    }
 	    	if ((excision_type==2)&&(min_AH_R0<1))
 	    	{
-	    		printf("\nExcision ellipse semiaxes: (ex_r[l][0],ex_r[][1],ex_r[l][2])=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
+	    		printf("\nExcision ellipse semiaxes: (ex_r[l][0],ex_r[l][1],ex_r[l][2])=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
 	    		if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
 	        	{     
 					if (prev_run_ex_r[l][0])
