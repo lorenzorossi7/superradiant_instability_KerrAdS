@@ -144,6 +144,7 @@ real AH_xc[MAX_BHS][3],AH_max_tol_inc[MAX_BHS],AH_tmin[MAX_BHS],AH_omt_scale[MAX
 int use_AH_new_smooth,use_AH_new;
 int c_AH;
 int AH_reset_r_sample;
+int AH_analytic_kerrads;
 
 //=============================================================================
 // some convenient, "local" global variables
@@ -2511,7 +2512,8 @@ void AdS4D_var_post_init(char *pfile)
         if (l==0) { AH_r1[l]=0.2; sprintf(buf,"AH_r1"); }
         else { AH_r1[l]=AH_r1[0]; sprintf(buf,"AH_r1_%i",l+1); }
         AMRD_real_param(pfile,buf,&AH_r1[l],1); 
-        AH_reset_r_sample=0; AMRD_int_param(pfile,"AH_reset_r_sample",&AH_reset_r_sample,1); 
+        AH_reset_r_sample=0; AMRD_int_param(pfile,"AH_reset_r_sample",&AH_reset_r_sample,1);
+        AH_analytic_kerrads=0; AMRD_int_param(pfile,"AH_analytic_kerrads",&AH_analytic_kerrads,1);
         if (l==0) { AH_lambda[l]=0.1; sprintf(buf,"AH_lambda"); }
         else { AH_lambda[l]=AH_lambda[0]; sprintf(buf,"AH_lambda_%i",l+1); }
         AMRD_real_param(pfile,buf,&AH_lambda[l],1); 
@@ -2739,7 +2741,11 @@ void AdS4D_var_post_init(char *pfile)
         else //if we start from bh initial data and AH finder is not off
         {
         	if (my_rank==0) printf("\n ... AH finder is on\n");
-			if (AH_reset_r_sample==0)
+        	if (AH_analytic_kerrads)
+        	{
+        		if (my_rank==0) printf("\nThe initial guess for the horizon radius AH_R is the analytic Kerr-AdS function\n");
+        	}
+			else if (AH_reset_r_sample==0)
 			{
 				if (my_rank==0) printf("\nusing initial range of sample sphere radius specified in parameter file\n");
 			}
@@ -22322,7 +22328,8 @@ void AdS4D_pre_tstep(int L)
         for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) {prev_AH_R[i]=AH_R[l][i];} 
         for (i=0; i<3; i++) {prev_AH_xc[i]=AH_xc[l][i];}
         c_AH=l;
-    	AH_Lmin[l]=Lc+1;
+    	//AH_Lmin[l]=Lc+1;
+    	AH_Lmin[l]=Lc;
 		AH_Lmax[l]=Lf;
 
 
@@ -22336,7 +22343,7 @@ void AdS4D_pre_tstep(int L)
             omt=0; // over-max-tolerance
 
             AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid0,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct); // AH finder 
+                    		&ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct); // AH finder 
             if (AH[l]) { freq0[l]=AH_freq_aft[l]; found_AH[l]=1; got_an_AH=1; AH_tol[l]=AH_tol_aft[l]; found_count_AH[l]++; } // if this time found AH  
             // if previously found but failed now
             if (found_AH[l] && !AH[l]) 
@@ -22350,7 +22357,7 @@ void AdS4D_pre_tstep(int L)
                     for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) AH_R[l][i]=prev_AH_R[i]*AH_reset_scale[l];  
 
                     if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid1,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                     { 
                         // shrink old initial-guess surface
                         if (my_rank==0 && AMRD_evo_trace>=1) printf("... still can't find one (min_resid=%lf)\n"
@@ -22358,7 +22365,7 @@ void AdS4D_pre_tstep(int L)
                         for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) AH_R[l][i]=prev_AH_R[i]/AH_reset_scale[l];  
 
                         if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid2,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                         {   
                             // increase AH_tol to force an AH to be found, starting with shrunken initial-guess surface
                             if (AH_min_resid2<AH_min_resid1 && AH_min_resid2<AH_min_resid0) 
@@ -22374,7 +22381,7 @@ void AdS4D_pre_tstep(int L)
                                 AH_tol[l]=AH_min_resid2*AH_omt_scale[l];
 
                                 if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid2,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                                 {
                                     if (my_rank==0 && AMRD_evo_trace>=1) printf("BUG: couldn't find *same* AH\n");
                                     if (AH_RESET_AFTER_FAIL) found_AH[l]=0;
@@ -22395,7 +22402,7 @@ void AdS4D_pre_tstep(int L)
                                 AH_tol[l]=AH_min_resid1*AH_omt_scale[l];
 
                                 if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid1,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                                 {
                                     if (my_rank==0 && AMRD_evo_trace>=1) printf("BUG: couldn't find *same* AH\n");
                                     if (AH_RESET_AFTER_FAIL) found_AH[l]=0;
@@ -22416,7 +22423,7 @@ void AdS4D_pre_tstep(int L)
                                 AH_tol[l]=AH_min_resid0*AH_omt_scale[l];
 
                                 if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid0,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                                 {
                                     if (my_rank==0 && AMRD_evo_trace>=1) printf("BUG: couldn't find *same* AH\n");
                                     if (AH_RESET_AFTER_FAIL) found_AH[l]=0;
@@ -22781,7 +22788,8 @@ void AdS4D_post_tstep(int L)
         for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) {prev_AH_R[i]=AH_R[l][i];} 
         for (i=0; i<3; i++) {prev_AH_xc[i]=AH_xc[l][i];}
         c_AH=l;
-        AH_Lmin[l]=Lc+1;
+        //AH_Lmin[l]=Lc+1;
+    	AH_Lmin[l]=Lc;
         AH_Lmax[l]=Lf;
 
 
@@ -22793,7 +22801,7 @@ void AdS4D_post_tstep(int L)
             omt=0; // over-max-tolerance
 
             AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid0,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct); // AH finder 
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct); // AH finder 
             if (AH[l]) { freq0[l]=AH_freq_aft[l]; found_AH[l]=1; got_an_AH=1; AH_tol[l]=AH_tol_aft[l]; found_count_AH[l]++; } // if this time found AH  
             // if previously found but failed now
             if (found_AH[l] && !AH[l]) 
@@ -22807,7 +22815,7 @@ void AdS4D_post_tstep(int L)
                     for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) AH_R[l][i]=prev_AH_R[i]*AH_reset_scale[l];  
 
                     if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid1,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                     { 
                         // shrink old initial-guess surface
                         if (my_rank==0 && AMRD_evo_trace>=1) printf("... still can't find one (min_resid=%lf)\n"
@@ -22815,7 +22823,7 @@ void AdS4D_post_tstep(int L)
                         for (i=0; i<AH_Nchi[l]*AH_Nphi[l]; i++) AH_R[l][i]=prev_AH_R[i]/AH_reset_scale[l];  
 
                         if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid2,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                         {   
                             // increase AH_tol to force an AH to be found, starting with shrunken initial-guess surface
                             if (AH_min_resid2<AH_min_resid1 && AH_min_resid2<AH_min_resid0) 
@@ -22831,7 +22839,7 @@ void AdS4D_post_tstep(int L)
                                 AH_tol[l]=AH_min_resid2*AH_omt_scale[l];
 
                                 if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid2,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                                 {
                                     if (my_rank==0 && AMRD_evo_trace>=1) printf("BUG: couldn't find *same* AH\n");
                                     if (AH_RESET_AFTER_FAIL) found_AH[l]=0;
@@ -22852,7 +22860,7 @@ void AdS4D_post_tstep(int L)
                                 AH_tol[l]=AH_min_resid1*AH_omt_scale[l];
 
                                 if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid1,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                                 {
                                     if (my_rank==0 && AMRD_evo_trace>=1) printf("BUG: couldn't find *same* AH\n");
                                     if (AH_RESET_AFTER_FAIL) found_AH[l]=0;
@@ -22873,7 +22881,7 @@ void AdS4D_post_tstep(int L)
                                 AH_tol[l]=AH_min_resid0*AH_omt_scale[l];
 
                                 if (!(AH[l]=find_apph(&M,&J,&area,&c_equat,&c_polar,&c_polar2,found_AH[l],&AH_min_resid0,
-                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&ct)))
+                    				  &ief_bh_r0,&a_rot0,&kerrads_background,&AH_analytic_kerrads,&ct)))
                                 {
                                     if (my_rank==0 && AMRD_evo_trace>=1) printf("BUG: couldn't find *same* AH\n");
                                     if (AH_RESET_AFTER_FAIL) found_AH[l]=0;

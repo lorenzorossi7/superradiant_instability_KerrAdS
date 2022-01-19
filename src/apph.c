@@ -663,7 +663,7 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
 #define SMOOTH_R 0
 #define SMOOTH_R_AFT 1
 int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *c_polar2, int use_R_ic, real *AH_min_resid, 
-              real *ief_bh_r0,real *a_rot0, int *kerrads_background, real *ct)
+              real *ief_bh_r0,real *a_rot0, int *kerrads_background, int *AH_analytic_kerrads, real *ct)
 {
    int iter,i,j,l,np,Lmax,Lmax_AH,is_ex;
    real resid,prev_resid,min_resid,min_R,c_R;
@@ -694,8 +694,8 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
    tol0=AH_tol[c_AH];
    if (eps1>1) eps1=eps1-1;
 
-   // for found_AH==use_R_ic=0, figure out an initial guess for AH_R
-   if (!use_R_ic)
+   // for found_AH:=use_R_ic=0, figure out an initial guess for AH_R
+   if ((!use_R_ic)&&(!AH_analytic_kerrads))
    {
       if (AH_rsteps[c_AH]==1) // for one radius iteration
       {

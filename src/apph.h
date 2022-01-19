@@ -43,7 +43,7 @@ extern int found_count_AH[MAX_BHS];
 //-----------------------------------------------------------------------------
 
 int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *c_polar2s, int use_R_ic, real *AH_min_resid, 
-    real *ief_bh_r0,real *a_rot0,int *kerrads_background, real *ct);
+    real *ief_bh_r0,real *a_rot0,int *kerrads_background, int *AH_analytic_kerrads, real *ct);
 
 //-----------------------------------------------------------------------------
 // related fotran routines

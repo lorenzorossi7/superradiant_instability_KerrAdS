@@ -112,7 +112,7 @@ c----------------------------------------------------------------------
         real*8 normsusq
 
         real*8 g0gamfx(4)
-        real*8 nufx,nuxfx(4),gamxfxfx(4)
+        real*8 nufx,nuxfx(4),nufxfx(4),gamxfxfx(4)
 
         real*8 theta_ads
 
@@ -161,7 +161,7 @@ c----------------------------------------------------------------------
         data normsusq/0.0/
 
         data g0gamfx/4*0.0/
-        data nufx,nuxfx,gamxfxfx/0.0,4*0.0,4*0.0/
+        data nufx,nuxfx,nufxfx,gamxfxfx/0.0,4*0.0,4*0.0,4*0.0/
 
         data g0_ll,g0_uu/16*0.0,16*0.0/
         data gads_ll,gads_uu/16*0.0,16*0.0/
@@ -383,10 +383,13 @@ c----------------------------------------------------------------------
                 nufx=nufx
      &              +n_u(a)*f0_x(a)
                 nuxfx(a)=0
+                nufxfx(a)=0
                 gamxfxfx(a)=0
                 do c=1,4
                   nuxfx(a)=nuxfx(a)
      &                    +n_u_x(c,a)*f0_x(c)
+                  nufxfx(a)=nufxfx(a)
+     &                    +n_u(c)*f0_xx(c,a)
                   do d=1,4
                     gamxfxfx(a)=gamxfxfx(a)
      &                        +gam_uu_x(c,d,a)*f0_x(c)*f0_x(d)
@@ -395,10 +398,14 @@ c----------------------------------------------------------------------
                   end do
                 end do
               end do
+
               do a=1,4
                 do b=1,4
                   s_l_x(a,b)=
-     &                     (f0_xx(a,b)+n_l_x(a,b)*nufx+n_l(a)*nuxfx(b))
+     &                     (n_l_x(a,b)*nufx+n_l(a)*nuxfx(b)
+     &                      +f0_xx(a,b)
+     &                      +n_l(a)*nufxfx(b)
+     &                        )
      &                     /sqrt(normsusq)
      &                    -(f0_x(a)+n_l(a)*nufx)*gamxfxfx(b)
      &                     /2.0d0/sqrt(normsusq)**3
