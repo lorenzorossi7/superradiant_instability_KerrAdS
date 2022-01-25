@@ -94,7 +94,7 @@ c----------------------------------------------------------------------
         parameter (PI=3.141592653589793d0)
 
         real*8 x0,y0,z0
-        real*8 rho0,theta0
+        real*8 rho0,theta0,phi0
         real*8 dx,dy,dz
 
         real*8 zeros(Nx,Ny,Nz)
@@ -245,6 +245,11 @@ c----------------------------------------------------------------------
                z0=z(k)
                rho0=sqrt(x0**2+y0**2+z0**2)
                theta0=acos(x0/rho0)
+               if (z0.lt.0) then
+                phi0=atan2(z0,y0)+2*PI
+               else
+                phi0=atan2(z0,y0)
+               end if
  
                ! computes tensors at point i,j 
                call tensor_init(
