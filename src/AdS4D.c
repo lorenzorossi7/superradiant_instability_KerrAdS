@@ -2767,7 +2767,7 @@ void AdS4D_var_post_init(char *pfile)
         	{
         		ind0=i0+AH_Nchi[0]*j0;
         		AH_R[0][ind0]=1;
-        		AH_R_for_ex_mask[0][ind0]=AH_R[0][ind0];
+        		if (excision_type==3) {AH_R_for_ex_mask[0][ind0]=AH_R[0][ind0];}
         	}
         }
         min_AH_R0=1;
