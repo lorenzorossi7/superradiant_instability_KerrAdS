@@ -18,7 +18,7 @@
 #include "apph.h"
 
 //maximum value for AH_Nchi+AH_Nchi*AH_Nphi determining the resolution of the AH finder: the resolution of each AH cannot be larger than MAX_AH_Nchi_AH_Nphi_AH_finder
-#define MAX_AH_Nchi_AH_Nphi_AH_FINDER 2145 //2145=33*65, 153=9*17
+#define MAX_AH_Nchi_AH_Nphi_AH_FINDER 131841 //131841=257*513, 2145=33*65, 153=9*17
 
 //=============================================================================
 // if axisym=1, then 2+1 simulation in (x,y) plane 
@@ -2472,7 +2472,7 @@ void AdS4D_var_post_init(char *pfile)
             }
         }
 
-        if (MAX_AH_Nchi_AH_Nphi_AH_FINDER < AH_Nchi[l]*AH_Nphi[l]) AMRD_stop("the resolution of the AH finder must be smaller than MAX_AH_Nchi_AH_Nphi_AH_FINDER\n",""); 
+        if ((MAX_AH_Nchi_AH_Nphi_AH_FINDER < AH_Nchi[l]*AH_Nphi[l])&&(excision_type==3)) AMRD_stop("To use AH-shaped excision, the resolution of the AH finder must be smaller than MAX_AH_Nchi_AH_Nphi_AH_FINDER\n",""); 
 
         if (l==0) { AH_Lmin[l]=2; sprintf(buf,"AH_Lmin"); }
         else { AH_Lmin[l]=AH_Lmin[0]; sprintf(buf,"AH_Lmin_%i",l+1); }
