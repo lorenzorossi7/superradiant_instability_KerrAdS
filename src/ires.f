@@ -554,8 +554,7 @@ c----------------------------------------------------------------------
         end
 
 c-----------------------------------------------------------------------
-c calculate Kretschmann scalar, Kretschmann scalar relative to the background, 
-c Riemann cube scalar and Riemann cube scalar relative to the background
+c calculate Kretschmann scalar and Riemann cube scalar
 c-----------------------------------------------------------------------
         subroutine kretsch_riemanncube(kretsch_n,
      &                  kretschcentregrid,
