@@ -60,8 +60,6 @@ rhoamp_a := 0.3
 rhoamp_b := 0.6
 
 #------ AH-finder ---------
-#AH_analytic_kerrads to use AH finder with analytic Kerr-AdS horizon radius as initial guess
-AH_analytic_kerrads := 1
 #AH_Lmin := 2
 #AH_Lmax := 2
 AH_rsteps := 10
@@ -71,7 +69,10 @@ AH_lambda := 0.001
 AH_tol := 1e-2
 AH_r0 := 0.1
 AH_r1 := 0.2
-AH_reset_r_sample := 1
+#AH_analytic_kerrads to use AH finder with analytic Kerr-AdS horizon radius as initial guess (not needed when evolving a pure AdS background)
+AH_analytic_kerrads := 1
+#To use max and min of analytic Kerr-AdS horizon radius as range of sample spheres for AH finder (only if AH_analytic_kerrads=0. This flag is not used in the case of Schwarzschild-AdS background.)
+AH_rsample_maxminkerrads := 0
 AH_xc := [0.0 0.0 0.0]
 AH_Nchi := 9
 AH_Nphi := 17
@@ -79,7 +80,7 @@ AH_freq := 1
 AH_freq_aft := 1
 #excision_type=0: no internal excision - excision_type=1: spherical excised region - excision_type=2: elliptic excised region - excision_type=3: AH-shaped excised region
 excision_type := 2
-#excision buffer, i.e. how wide the region to evolve within the AH (or the AdS boundary if there is no BH) is
+#excision buffer, i.e. size of the region to evolve within the AH (or the AdS boundary if there is no BH)
 ex_rbuf := 0.9
 AH_reset_scale := 1.1
 AH_max_iter_2 := 0

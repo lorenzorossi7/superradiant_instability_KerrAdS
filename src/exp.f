@@ -52,7 +52,10 @@ c
 c is_ex is set to 1 if couldn't compute expansion an some point due
 c to closeness of an excised region.
 c----------------------------------------------------------------------
-        subroutine calc_exp(theta,f,is0,ie0,js0,je0,ks0,ke0,is_ex,
+        subroutine calc_exp_metric(theta,f,
+     &                    g0_xx,g0_xy,g0_xz,
+     &                    g0_yy,g0_yz,g0_zz,
+     &                    is0,ie0,js0,je0,ks0,ke0,is_ex,
      &                    gb_tt_np1,gb_tt_n,gb_tt_nm1,
      &                    gb_tx_np1,gb_tx_n,gb_tx_nm1,
      &                    gb_ty_np1,gb_ty_n,gb_ty_nm1,
@@ -63,6 +66,11 @@ c----------------------------------------------------------------------
      &                    gb_yy_np1,gb_yy_n,gb_yy_nm1,
      &                    gb_yz_np1,gb_yz_n,gb_yz_nm1,
      &                    gb_zz_np1,gb_zz_n,gb_zz_nm1,
+     &                    Hb_t_np1,Hb_t_n,Hb_t_nm1,
+     &                    Hb_x_np1,Hb_x_n,Hb_x_nm1,
+     &                    Hb_y_np1,Hb_y_n,Hb_y_nm1,
+     &                    Hb_z_np1,Hb_z_n,Hb_z_nm1,
+     &                    phi1_np1,phi1_n,phi1_nm1,
      &                    L,x,y,z,dt,chr,ex,do_ex,
      &                    Nx,Ny,Nz,
      &                    ief_bh_r0,a_rot,kerrads_background)
@@ -70,11 +78,21 @@ c----------------------------------------------------------------------
 
         real*8  ief_bh_r0,a_rot,M0,M0_min
         integer kerrads_background
+        logical calc_der,calc_adv_quant
+        data calc_der/.true./
+        data calc_adv_quant/.false./
 
         integer Nx,Ny,Nz,is0,ie0,js0,je0,ks0,ke0,do_ex
         integer is_ex
         real*8 theta(Nx,Ny,Nz),f(Nx,Ny,Nz),chr(Nx,Ny,Nz),ex
         real*8 x(Nx),y(Ny),z(Nz),dt,L
+
+        real*8 g0_xx(Nx,Ny,Nz)
+        real*8 g0_xy(Nx,Ny,Nz)
+        real*8 g0_xz(Nx,Ny,Nz)
+        real*8 g0_yy(Nx,Ny,Nz)
+        real*8 g0_yz(Nx,Ny,Nz)
+        real*8 g0_zz(Nx,Ny,Nz)
 
         real*8 gb_tt_np1(Nx,Ny,Nz),gb_tt_n(Nx,Ny,Nz),gb_tt_nm1(Nx,Ny,Nz)
         real*8 gb_tx_np1(Nx,Ny,Nz),gb_tx_n(Nx,Ny,Nz),gb_tx_nm1(Nx,Ny,Nz)
@@ -86,6 +104,11 @@ c----------------------------------------------------------------------
         real*8 gb_yy_np1(Nx,Ny,Nz),gb_yy_n(Nx,Ny,Nz),gb_yy_nm1(Nx,Ny,Nz)
         real*8 gb_yz_np1(Nx,Ny,Nz),gb_yz_n(Nx,Ny,Nz),gb_yz_nm1(Nx,Ny,Nz)
         real*8 gb_zz_np1(Nx,Ny,Nz),gb_zz_n(Nx,Ny,Nz),gb_zz_nm1(Nx,Ny,Nz)
+        real*8 Hb_t_np1(Nx,Ny,Nz),Hb_t_n(Nx,Ny,Nz),Hb_t_nm1(Nx,Ny,Nz)
+        real*8 Hb_x_np1(Nx,Ny,Nz),Hb_x_n(Nx,Ny,Nz),Hb_x_nm1(Nx,Ny,Nz)
+        real*8 Hb_y_np1(Nx,Ny,Nz),Hb_y_n(Nx,Ny,Nz),Hb_y_nm1(Nx,Ny,Nz)
+        real*8 Hb_z_np1(Nx,Ny,Nz),Hb_z_n(Nx,Ny,Nz),Hb_z_nm1(Nx,Ny,Nz)
+        real*8 phi1_np1(Nx,Ny,Nz),phi1_n(Nx,Ny,Nz),phi1_nm1(Nx,Ny,Nz)
 
         integer i,j,k,is,ie,js,je,ks,ke
         integer a,b,c,d,e
@@ -96,8 +119,6 @@ c----------------------------------------------------------------------
         real*8 x0,y0,z0
         real*8 rho0,theta0,phi0
         real*8 dx,dy,dz
-
-        real*8 zeros(Nx,Ny,Nz)
 
         real*8 f_x,f_y,f_z,f_xx,f_xy,f_xz,f_yy,f_yz,f_zz
         real*8 tmp1,tmp2,tmp3,tmp4,tmp5
@@ -190,22 +211,20 @@ c----------------------------------------------------------------------
 
 !----------------------------------------------------------------------
 
-        if (ltrace) write(*,*) 'calc_exp ... N=',Nx,Ny,Nz
+        if (ltrace) write(*,*) 'calc_exp_metric ... N=',Nx,Ny,Nz
 
         is_ex=0
-
-        do i=1,Nx
-          do j=1,Ny
-           do k=1,Nz
-            zeros(i,j,k)=0
-           end do
-          end do
-        end do
 
         do i=is0,ie0
           do j=js0,je0
            do k=ks0,ke0 
-           theta(i,j,k)=1.0d0
+            theta(i,j,k)=1.0d0
+            g0_xx(i,j,k)=1.0d0
+            g0_xy(i,j,k)=1.0d0
+            g0_xz(i,j,k)=1.0d0
+            g0_yy(i,j,k)=1.0d0
+            g0_yz(i,j,k)=1.0d0
+            g0_zz(i,j,k)=1.0d0
            end do
           end do
         end do
@@ -263,11 +282,11 @@ c----------------------------------------------------------------------
      &                 gb_yy_np1,gb_yy_n,gb_yy_nm1,
      &                 gb_yz_np1,gb_yz_n,gb_yz_nm1,
      &                 gb_zz_np1,gb_zz_n,gb_zz_nm1,
-     &                 zeros,zeros,zeros,
-     &                 zeros,zeros,zeros,
-     &                 zeros,zeros,zeros,
-     &                 zeros,zeros,zeros,
-     &                 zeros,zeros,zeros,
+     &                 Hb_t_np1,Hb_t_n,Hb_t_nm1,
+     &                 Hb_x_np1,Hb_x_n,Hb_x_nm1,
+     &                 Hb_y_np1,Hb_y_n,Hb_y_nm1,
+     &                 Hb_z_np1,Hb_z_n,Hb_z_nm1,
+     &                 phi1_np1,phi1_n,phi1_nm1,
      &                 g0_ll,g0_uu,g0_ll_x,g0_uu_x,g0_ll_xx,
      &                 gads_ll,gads_uu,gads_ll_x,gads_uu_x,gads_ll_xx,
      &                 h0_ll,h0_uu,h0_ll_x,h0_uu_x,h0_ll_xx,
@@ -277,7 +296,15 @@ c----------------------------------------------------------------------
      &                 einstein_ll,set_ll,
      &                 phi10_x,phi10_xx,
      &                 x,y,z,dt,chr,L,ex,Nx,Ny,Nz,i,j,k,
-     &                 ief_bh_r0,a_rot,kerrads_background)
+     &                 ief_bh_r0,a_rot,kerrads_background,
+     &                 calc_der,calc_adv_quant)
+
+                g0_xx(i,j,k)=g0_ll(2,2)
+                g0_xy(i,j,k)=g0_ll(2,3)
+                g0_xz(i,j,k)=g0_ll(2,4)
+                g0_yy(i,j,k)=g0_ll(3,3)
+                g0_yz(i,j,k)=g0_ll(3,4)
+                g0_zz(i,j,k)=g0_ll(4,4)
 
             end if
 
@@ -439,7 +466,7 @@ c----------------------------------------------------------------------
 
               ! if theta is nan, then set it to the following instead
               if (.not.(theta(i,j,k).le.abs(theta(i,j,k)))) then
-                 theta(i,j,k)=0.0d0
+                 theta(i,j,k)=1000.0d0
               end if
  
             end if
@@ -955,6 +982,11 @@ c-----------------------------------------------------------------------
      &                    gb_yy_np1,gb_yy_n,gb_yy_nm1,
      &                    gb_yz_np1,gb_yz_n,gb_yz_nm1,
      &                    gb_zz_np1,gb_zz_n,gb_zz_nm1,
+     &                    Hb_t_np1,Hb_t_n,Hb_t_nm1,
+     &                    Hb_x_np1,Hb_x_n,Hb_x_nm1,
+     &                    Hb_y_np1,Hb_y_n,Hb_y_nm1,
+     &                    Hb_z_np1,Hb_z_n,Hb_z_nm1,
+     &                    phi1_np1,phi1_n,phi1_nm1,
      &                    kretsch_n,
      &                    riemanncube_n,
      &                    L,x,y,z,dt,chr,ex,do_ex,
@@ -967,7 +999,8 @@ c-----------------------------------------------------------------------
 
         integer axisym
         integer Nx,Ny,Nz,i0,j0,AH_Nchi,AH_Nphi,do_ex
-        real*8 theta(Nx,Ny,Nz),f(Nx,Ny,Nz),AH_xc(3),da,d_ceq,d_cp,d_cp2
+        real*8 theta(Nx,Ny,Nz),f(Nx,Ny,Nz),AH_xc(3)
+        real*8 da,da_full,d_ceq,d_cp,d_cp2
         real*8 AH_R(AH_Nchi,AH_Nphi),AH_theta(AH_Nchi,AH_Nphi)
         real*8 AH_gb_xx(AH_Nchi,AH_Nphi),AH_gb_xy(AH_Nchi,AH_Nphi)
         real*8 AH_gb_xz(AH_Nchi,AH_Nphi)
@@ -1005,6 +1038,12 @@ c-----------------------------------------------------------------------
         real*8 gb_yy_np1(Nx,Ny,Nz),gb_yy_n(Nx,Ny,Nz),gb_yy_nm1(Nx,Ny,Nz)
         real*8 gb_yz_np1(Nx,Ny,Nz),gb_yz_n(Nx,Ny,Nz),gb_yz_nm1(Nx,Ny,Nz)
         real*8 gb_zz_np1(Nx,Ny,Nz),gb_zz_n(Nx,Ny,Nz),gb_zz_nm1(Nx,Ny,Nz)
+        real*8 Hb_t_np1(Nx,Ny,Nz),Hb_t_n(Nx,Ny,Nz),Hb_t_nm1(Nx,Ny,Nz)
+        real*8 Hb_x_np1(Nx,Ny,Nz),Hb_x_n(Nx,Ny,Nz),Hb_x_nm1(Nx,Ny,Nz)
+        real*8 Hb_y_np1(Nx,Ny,Nz),Hb_y_n(Nx,Ny,Nz),Hb_y_nm1(Nx,Ny,Nz)
+        real*8 Hb_z_np1(Nx,Ny,Nz),Hb_z_n(Nx,Ny,Nz),Hb_z_nm1(Nx,Ny,Nz)
+        real*8 phi1_np1(Nx,Ny,Nz),phi1_n(Nx,Ny,Nz),phi1_nm1(Nx,Ny,Nz)
+
         real*8 kretsch_n(Nx,Ny,Nz)
         real*8 riemanncube_n(Nx,Ny,Nz)
 
@@ -1033,16 +1072,80 @@ c-----------------------------------------------------------------------
 
         real*8 rho0,f0
 
-        real*8 g0_tt_ads0
-        real*8 g0_tx_ads0
-        real*8 g0_ty_ads0
-        real*8 g0_tz_ads0
-        real*8 g0_xx_ads0
-        real*8 g0_xy_ads0
-        real*8 g0_xz_ads0
-        real*8 g0_yy_ads0
-        real*8 g0_yz_ads0
-        real*8 g0_zz_ads0
+        real*8 g0_ll(4,4),g0_uu(4,4)
+        real*8 g0_ll_x(4,4,4),g0_uu_x(4,4,4),g0_ll_xx(4,4,4,4)
+        real*8 gads_ll(4,4),gads_uu(4,4)
+        real*8 gads_ll_x(4,4,4),gads_uu_x(4,4,4),gads_ll_xx(4,4,4,4)
+        real*8 h0_ll(4,4),h0_uu(4,4)
+        real*8 h0_ll_x(4,4,4),h0_uu_x(4,4,4),h0_ll_xx(4,4,4,4)
+        real*8 gamma_ull(4,4,4),gamma_ull_x(4,4,4,4)
+        real*8 riemann_ulll(4,4,4,4)
+        real*8 ricci_ll(4,4),ricci_lu(4,4),ricci
+        real*8 einstein_ll(4,4),set_ll(4,4)
+        real*8 Hads_l(4),A_l(4),A_l_x(4,4)
+        real*8 phi10_x(4),phi10_xx(4,4)
+
+        real*8 g0_xx(Nx,Ny,Nz)
+        real*8 g0_xy(Nx,Ny,Nz)
+        real*8 g0_xz(Nx,Ny,Nz)
+        real*8 g0_yy(Nx,Ny,Nz)
+        real*8 g0_yz(Nx,Ny,Nz)
+        real*8 g0_zz(Nx,Ny,Nz)
+
+        real*8 g0_xx_ijk
+        real*8 g0_xx_ip1jk
+        real*8 g0_xx_ijp1k
+        real*8 g0_xx_ijkp1
+        real*8 g0_xx_ip1jp1k
+        real*8 g0_xx_ip1jkp1
+        real*8 g0_xx_ijp1kp1
+        real*8 g0_xx_ip1jp1kp1
+
+        real*8 g0_xy_ijk
+        real*8 g0_xy_ip1jk
+        real*8 g0_xy_ijp1k
+        real*8 g0_xy_ijkp1
+        real*8 g0_xy_ip1jp1k
+        real*8 g0_xy_ip1jkp1
+        real*8 g0_xy_ijp1kp1
+        real*8 g0_xy_ip1jp1kp1
+
+        real*8 g0_xz_ijk
+        real*8 g0_xz_ip1jk
+        real*8 g0_xz_ijp1k
+        real*8 g0_xz_ijkp1
+        real*8 g0_xz_ip1jp1k
+        real*8 g0_xz_ip1jkp1
+        real*8 g0_xz_ijp1kp1
+        real*8 g0_xz_ip1jp1kp1
+
+        real*8 g0_yy_ijk
+        real*8 g0_yy_ip1jk
+        real*8 g0_yy_ijp1k
+        real*8 g0_yy_ijkp1
+        real*8 g0_yy_ip1jp1k
+        real*8 g0_yy_ip1jkp1
+        real*8 g0_yy_ijp1kp1
+        real*8 g0_yy_ip1jp1kp1
+
+        real*8 g0_yz_ijk
+        real*8 g0_yz_ip1jk
+        real*8 g0_yz_ijp1k
+        real*8 g0_yz_ijkp1
+        real*8 g0_yz_ip1jp1k
+        real*8 g0_yz_ip1jkp1
+        real*8 g0_yz_ijp1kp1
+        real*8 g0_yz_ip1jp1kp1
+
+        real*8 g0_zz_ijk
+        real*8 g0_zz_ip1jk
+        real*8 g0_zz_ijp1k
+        real*8 g0_zz_ijkp1
+        real*8 g0_zz_ip1jp1k
+        real*8 g0_zz_ip1jkp1
+        real*8 g0_zz_ijp1kp1
+        real*8 g0_zz_ip1jp1kp1
+
 
         integer is_bad,fill_later
 
@@ -1051,7 +1154,35 @@ c-----------------------------------------------------------------------
         parameter (ltrace=.false.)
 !        parameter (ltrace=.true.)
 
+        !--------------------------------------------------------------
         ! initialize fixed-size variables 
+        !--------------------------------------------------------------
+
+        data g0_ll,g0_uu/16*0.0,16*0.0/
+        data gads_ll,gads_uu/16*0.0,16*0.0/
+        data h0_ll,h0_uu/16*0.0,16*0.0/
+        data gamma_ull/64*0.0/
+        data gamma_ull_x/256*0.0/
+
+        data g0_ll_x,g0_uu_x/64*0.0,64*0.0/
+        data gads_ll_x,gads_uu_x/64*0.0,64*0.0/
+        data h0_ll_x,h0_uu_x/64*0.0,64*0.0/
+
+        data g0_ll_xx/256*0.0/
+        data gads_ll_xx/256*0.0/
+        data h0_ll_xx/256*0.0/
+
+        data ricci/0.0/
+        data ricci_ll,ricci_lu/16*0.0,16*0.0/
+        data einstein_ll,set_ll/16*0.0,16*0.0/
+        data riemann_ulll/256*0.0/
+
+        data A_l,Hads_l/4*0.0,4*0.0/
+        data A_l_x/16*0.0/
+
+        data phi10_x/4*0.0/
+        data phi10_xx/16*0.0/
+
         data i,j,k,i1,j1,k1/0.0,0.0,0.0,0.0,0.0,0.0/
         data is,ie,js,je,ks,ke/0.0,0.0,0.0,0.0,0.0,0.0/
         data is_ex/0.0/
@@ -1182,7 +1313,7 @@ c-----------------------------------------------------------------------
                 do j1=js,je
                    do k1=ks,ke
                       if (chr(i1,j1,k1).eq.ex) then
-                         write(*,*) ' calc_exp0: pt i1,j1,k1 is excised'
+                  write(*,*) ' calc_exp_metric0: pt i1,j1,k1 is excised'
                          write(*,*) ' i0,j0=',i0,j0
                          write(*,*) ' AH_Nchi,AH_Nphi=',AH_Nchi,AH_Nphi
                          write(*,*) ' AH_chi,AH_phi=',AH_chi,AH_phi
@@ -1205,7 +1336,10 @@ c-----------------------------------------------------------------------
              end do
           end if
 
-          call calc_exp(theta,f,is,ie,js,je,ks,ke,is_ex,
+          call calc_exp_metric(theta,f,
+     &               g0_xx,g0_xy,g0_xz,
+     &               g0_yy,g0_yz,g0_zz,
+     &               is,ie,js,je,ks,ke,is_ex,
      &               gb_tt_np1,gb_tt_n,gb_tt_nm1,
      &               gb_tx_np1,gb_tx_n,gb_tx_nm1,
      &               gb_ty_np1,gb_ty_n,gb_ty_nm1,
@@ -1216,6 +1350,11 @@ c-----------------------------------------------------------------------
      &               gb_yy_np1,gb_yy_n,gb_yy_nm1,
      &               gb_yz_np1,gb_yz_n,gb_yz_nm1,
      &               gb_zz_np1,gb_zz_n,gb_zz_nm1,
+     &               Hb_t_np1,Hb_t_n,Hb_t_nm1,
+     &               Hb_x_np1,Hb_x_n,Hb_x_nm1,
+     &               Hb_y_np1,Hb_y_n,Hb_y_nm1,
+     &               Hb_z_np1,Hb_z_n,Hb_z_nm1,
+     &               phi1_np1,phi1_n,phi1_nm1,
      &               L,x,y,z,dt,chr,ex,do_ex,Nx,Ny,Nz,
      &               ief_bh_r0,a_rot,kerrads_background)
 
@@ -1252,101 +1391,62 @@ c-----------------------------------------------------------------------
         end if
 
 
-        rho0=sqrt(x0**2+y0**2+z0**2)
-
-        !metric components of pure AdS in Cartesian coordinates
-        g0_tt_ads0 =-(4*rho0**2+L**2*(-1+rho0**2)**2)
-     &               /L**2/(-1+rho0**2)**2
-        g0_tx_ads0 =0
-        g0_ty_ads0 =0
-        g0_tz_ads0 =0
-        g0_xx_ads0 =(8*(-1+L**2)*(x0**2-y0**2-z0**2)
-     &              +8*rho0**2+4*L**2*(1+rho0**4))
-     &              /(-1+rho0**2)**2/(4*rho0**2+L**2*(-1+rho0**2)**2)
-        g0_xy_ads0 =(16 *(-1 + L**2) *x0* y0)
-     &              /((-1 + rho0**2)**2 
-     &               *(4 *rho0**2 +L**2 *(-1 +rho0**2)**2))
-        g0_xz_ads0 =(16 *(-1 + L**2) *x0* z0)
-     &              /((-1 + rho0**2)**2
-     &               *(4 *rho0**2 +L**2 *(-1 +rho0**2)**2))
-
-        g0_yy_ads0 =(4*(4*(x0**2+z0**2)+L**2*(x0**4+(1+y0**2)**2
-     &              +2*(-1+y0**2)*z0**2+z0**4
-     &              +2*x0**2*(-1+y0**2+z0**2))))
-     &              /(L**2*(-1+rho0**2)**4+4*(-1+rho0**2)**2*(rho0**2))
-        g0_yz_ads0 =(16 *(-1 + L**2) *y0* z0)
-     &              /((-1 + rho0**2)**2
-     &               *(4 *rho0**2 +L**2 *(-1 +rho0**2)**2))
-
-        g0_zz_ads0=(4*(4*(x0**2+y0**2)+L**2*((-1+x0**2+y0**2)**2
-     &              +2*(1+x0**2+y0**2)*z0**2+z0**4)))
-     &              /(L**2*(-1+rho0**2)**4
-     &              +4*(-1+rho0**2)**2*(rho0**2))
-
-
           ! interpolate metric components from 
           ! (i,j,k),(i+1,j,k),(i,j+1,k),(i+1,j+1,k),(i,j,k+1),(i+1,j,k+1),(i,j+1,k+1),(i+1,j+1,k+1)
 
-          AH_gb_xx(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *gb_xx_n(i,j,k)+
-     &                    (  fx)*(1-fy)*(1-fz)  *gb_xx_n(i+1,j,k)+
-     &                    (1-fx)*(  fy)*(1-fz)  *gb_xx_n(i,j+1,k)+
-     &                    (  fx)*(  fy)*(1-fz)  *gb_xx_n(i+1,j+1,k)+
-     &                    (1-fx)*(1-fy)*(  fz)  *gb_xx_n(i,j,k+1)+
-     &                    (  fx)*(1-fy)*(  fz)  *gb_xx_n(i+1,j,k+1)+
-     &                    (1-fx)*(  fy)*(  fz)  *gb_xx_n(i,j+1,k+1)+
-     &                    (  fx)*(  fy)*(  fz)  *gb_xx_n(i+1,j+1,k+1)
+          AH_g0_xx(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *g0_xx(i,j,k)+
+     &                    (  fx)*(1-fy)*(1-fz)  *g0_xx(i+1,j,k)+
+     &                    (1-fx)*(  fy)*(1-fz)  *g0_xx(i,j+1,k)+
+     &                    (  fx)*(  fy)*(1-fz)  *g0_xx(i+1,j+1,k)+
+     &                    (1-fx)*(1-fy)*(  fz)  *g0_xx(i,j,k+1)+
+     &                    (  fx)*(1-fy)*(  fz)  *g0_xx(i+1,j,k+1)+
+     &                    (1-fx)*(  fy)*(  fz)  *g0_xx(i,j+1,k+1)+
+     &                    (  fx)*(  fy)*(  fz)  *g0_xx(i+1,j+1,k+1)
 
-          AH_gb_xy(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *gb_xy_n(i,j,k)+
-     &                    (  fx)*(1-fy)*(1-fz)  *gb_xy_n(i+1,j,k)+
-     &                    (1-fx)*(  fy)*(1-fz)  *gb_xy_n(i,j+1,k)+
-     &                    (  fx)*(  fy)*(1-fz)  *gb_xy_n(i+1,j+1,k)+
-     &                    (1-fx)*(1-fy)*(  fz)  *gb_xy_n(i,j,k+1)+
-     &                    (  fx)*(1-fy)*(  fz)  *gb_xy_n(i+1,j,k+1)+
-     &                    (1-fx)*(  fy)*(  fz)  *gb_xy_n(i,j+1,k+1)+
-     &                    (  fx)*(  fy)*(  fz)  *gb_xy_n(i+1,j+1,k+1)
+          AH_g0_xy(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *g0_xy(i,j,k)+
+     &                    (  fx)*(1-fy)*(1-fz)  *g0_xy(i+1,j,k)+
+     &                    (1-fx)*(  fy)*(1-fz)  *g0_xy(i,j+1,k)+
+     &                    (  fx)*(  fy)*(1-fz)  *g0_xy(i+1,j+1,k)+
+     &                    (1-fx)*(1-fy)*(  fz)  *g0_xy(i,j,k+1)+
+     &                    (  fx)*(1-fy)*(  fz)  *g0_xy(i+1,j,k+1)+
+     &                    (1-fx)*(  fy)*(  fz)  *g0_xy(i,j+1,k+1)+
+     &                    (  fx)*(  fy)*(  fz)  *g0_xy(i+1,j+1,k+1)
 
-          AH_gb_xz(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *gb_xz_n(i,j,k)+
-     &                    (  fx)*(1-fy)*(1-fz)  *gb_xz_n(i+1,j,k)+
-     &                    (1-fx)*(  fy)*(1-fz)  *gb_xz_n(i,j+1,k)+
-     &                    (  fx)*(  fy)*(1-fz)  *gb_xz_n(i+1,j+1,k)+
-     &                    (1-fx)*(1-fy)*(  fz)  *gb_xz_n(i,j,k+1)+
-     &                    (  fx)*(1-fy)*(  fz)  *gb_xz_n(i+1,j,k+1)+
-     &                    (1-fx)*(  fy)*(  fz)  *gb_xz_n(i,j+1,k+1)+
-     &                    (  fx)*(  fy)*(  fz)  *gb_xz_n(i+1,j+1,k+1)
+          AH_g0_xz(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *g0_xz(i,j,k)+
+     &                    (  fx)*(1-fy)*(1-fz)  *g0_xz(i+1,j,k)+
+     &                    (1-fx)*(  fy)*(1-fz)  *g0_xz(i,j+1,k)+
+     &                    (  fx)*(  fy)*(1-fz)  *g0_xz(i+1,j+1,k)+
+     &                    (1-fx)*(1-fy)*(  fz)  *g0_xz(i,j,k+1)+
+     &                    (  fx)*(1-fy)*(  fz)  *g0_xz(i+1,j,k+1)+
+     &                    (1-fx)*(  fy)*(  fz)  *g0_xz(i,j+1,k+1)+
+     &                    (  fx)*(  fy)*(  fz)  *g0_xz(i+1,j+1,k+1)
 
-          AH_gb_yy(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *gb_yy_n(i,j,k)+
-     &                    (  fx)*(1-fy)*(1-fz)  *gb_yy_n(i+1,j,k)+
-     &                    (1-fx)*(  fy)*(1-fz)  *gb_yy_n(i,j+1,k)+
-     &                    (  fx)*(  fy)*(1-fz)  *gb_yy_n(i+1,j+1,k)+
-     &                    (1-fx)*(1-fy)*(  fz)  *gb_yy_n(i,j,k+1)+
-     &                    (  fx)*(1-fy)*(  fz)  *gb_yy_n(i+1,j,k+1)+
-     &                    (1-fx)*(  fy)*(  fz)  *gb_yy_n(i,j+1,k+1)+
-     &                    (  fx)*(  fy)*(  fz)  *gb_yy_n(i+1,j+1,k+1)
+          AH_g0_yy(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *g0_yy(i,j,k)+
+     &                    (  fx)*(1-fy)*(1-fz)  *g0_yy(i+1,j,k)+
+     &                    (1-fx)*(  fy)*(1-fz)  *g0_yy(i,j+1,k)+
+     &                    (  fx)*(  fy)*(1-fz)  *g0_yy(i+1,j+1,k)+
+     &                    (1-fx)*(1-fy)*(  fz)  *g0_yy(i,j,k+1)+
+     &                    (  fx)*(1-fy)*(  fz)  *g0_yy(i+1,j,k+1)+
+     &                    (1-fx)*(  fy)*(  fz)  *g0_yy(i,j+1,k+1)+
+     &                    (  fx)*(  fy)*(  fz)  *g0_yy(i+1,j+1,k+1)
 
-          AH_gb_yz(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *gb_yz_n(i,j,k)+
-     &                    (  fx)*(1-fy)*(1-fz)  *gb_yz_n(i+1,j,k)+
-     &                    (1-fx)*(  fy)*(1-fz)  *gb_yz_n(i,j+1,k)+
-     &                    (  fx)*(  fy)*(1-fz)  *gb_yz_n(i+1,j+1,k)+
-     &                    (1-fx)*(1-fy)*(  fz)  *gb_yz_n(i,j,k+1)+
-     &                    (  fx)*(1-fy)*(  fz)  *gb_yz_n(i+1,j,k+1)+
-     &                    (1-fx)*(  fy)*(  fz)  *gb_yz_n(i,j+1,k+1)+
-     &                    (  fx)*(  fy)*(  fz)  *gb_yz_n(i+1,j+1,k+1)
+          AH_g0_yz(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *g0_yz(i,j,k)+
+     &                    (  fx)*(1-fy)*(1-fz)  *g0_yz(i+1,j,k)+
+     &                    (1-fx)*(  fy)*(1-fz)  *g0_yz(i,j+1,k)+
+     &                    (  fx)*(  fy)*(1-fz)  *g0_yz(i+1,j+1,k)+
+     &                    (1-fx)*(1-fy)*(  fz)  *g0_yz(i,j,k+1)+
+     &                    (  fx)*(1-fy)*(  fz)  *g0_yz(i+1,j,k+1)+
+     &                    (1-fx)*(  fy)*(  fz)  *g0_yz(i,j+1,k+1)+
+     &                    (  fx)*(  fy)*(  fz)  *g0_yz(i+1,j+1,k+1)
 
-          AH_gb_zz(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *gb_zz_n(i,j,k)+
-     &                    (  fx)*(1-fy)*(1-fz)  *gb_zz_n(i+1,j,k)+
-     &                    (1-fx)*(  fy)*(1-fz)  *gb_zz_n(i,j+1,k)+
-     &                    (  fx)*(  fy)*(1-fz)  *gb_zz_n(i+1,j+1,k)+
-     &                    (1-fx)*(1-fy)*(  fz)  *gb_zz_n(i,j,k+1)+
-     &                    (  fx)*(1-fy)*(  fz)  *gb_zz_n(i+1,j,k+1)+
-     &                    (1-fx)*(  fy)*(  fz)  *gb_zz_n(i,j+1,k+1)+
-     &                    (  fx)*(  fy)*(  fz)  *gb_zz_n(i+1,j+1,k+1)
-
-         AH_g0_xx(i0,j0)  = g0_xx_ads0  + AH_gb_xx(i0,j0)
-         AH_g0_xy(i0,j0)  = g0_xy_ads0  + AH_gb_xy(i0,j0)
-         AH_g0_xz(i0,j0)  = g0_xz_ads0  + AH_gb_xz(i0,j0)
-         AH_g0_yy(i0,j0)  = g0_yy_ads0  + AH_gb_yy(i0,j0)
-         AH_g0_yz(i0,j0)  = g0_yz_ads0  + AH_gb_yz(i0,j0)
-         AH_g0_zz(i0,j0)  = g0_zz_ads0  + AH_gb_zz(i0,j0)
+          AH_g0_zz(i0,j0)=(1-fx)*(1-fy)*(1-fz)  *g0_zz(i,j,k)+
+     &                    (  fx)*(1-fy)*(1-fz)  *g0_zz(i+1,j,k)+
+     &                    (1-fx)*(  fy)*(1-fz)  *g0_zz(i,j+1,k)+
+     &                    (  fx)*(  fy)*(1-fz)  *g0_zz(i+1,j+1,k)+
+     &                    (1-fx)*(1-fy)*(  fz)  *g0_zz(i,j,k+1)+
+     &                    (  fx)*(1-fy)*(  fz)  *g0_zz(i+1,j,k+1)+
+     &                    (1-fx)*(  fy)*(  fz)  *g0_zz(i,j+1,k+1)+
+     &                    (  fx)*(  fy)*(  fz)  *g0_zz(i+1,j+1,k+1)
 
 
 !         write (*,*) "i0,j0=",i0,j0
@@ -1455,7 +1555,18 @@ c-----------------------------------------------------------------------
               AH_det_g0=g0_chichi0*g0_phiphi0-g0_chiphi0**2
 
               ! horizon area element
-              da=sqrt(AH_det_g0)*dahchi*dahphi
+              ! to avoid overcounting when we compute the area as the sum of the area element over all MPI processes
+              ! we exclude the case j0=Nphi.
+              ! However, including j0=Nphi is useful when computing the area as an integral over the area density (=da/(dchi dphi) ),
+              ! as we do in Mathematica in post-processing. da_full includes the case j0=Nphi and is then saved in AH_da0(i0,j0), which
+              ! is the quantity that we output in sdf and ascii form in app_pre_tstep() and app_post_tstep()
+              if (j0.ne.AH_Nphi) then
+               da=sqrt(AH_det_g0)*dahchi*dahphi
+               da_full=sqrt(AH_det_g0)*dahchi*dahphi
+              else
+               da=0
+               da_full=sqrt(AH_det_g0)*dahchi*dahphi
+              end if
               if (is_ex.eq.1) then
                da=-10000
               end if
@@ -1508,7 +1619,7 @@ c-----------------------------------------------------------------------
         AH_ahr(i0,j0)=AH_R(i0,j0)
         AH_dch(i0,j0)=dahr_dch
         AH_dph(i0,j0)=dahr_dph
-        AH_da0(i0,j0)=da
+        AH_da0(i0,j0)=da_full
         AH_dcq(i0,j0)=d_ceq
         AH_dcp(i0,j0)=d_cp
         AH_dcp2(i0,j0)=d_cp2

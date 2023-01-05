@@ -143,7 +143,7 @@ real AH_eps[MAX_BHS],AH_r1[MAX_BHS],AH_tol_scale[MAX_BHS],AH_reset_scale[MAX_BHS
 real AH_xc[MAX_BHS][3],AH_max_tol_inc[MAX_BHS],AH_tmin[MAX_BHS],AH_omt_scale[MAX_BHS];
 int use_AH_new_smooth,use_AH_new;
 int c_AH;
-int AH_reset_r_sample;
+int AH_rsample_maxminkerrads;
 int AH_analytic_kerrads;
 
 //=============================================================================
@@ -2512,7 +2512,7 @@ void AdS4D_var_post_init(char *pfile)
         if (l==0) { AH_r1[l]=0.2; sprintf(buf,"AH_r1"); }
         else { AH_r1[l]=AH_r1[0]; sprintf(buf,"AH_r1_%i",l+1); }
         AMRD_real_param(pfile,buf,&AH_r1[l],1); 
-        AH_reset_r_sample=0; AMRD_int_param(pfile,"AH_reset_r_sample",&AH_reset_r_sample,1);
+        AH_rsample_maxminkerrads=0; AMRD_int_param(pfile,"AH_rsample_maxminkerrads",&AH_rsample_maxminkerrads,1);
         AH_analytic_kerrads=0; AMRD_int_param(pfile,"AH_analytic_kerrads",&AH_analytic_kerrads,1);
         if (l==0) { AH_lambda[l]=0.1; sprintf(buf,"AH_lambda"); }
         else { AH_lambda[l]=AH_lambda[0]; sprintf(buf,"AH_lambda_%i",l+1); }
@@ -2623,18 +2623,25 @@ void AdS4D_var_post_init(char *pfile)
         }
 		min_AH_R0=rhoh;
         max_AH_R0=rhoh;
-        ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
-        ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
-        ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
+		if (excision_type==0) //no excision
+        {
+        	AMRD_stop("ERROR: Use excision for black hole initial data or code will crash due to the curvature singularity. Set excision_type to a non-zero value.","");    
+        }
+        else
+        {
+        	ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
+        	ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
+        	ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
+       	}
+
         if (ah_finder_is_off) 
         {
             if (my_rank==0) printf("\n ... AH finder is off so we excise, AT ALL TIME STEPS, points with compactified radius smaller than rhoh*(1-ex_rbuf[0])=%lf ... \n",rhoh*(1-ex_rbuf[0]));
         }
-        else //if we start from bh initial data and AH finder is not off
+        else //if we start from Schwarzschild-AdS initial data and AH finder is not off
         {
-           	//AH_rsteps[l]=1;
-           	//AH_r0[l]=rhoh;
-          	//AH_r1[l]=rhoh;
+        	if (my_rank==0) printf("\n ... AH finder is on\n");
+
             if (rhoh*(1-ex_rbuf[0])>AH_r0[0])
             {
            		if (my_rank==0) printf("WARNING: smallest radius of sample spheres for AH finder at t>0 is smaller than excision radius - setting to horizon radius: AH_r0[0]=rhoh\n");
@@ -2710,19 +2717,23 @@ void AdS4D_var_post_init(char *pfile)
                    "Excision buffer (i.e. size of the evolved region within the AH) ex_rbuf[0]=%lf\n\n"
                    ,ief_bh_r0/AdS_L,M0,a_rot0/AdS_L,E,J0,rh,min_AH_R0,max_AH_R0,AH_semiax[0],AH_semiax[1],AH_semiax[2],ex_rbuf[0]);
         } 
-        if (excision_type==1)
+        if (excision_type==0)
+        {
+        	AMRD_stop("ERROR: Use excision for black hole initial data or code will crash due to the curvature singularity. Set excision_type to a non-zero value.","");   
+        }
+        else if (excision_type==1)
 		{
 			ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
         	ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
         	ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
 		}
-		if (excision_type==2)
+		else if (excision_type==2)
 		{
 			ex_r[0][0]=AH_semiax[0]*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
         	ex_r[0][1]=AH_semiax[1]*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
         	ex_r[0][2]=AH_semiax[2]*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
 		}
-		if (excision_type==3)
+		else if (excision_type==3)
 		{
 	        for (i0=0;i0<AH_Nchi[0];i0++)
     	    {
@@ -2738,29 +2749,29 @@ void AdS4D_var_post_init(char *pfile)
         {
             if (my_rank==0)   printf("\n ... AH finder is off so the excision region is the same AT ALL TIME STEPS\n");
         }
-        else //if we start from bh initial data and AH finder is not off
+        else //if we start from Kerr-AdS initial data and AH finder is not off
         {
         	if (my_rank==0) printf("\n ... AH finder is on\n");
         	if (AH_analytic_kerrads)
         	{
-        		if (my_rank==0) printf("\nThe initial guess for the horizon radius AH_R is the analytic Kerr-AdS function\n");
+        		if (my_rank==0) printf("\nThe initial guess for the horizon radius AH_R is the corresponding, analytic Kerr-AdS function\n");
         	}
-			else if (AH_reset_r_sample==0)
+			else if (AH_rsample_maxminkerrads)
 			{
-				if (my_rank==0) printf("\nusing initial range of sample sphere radius specified in parameter file\n");
+				if (my_rank==0) printf("\ninitial range of sample sphere radius set to [min_Kerr_AdS_horizon_radius,max_Kerr_AdS_horizon_radius]=[%lf,%lf]\n",min_AH_R0,max_AH_R0);        	
+            	AH_r0[0]=min_AH_R0;
+            	AH_r1[0]=max_AH_R0;
 			}
 			else
 			{ 
-			 if (my_rank==0) printf("\ninitial range of sample sphere radius set to [min_Kerr_AdS_horizon_radius,max_Kerr_AdS_horizon_radius]=[%lf,%lf]\n",min_AH_R0,max_AH_R0);        	
-            	AH_r0[0]=min_AH_R0;
-            	AH_r1[0]=max_AH_R0;
+				if (my_rank==0) printf("\nusing initial range of sample sphere radius specified in parameter file\n");
 			} 
 		}
 
     }
     else
     {
-        if (my_rank==0) printf("\nscalar field initial data from Hamiltonian constraint solver\n");
+        if (my_rank==0) printf("\nInitial data with no black hole\n");
         for (i0=0;i0<AH_Nchi[0];i0++)
         {
        		for (j0=0;j0<AH_Nphi[0];j0++)
@@ -2772,12 +2783,34 @@ void AdS4D_var_post_init(char *pfile)
         }
         min_AH_R0=1;
         max_AH_R0=1;
-        ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
-        ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
-        ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
+        
         if (ah_finder_is_off)
         {
-            if (my_rank==0)   printf("\n ... AH finder is off so we excise, AT ALL TIME STEPS, points with compactified radius smaller than (1-ex_rbuf[0])=%lf ... \n",(1-ex_rbuf[0]));
+            if (excision_type==0) //no excision
+       		{
+       			if (my_rank==0) printf("\n ... AH finder is off and we are not excising ... \n");
+       			ex_r[0][0]=0; //excision ellipse x-semiaxis
+       			ex_r[0][1]=0; //excision ellipse y-semiaxis
+       			ex_r[0][2]=0; //excision ellipse z-semiaxis
+       		}
+       		else
+       		{
+       			if (my_rank==0) 
+       			{
+       				printf("\n ... AH finder is off so we excise, AT ALL TIME STEPS, points with compactified radius smaller than (1-ex_rbuf[0])=%lf ... \n",(1-ex_rbuf[0]));
+       				printf("\nWARNING...excising with respect to the boundary! This is not safe: if we do not excise a region inside an apparent horizon, we lose convergence. Set excision_type=0 to turn off excision.\n");
+       			}
+       			ex_r[0][0]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse x-semiaxis
+       			ex_r[0][1]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse y-semiaxis
+       			ex_r[0][2]=min_AH_R0*(1-ex_rbuf[0]); //excision ellipse z-semiaxis
+       		}
+        }
+        else
+        {
+        	if (my_rank==0) printf("\n ... AH finder is on. Once an apparent horizon is found, we excise points with compactified radius smaller than AH_R(i0,j0)*(1-ex_rbuf[0])=AH_R(i0,j0)*(1-%lf)\n",ex_rbuf[0]);
+        	ex_r[0][0]=0; //excision ellipse x-semiaxis
+       		ex_r[0][1]=0; //excision ellipse y-semiaxis
+       		ex_r[0][2]=0; //excision ellipse z-semiaxis
         }
     }   
 
@@ -2786,13 +2819,13 @@ void AdS4D_var_post_init(char *pfile)
     {
 		l=0;
 
-	    	if (excision_type==0) printf("\nNo internal excision\n");
-		    if ((excision_type==1)&&(min_AH_R0<1)) 
+			if (excision_type==0) printf("\nNo internal excision\n");
+		    else if (excision_type==1)
 		    {
 		    	printf("\nSpherical excised region with radius min_AH_R0*(1-ex_rbuf[l])=%lf\n",min_AH_R0*(1-ex_rbuf[l]));
 		    	if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
 		    }
-	    	if ((excision_type==2)&&(min_AH_R0<1))
+	    	else if (excision_type==2)
 	    	{
 	    		printf("\nExcision ellipse semiaxes: (ex_r[l][0],ex_r[l][1],ex_r[l][2])=(%lf,%lf,%lf)\n",ex_r[l][0],ex_r[l][1],ex_r[l][2]);
 	    		if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts))
@@ -2808,7 +2841,7 @@ void AdS4D_var_post_init(char *pfile)
 					}	
 				}
 			}
-	   		if ((excision_type==3)&&(min_AH_R0<1)) 
+	   		else if (excision_type==3)
 	   		{
 	   			printf("AH-shaped excised region: minimum and maximum of AH radius: min_AH_R0=%lf, max_AH_R0=%lf\n",min_AH_R0,max_AH_R0);
 	   			if ((AMRD_cp_restart)&&(excise_prev_run_ex_pts)) printf("WARNING: excision of pre-checkpoint excised points that would not be excised in the current run can be activated only for elliptic-type excision. This will be ignored\n");
@@ -3155,6 +3188,10 @@ void AdS4D_t0_cnst_data(void)
     }
     else
     {   
+    	if (ief_bh_r0>pow(10,-10)) 
+    	{
+    		AMRD_stop("The option of solving the constraints on black hole backgrounds is not implemented.\n Before implementing this, a momentum constraint solver is needed: black hole metrics in horizon penetrating-coordinates (needed to ensure we can excise a region well-inside the event horizon, and thus not lose convergence) have g_ti!=0, so they do not trivially satisfy the momentum constraint.\n If you wish to use a black hole background, perturbations can only be added without solving the constraints. Set skip_constraints=0 to skip the Hamiltonian constraint solver.","");   
+    	}
         if (gb_xx_nm1) //"np1,n,nm1" variables only allocated on finest MG level
         {   
 
@@ -21632,7 +21669,7 @@ real AdS4D_evo_residual(void)
     l2norm_hb_t=norm_l2(hb_t_res,mask,chr);
     l2norm_hb_i=norm_l2(hb_i_res,mask,chr); 
     l2norm=l2norm_phi1; 
-    if (!background) l2norm+=(l2norm_gb+l2norm_hb_t+l2norm_hb_i);   
+    if (!background) l2norm+=(l2norm_gb+l2norm_hb_t+l2norm_hb_i+l2norm_phi1);   
     check_nan_(&l2norm,&is_nan);    
     if (is_nan)
     {

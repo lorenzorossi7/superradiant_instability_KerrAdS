@@ -178,6 +178,11 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
                          gb_yy_n,gb_yy_nm1,gb_yy_np1,
                          gb_yz_n,gb_yz_nm1,gb_yz_np1,
                          gb_zz_n,gb_zz_nm1,gb_zz_np1,
+                         Hb_t_n,Hb_t_nm1,Hb_t_np1,
+                         Hb_x_n,Hb_x_nm1,Hb_x_np1,
+                         Hb_y_n,Hb_y_nm1,Hb_y_np1,
+                         Hb_z_n,Hb_z_nm1,Hb_z_np1,
+                         phi1_n,phi1_nm1,phi1_np1,
                          kretsch_n,
                          riemanncube_n,
                          &AdS_L,x,y,z,&dt,chr,&AMRD_ex,&AMRD_do_ex,&Nx,&Ny,&Nz,&axisym,
@@ -208,6 +213,11 @@ real fill_theta_ahmetric(double *AH_theta0, real eps0, real *area, real *c_equat
                          gb_yy_np1,gb_yy_n,gb_yy_nm1,
                          gb_yz_np1,gb_yz_n,gb_yz_nm1,
                          gb_zz_np1,gb_zz_n,gb_zz_nm1,
+                         Hb_t_np1,Hb_t_n,Hb_t_nm1,
+                         Hb_x_np1,Hb_x_n,Hb_x_nm1,
+                         Hb_y_np1,Hb_y_n,Hb_y_nm1,
+                         Hb_z_np1,Hb_z_n,Hb_z_nm1,
+                         phi1_np1,phi1_n,phi1_nm1,
                          kretsch_np1,
                          riemanncube_np1,
                          &AdS_L,x,y,z,&dt,chr,&AMRD_ex,&AMRD_do_ex,&Nx,&Ny,&Nz,&axisym,
@@ -695,7 +705,7 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
    if (eps1>1) eps1=eps1-1;
 
    // for found_AH:=use_R_ic=0, figure out an initial guess for AH_R
-   if ((!use_R_ic)&&(!AH_analytic_kerrads))
+   if ((!use_R_ic)&&(!(*AH_analytic_kerrads)))
    {
       if (AH_rsteps[c_AH]==1) // for one radius iteration
       {
@@ -842,7 +852,7 @@ int find_apph(real *M, real *J, real *area, real *c_equat, real *c_polar, real *
       {
          printf("\n ... found an AH (to within %lf) in %i iterations ... \n",
                 tol0,iter);
-         printf("     horizon area approximation (it overestimates the actual sum of all area elements da, due to overcounting from the many processes): %5.6lf,\n areal horizon radius (non-compactified): %5.6lf , horizon Schwarzschild-AdS mass with given area: %5.6lf \n",
+         printf("     horizon area approximation (calculating the area density and computing the integral over the apparent horizon, e.g., in Mathematica, is slightly more precise): %5.6lf,\n areal horizon radius (non-compactified): %5.6lf , horizon Schwarzschild-AdS mass with given area: %5.6lf \n",
               *area,sqrt((*area)/4/M_PI),*M);
          printf("     equat circum (x=0): %5.3lf,  polar circum 1 (y=0, i.e. phi=PI/2 && phi=3*PI/2): %5.3lf, and polar circum 2 (z=0, i.e. phi=0 && phi=PI): %5.3lf\n",
               *c_equat,*c_polar,*c_polar2);

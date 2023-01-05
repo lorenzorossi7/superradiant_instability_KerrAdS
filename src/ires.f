@@ -501,12 +501,13 @@ c----------------------------------------------------------------------
                kg_ires(i,j,k)=0.0d0
                do a=1,4
                 do b=1,4
+                 kg_ires(i,j,k)=
+     &               kg_ires(i,j,k)
+     &                +g0_uu(a,b)*phi10_xx(a,b)
                  do c=1,4
                    kg_ires(i,j,k)=
-     &                         kg_ires(i,j,k)
-     &                         +phi10_xx(a,b)*g0_uu(a,b)
-     &                         +phi10_x(b)*g0_uu_x(a,b,a)
-     &                         +phi10_x(c)*g0_uu(c,b)*gamma_ull(a,a,b)
+     &               kg_ires(i,j,k)
+     &                -g0_uu(a,b)*gamma_ull(c,a,b)*phi10_x(c)
                  end do
                 end do
                end do
