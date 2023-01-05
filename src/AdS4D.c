@@ -2513,7 +2513,7 @@ void AdS4D_var_post_init(char *pfile)
         else { AH_r1[l]=AH_r1[0]; sprintf(buf,"AH_r1_%i",l+1); }
         AMRD_real_param(pfile,buf,&AH_r1[l],1); 
         AH_rsample_maxminkerrads=0; AMRD_int_param(pfile,"AH_rsample_maxminkerrads",&AH_rsample_maxminkerrads,1);
-        AH_analytic_kerrads=0; AMRD_int_param(pfile,"AH_analytic_kerrads",&AH_analytic_kerrads,1);
+        AH_analytic_kerrads=0; if (ief_bh_r0>0) AMRD_int_param(pfile,"AH_analytic_kerrads",&AH_analytic_kerrads,1);
         if (l==0) { AH_lambda[l]=0.1; sprintf(buf,"AH_lambda"); }
         else { AH_lambda[l]=AH_lambda[0]; sprintf(buf,"AH_lambda_%i",l+1); }
         AMRD_real_param(pfile,buf,&AH_lambda[l],1); 
@@ -2652,6 +2652,17 @@ void AdS4D_var_post_init(char *pfile)
                	if (my_rank==0) printf("WARNING: largest radius of sample spheres for AH finder at t>0 is smaller than excision radius - setting to horizon radius: AH_r1[0]=rhoh\n");
               	AH_r1[0]=rhoh;
             }  
+
+        	if (AH_analytic_kerrads)
+        	{
+        		if (my_rank==0) printf("\nThe initial guess for the horizon radius AH_R is the corresponding, analytic Schwarzschild-AdS function\n");
+        		AH_r0[0]=rhoh;
+            	AH_r1[0]=rhoh;
+        	}
+			else
+			{
+				if (my_rank==0) printf("\nusing initial range of sample sphere radius specified in parameter file\n");
+			}
         }   
     }
     else if ((ief_bh_r0>0)&&(a_rot0>0))
